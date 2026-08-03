@@ -9,24 +9,41 @@ import Add from "@/components/Add";
 
 const PRODUCT_PER_PAGE = 20;
 
+// Normalize category names so "Editors Choice" matches "Editor's Choice" etc.
+const normalize = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, "");
+
 const ProductList= async ({
                                categoryId,
+                               categoryName,
                                limit,
                                searchParams,
                            }: {
     categoryId: string;
+    categoryName?: string;
     limit?: number;
     searchParams?: any;
 }) => {
 
     const wixClient = await wixClientServer();
 
+    // If a category name is given, resolve it to a collection id (categoryId is the fallback)
+    let resolvedCategoryId = categoryId;
+    if (categoryName) {
+        try {
+            const cats = await wixClient.collections.queryCollections().find();
+            const match = cats.items.find(
+                (c) => c.name && normalize(c.name) === normalize(categoryName)
+            );
+            if (match?._id) resolvedCategoryId = match._id;
+        } catch (e) {}
+    }
+
     let productQuery = wixClient.products
         .queryProducts()
         .startsWith("name", searchParams?.name || "");
 
-    if (categoryId) {
-        productQuery = productQuery.eq("collectionIds", categoryId);
+    if (resolvedCategoryId) {
+        productQuery = productQuery.eq("collectionIds", resolvedCategoryId);
     }
 
     productQuery = productQuery
@@ -65,7 +82,7 @@ const ProductList= async ({
                     className="flex flex-col gap-4"
                     key={product._id}
                 >
-                    <div className="relative w-full h-80">
+                    <div className="relative w-full aspect-square lg:aspect-auto lg:h-80">
                         <Image
                             src={product.media?.mainMedia?.image?.url || "/product.png"}
                             alt=""

@@ -12,14 +12,17 @@ const DEFAULT_PAGE_SIZE = 20;
 
 export type FetchLike = (url: string, init?: RequestInit) => Promise<Response>;
 
+// Values from the page's query string. Next.js hands over an array when a key is repeated.
+type QueryValue = string | string[] | number | undefined;
+
 export type ProductListParams = {
   categoryId?: string;
-  name?: string;
-  type?: string;
-  min?: string | number;
-  max?: string | number;
-  sort?: string;
-  page?: string | number;
+  name?: QueryValue;
+  type?: QueryValue;
+  min?: QueryValue;
+  max?: QueryValue;
+  sort?: QueryValue;
+  page?: QueryValue;
   limit?: number;
 };
 
@@ -63,9 +66,21 @@ const PRODUCT_TYPES: Record<string, string> = {
   digital: "DIGITAL",
 };
 
-const asNumberString = (value: string | number | undefined): string | null => {
-  if (value === undefined || value === null || String(value).trim() === "") return null;
-  const n = Number(value);
+const has = (table: Record<string, string>, key: string) =>
+  Object.prototype.hasOwnProperty.call(table, key);
+
+// A repeated query key (?name=a&name=b) arrives as an array: use the first value.
+const asText = (value: QueryValue): string | undefined => {
+  const first = Array.isArray(value) ? value[0] : value;
+  if (typeof first === "number") return String(first);
+  return typeof first === "string" ? first : undefined;
+};
+
+// Accepts "1000", "1,000" and " 1000 "; anything else is not a price.
+const asNumberString = (value: QueryValue): string | null => {
+  const text = asText(value)?.replace(/[,\s]/g, "");
+  if (!text) return null;
+  const n = Number(text);
   return Number.isFinite(n) ? String(n) : null;
 };
 
@@ -80,11 +95,13 @@ export const buildSearchBody = (params: ProductListParams): SearchBody => {
     });
   }
 
-  const name = params.name?.trim();
+  const name = asText(params.name)?.trim();
   if (name) conditions.push({ name: { $startsWith: name } });
 
-  const type = params.type ? PRODUCT_TYPES[params.type.toLowerCase()] : undefined;
-  if (type) conditions.push({ productType: { $eq: type } });
+  const typeKey = asText(params.type)?.toLowerCase() ?? "";
+  if (has(PRODUCT_TYPES, typeKey)) {
+    conditions.push({ productType: { $eq: PRODUCT_TYPES[typeKey] } });
+  }
 
   const min = asNumberString(params.min);
   if (min !== null) conditions.push({ [PRICE_FIELD]: { $gte: min } });
@@ -98,10 +115,11 @@ export const buildSearchBody = (params: ProductListParams): SearchBody => {
   };
   if (conditions.length > 0) body.search.filter = { $and: conditions };
 
-  const [direction, field] = (params.sort ?? "").split(" ");
-  const fieldName = SORT_FIELDS[field];
-  if (fieldName && (direction === "asc" || direction === "desc")) {
-    body.search.sort = [{ fieldName, order: direction === "asc" ? "ASC" : "DESC" }];
+  const [direction, field = ""] = (asText(params.sort) ?? "").split(" ");
+  if (has(SORT_FIELDS, field) && (direction === "asc" || direction === "desc")) {
+    body.search.sort = [
+      { fieldName: SORT_FIELDS[field], order: direction === "asc" ? "ASC" : "DESC" },
+    ];
   }
 
   return body;
@@ -145,7 +163,7 @@ export const listProducts = async (
   params: ProductListParams
 ): Promise<ProductPage> => {
   const limit = params.limit && params.limit > 0 ? params.limit : DEFAULT_PAGE_SIZE;
-  const page = Math.max(0, parseInt(String(params.page ?? 0), 10) || 0);
+  const page = Math.max(0, parseInt(asText(params.page) ?? "0", 10) || 0);
 
   const response = await fetchLike(PRODUCTS_SEARCH_URL, {
     method: "POST",
@@ -159,7 +177,11 @@ export const listProducts = async (
     throw new Error(`Wix product search failed: ${response.status} ${code}: ${json?.message ?? "no message"}`);
   }
 
-  const all: WixProduct[] = json.products ?? [];
+  // Wix returns "products": [] for an empty result, so a missing list means a bad response.
+  if (!Array.isArray(json.products)) {
+    throw new Error("Wix product search returned an unexpected response");
+  }
+  const all: WixProduct[] = json.products;
   const start = page * limit;
   return {
     items: all.slice(start, start + limit).map(toCard),

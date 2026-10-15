@@ -29,7 +29,9 @@ const ProductList = async ({
                 (c) => c.name && normalize(c.name) === normalize(categoryName)
             );
             if (match?._id) resolvedCategoryId = match._id;
-        } catch (e) {}
+        } catch (e) {
+            console.error("ProductList: category lookup failed, using the given id", e);
+        }
     }
 
     let page;

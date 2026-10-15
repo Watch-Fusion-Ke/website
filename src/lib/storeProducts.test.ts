@@ -92,6 +92,32 @@ describe("buildSearchBody", () => {
     ]);
   });
 
+  it("ignores values that only exist on every object, such as 'constructor'", () => {
+    expect(buildSearchBody({ type: "constructor" }).search.filter).toBeUndefined();
+    expect(buildSearchBody({ type: "__proto__" }).search.filter).toBeUndefined();
+    expect(buildSearchBody({ sort: "asc constructor" }).search.sort).toBeUndefined();
+    expect(buildSearchBody({ sort: "asc __proto__" }).search.sort).toBeUndefined();
+  });
+
+  it("uses the first value when a query key is repeated", () => {
+    const { filter } = buildSearchBody({
+      name: ["Navi", "Curren"],
+      type: ["physical", "digital"],
+      min: ["1000", "2000"],
+    }).search;
+    expect(filter?.$and).toContainEqual({ name: { $startsWith: "Navi" } });
+    expect(filter?.$and).toContainEqual({ productType: { $eq: "PHYSICAL" } });
+    expect(filter?.$and).toContainEqual({ "actualPriceRange.minValue.amount": { $gte: "1000" } });
+    expect(buildSearchBody({ sort: ["asc price", "desc name"] }).search.sort).toHaveLength(1);
+  });
+
+  it("reads a price typed with a thousands comma and drops one that is not a number", () => {
+    expect(buildSearchBody({ min: "1,000" }).search.filter?.$and).toEqual([
+      { "actualPriceRange.minValue.amount": { $gte: "1000" } },
+    ]);
+    expect(buildSearchBody({ min: "KES 500", max: "abc" }).search.filter).toBeUndefined();
+  });
+
   it("drops a sort it does not know instead of sending it to Wix", () => {
     expect(buildSearchBody({ sort: "asc colour" }).search.sort).toBeUndefined();
     expect(buildSearchBody({ sort: "sideways price" }).search.sort).toBeUndefined();
@@ -166,6 +192,23 @@ describe("listProducts", () => {
   it("treats a junk page number as the first page", async () => {
     const page = await listProducts(fakeFetch([wixProduct(1)]).fetchLike, { page: "abc" });
     expect(page.page).toBe(0);
+  });
+
+  it("treats a repeated page key as its first value", async () => {
+    const products = Array.from({ length: 12 }, (_, i) => wixProduct(i));
+    const page = await listProducts(fakeFetch(products).fetchLike, { limit: 5, page: ["1", "2"] });
+    expect(page.page).toBe(1);
+    expect(page.items[0].id).toBe("id-5");
+  });
+
+  it("returns an empty last page when the page is past the end", async () => {
+    const page = await listProducts(fakeFetch([wixProduct(1)]).fetchLike, { limit: 5, page: "4" });
+    expect(page).toEqual({ items: [], page: 4, hasPrev: true, hasNext: false });
+  });
+
+  it("throws when a 200 response has no product list", async () => {
+    const { fetchLike } = fakeFetch([], 200, { unexpected: true });
+    await expect(listProducts(fetchLike, {})).rejects.toThrow(/unexpected response/);
   });
 
   it("throws with Wix's message when the search is rejected", async () => {

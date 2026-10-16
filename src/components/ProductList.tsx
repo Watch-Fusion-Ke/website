@@ -56,7 +56,7 @@ const ProductList = async ({
     }
 
     return (
-        <div className="mt-12 grid grid-cols-2 lg:grid-cols-4 gap-x-4 gap-y-16">
+        <div className="mt-6 grid grid-cols-2 lg:grid-cols-4 gap-x-4 gap-y-16">
             {page.items.map((product) => (
                 <Link
                     href={"/" + product.slug}

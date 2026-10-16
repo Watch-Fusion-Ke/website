@@ -68,7 +68,7 @@ const ProductList = async ({
                             src={product.imageUrl || "/product.png"}
                             alt=""
                             fill
-                            sizes="25vw"
+                            sizes="(max-width: 1023px) 50vw, 25vw"
                             className={`absolute object-cover rounded-md z-10 transition-opacity duration-500 ${product.hoverImageUrl ? "hover:opacity-0" : ""}`}
                         />
                         {product.hoverImageUrl && (
@@ -76,7 +76,7 @@ const ProductList = async ({
                                 src={product.hoverImageUrl}
                                 alt=""
                                 fill
-                                sizes="25vw"
+                                sizes="(max-width: 1023px) 50vw, 25vw"
                                 className="absolute object-cover rounded-md"
                             />
                         )}

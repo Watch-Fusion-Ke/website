@@ -33,19 +33,27 @@ describe("Navbar on a phone", () => {
 
   it("centres the logo between the menu button and the cart", () => {
     const html = phoneHeader();
-    expect(html).toContain("grid-cols-[1fr_auto_1fr]");
+    const grid = html.indexOf("grid-cols-[1fr_auto_1fr]");
     const menu = html.indexOf('aria-label="Open menu"');
     const logo = html.indexOf('alt="Watch Fusion Kenya"');
     const cart = html.indexOf('aria-label="Cart"');
-    expect(menu).toBeGreaterThan(-1);
+    expect(grid).toBeGreaterThan(-1);
+    expect(menu).toBeGreaterThan(grid);
     expect(logo).toBeGreaterThan(menu);
     expect(cart).toBeGreaterThan(logo);
   });
 
   it("keeps the logo small so the header looks calm", () => {
     const logoTag = phoneHeader().match(/<img[^>]*alt="Watch Fusion Kenya"[^>]*>/)?.[0] ?? "";
-    expect(logoTag).toContain("h-6");
-    expect(logoTag).not.toContain("h-8");
+    const classes = (logoTag.match(/class="([^"]*)"/)?.[1] ?? "").split(" ");
+    expect(classes).toContain("h-6");
+    expect(classes.filter((c) => /^h-/.test(c))).toEqual(["h-6"]);
+  });
+
+  it("gives the logo link a tap area at least 44 px tall", () => {
+    const link = phoneHeader().match(/<a[^>]*href="\/"[^>]*>(?=<span[^>]*><img[^>]*alt="Watch Fusion Kenya")/)?.[0] ?? "";
+    expect(link).not.toBe("");
+    expect(link.match(/class="([^"]*)"/)?.[1].split(" ")).toContain("h-11");
   });
 
   it("shows the header's own cart link, not only the one inside the menu", () => {

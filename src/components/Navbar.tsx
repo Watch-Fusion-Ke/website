@@ -17,15 +17,17 @@ const Navbar = () => {
           <div className='flex justify-start'>
             <Menu />
           </div>
-          <Link href="/" className='flex items-center bg-brand-black rounded-md px-2.5 py-1'>
-            <Image
-              src="/logo.png"
-              alt="Watch Fusion Kenya"
-              width={118}
-              height={50}
-              priority
-              className='h-6 w-auto'
-            />
+          <Link href="/" className='flex items-center h-11'>
+            <span className='flex items-center bg-brand-black rounded-md px-2.5 py-1'>
+              <Image
+                src="/logo.png"
+                alt="Watch Fusion Kenya"
+                width={118}
+                height={50}
+                priority
+                className='h-6 w-auto'
+              />
+            </span>
           </Link>
           <div className='flex justify-end'>
             <MobileCartLink />

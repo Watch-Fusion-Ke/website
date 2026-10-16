@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { ChatIcon, MailIcon, MapPinIcon, PhoneIcon } from "@/components/icons";
 
 export default function ContactPage() {
     const [formData, setFormData] = useState({
@@ -43,21 +44,21 @@ export default function ContactPage() {
                 {/* Contact Info Cards */}
                 <div className="lg:col-span-1 space-y-6">
                     <div className="bg-gradient-to-br from-pink-50 to-purple-50 rounded-xl p-6">
-                        <div className="text-3xl mb-3">📧</div>
+                        <MailIcon className="w-8 h-8 mb-3 text-gray-700" />
                         <h3 className="font-semibold text-lg mb-2">Email Us</h3>
                         <p className="text-gray-600">support@store.com</p>
                         <p className="text-gray-600">sales@store.com</p>
                     </div>
 
                     <div className="bg-gradient-to-br from-pink-50 to-purple-50 rounded-xl p-6">
-                        <div className="text-3xl mb-3">📞</div>
+                        <PhoneIcon className="w-8 h-8 mb-3 text-gray-700" />
                         <h3 className="font-semibold text-lg mb-2">Call Us</h3>
                         <p className="text-gray-600">+254 700 000 000</p>
                         <p className="text-sm text-gray-500 mt-1">Mon-Fri: 9am - 6pm EAT</p>
                     </div>
 
                     <div className="bg-gradient-to-br from-pink-50 to-purple-50 rounded-xl p-6">
-                        <div className="text-3xl mb-3">📍</div>
+                        <MapPinIcon className="w-8 h-8 mb-3 text-gray-700" />
                         <h3 className="font-semibold text-lg mb-2">Visit Us</h3>
                         <p className="text-gray-600">
                             Nairobi, Kenya<br />
@@ -66,7 +67,7 @@ export default function ContactPage() {
                     </div>
 
                     <div className="bg-gradient-to-br from-pink-50 to-purple-50 rounded-xl p-6">
-                        <div className="text-3xl mb-3">💬</div>
+                        <ChatIcon className="w-8 h-8 mb-3 text-gray-700" />
                         <h3 className="font-semibold text-lg mb-2">Social Media</h3>
                         <div className="flex gap-3 mt-3">
                             <a href="#" className="w-10 h-10 bg-white rounded-full flex items-center justify-center hover:bg-[#F35C7A] hover:text-white transition-colors">

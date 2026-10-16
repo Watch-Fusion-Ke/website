@@ -1,10 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { TABS, activeTab } from "@/lib/tabs";
-import { WHATSAPP_URL } from "@/lib/contact";
 
 describe("TABS", () => {
-  it("are Home, Gents, Ladies, Cart and Chat, in that order", () => {
-    expect(TABS.map((t) => t.label)).toEqual(["Home", "Gents", "Ladies", "Cart", "Chat"]);
+  it("are Home, Gents, Ladies and Cart, in that order", () => {
+    expect(TABS.map((t) => t.label)).toEqual(["Home", "Gents", "Ladies", "Cart"]);
   });
 
   it("send Gents and Ladies to the store's two watch categories", () => {
@@ -14,9 +13,8 @@ describe("TABS", () => {
     expect(href("cart")).toBe("/cart");
   });
 
-  it("send Chat to WhatsApp", () => {
-    expect(TABS.find((t) => t.key === "chat")?.href).toBe(WHATSAPP_URL);
-    expect(WHATSAPP_URL).toBe("https://wa.me/254796044969");
+  it("keep every tab inside the site, so no tab opens WhatsApp", () => {
+    expect(TABS.every((t) => t.href.startsWith("/"))).toBe(true);
   });
 });
 
@@ -44,9 +42,5 @@ describe("activeTab", () => {
   it("does not mark Cart on a product whose address merely starts with 'cart'", () => {
     expect(activeTab("/cartier-style-watch", null)).toBeNull();
     expect(activeTab("/cartoon-kids-watch", null)).toBeNull();
-  });
-
-  it("never marks Chat, which leaves the site", () => {
-    expect(activeTab("/anything", "x")).not.toBe("chat");
   });
 });

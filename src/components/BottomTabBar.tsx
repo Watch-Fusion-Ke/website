@@ -4,14 +4,13 @@ import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { useCartStore } from "@/hooks/useCartStore";
 import { TABS, activeTab, type TabKey } from "@/lib/tabs";
-import { BagIcon, ChatIcon, HomeIcon, WatchRoundIcon, WatchSquareIcon } from "@/components/icons";
+import { BagIcon, HomeIcon, WatchRoundIcon, WatchSquareIcon } from "@/components/icons";
 
 const ICONS: Record<TabKey, (props: { className?: string }) => JSX.Element> = {
   home: HomeIcon,
   gents: WatchSquareIcon,
   ladies: WatchRoundIcon,
   cart: BagIcon,
-  chat: ChatIcon,
 };
 
 // Main navigation along the bottom of the screen on phones, like a shopping app.
@@ -31,7 +30,7 @@ export const TabBarView = ({
       aria-label="Main"
       className="fixed bottom-0 inset-x-0 z-30 md:hidden bg-white border-t border-gray-200 pb-[env(safe-area-inset-bottom)]"
     >
-      <ul className="grid grid-cols-5">
+      <ul className="grid grid-cols-4">
         {TABS.map((tab) => {
           const Icon = ICONS[tab.key];
           const active = current === tab.key;
@@ -57,26 +56,14 @@ export const TabBarView = ({
 
           return (
             <li key={tab.key}>
-              {tab.external ? (
-                <a
-                  href={tab.href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  aria-label="Chat on WhatsApp (opens in a new tab)"
-                  className={className}
-                >
-                  {content}
-                </a>
-              ) : (
-                <Link
-                  href={tab.href}
-                  aria-current={active ? "page" : undefined}
-                  aria-label={tab.key === "cart" && counter > 0 ? `Cart, ${counter} items` : undefined}
-                  className={className}
-                >
-                  {content}
-                </Link>
-              )}
+              <Link
+                href={tab.href}
+                aria-current={active ? "page" : undefined}
+                aria-label={tab.key === "cart" && counter > 0 ? `Cart, ${counter} items` : undefined}
+                className={className}
+              >
+                {content}
+              </Link>
             </li>
           );
         })}

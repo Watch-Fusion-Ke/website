@@ -1,13 +1,15 @@
 "use client";
 
+import { WHATSAPP_URL } from "@/lib/contact";
+
 const WhatsAppButton = () => {
   return (
     <a
-      href="https://wa.me/254796044969"
+      href={WHATSAPP_URL}
       target="_blank"
       rel="noopener noreferrer"
       aria-label="Chat on WhatsApp"
-      className="whatsapp-float"
+      className="whatsapp-float flex items-center justify-center max-md:hidden"
       style={{
         position: "fixed",
         bottom: "24px",
@@ -17,9 +19,6 @@ const WhatsAppButton = () => {
         height: "60px",
         borderRadius: "50%",
         backgroundColor: "#25D366",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
         boxShadow: "0 4px 12px rgba(0, 0, 0, 0.25)",
         transition: "transform 0.3s ease, box-shadow 0.3s ease",
         cursor: "pointer",

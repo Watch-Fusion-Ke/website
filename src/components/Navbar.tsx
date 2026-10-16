@@ -11,21 +11,27 @@ import MobileCartLink from './MobileCartLink'
 const Navbar = () => {
   return (
     <div className="md:h-20 px-4 md:px-8 lg:px-16 xl:px-32 2xl:px-64 relative">
-      {/* Mobile Navbar: menu button on the left, then the logo, cart on the right, search underneath */}
+      {/* Mobile Navbar: menu button on the left, logo in the middle, cart on the right, search underneath */}
       <div data-testid="phone-header" className='md:hidden border-b border-gray-200 pb-3'>
-        <div className='flex items-center gap-3 h-16'>
-          <Menu />
-          <Link href="/" className='flex items-center flex-shrink-0 bg-brand-black rounded-lg px-3 py-1.5'>
-            <Image
-              src="/logo.png"
-              alt="Watch Fusion Kenya"
-              width={118}
-              height={50}
-              priority
-              className='h-8 w-auto'
-            />
+        <div className='grid grid-cols-[1fr_auto_1fr] items-center h-14'>
+          <div className='flex justify-start'>
+            <Menu />
+          </div>
+          <Link href="/" className='flex items-center h-11'>
+            <span className='flex items-center bg-brand-black rounded-md px-2.5 py-1'>
+              <Image
+                src="/logo.png"
+                alt="Watch Fusion Kenya"
+                width={118}
+                height={50}
+                priority
+                className='h-6 w-auto'
+              />
+            </span>
           </Link>
-          <MobileCartLink />
+          <div className='flex justify-end'>
+            <MobileCartLink />
+          </div>
         </div>
         <SearchBar />
       </div>

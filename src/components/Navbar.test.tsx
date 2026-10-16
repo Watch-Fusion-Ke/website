@@ -31,8 +31,8 @@ describe("Navbar on a phone", () => {
     expect(logo).toBeGreaterThan(menu);
   });
 
-  it("shows a cart link in the header", () => {
-    expect(phoneHeader()).toContain('href="/cart"');
+  it("shows the header's own cart link, not only the one inside the menu", () => {
+    expect(phoneHeader()).toContain('aria-label="Cart"');
   });
 
   it("shows a search field under the logo row", () => {
@@ -46,5 +46,12 @@ describe("Navbar on a phone", () => {
     expect(html).toContain("left-0");
     expect(html).not.toContain("right-0");
     expect(html).not.toContain("shadow-2xl");
+  });
+
+  it("hides the closed menu from keyboards and screen readers instead of leaving its links reachable", () => {
+    const html = phoneHeader();
+    expect(html).toContain("invisible");
+    expect(html).toContain('role="dialog"');
+    expect(html).not.toContain('aria-hidden="false"');
   });
 });

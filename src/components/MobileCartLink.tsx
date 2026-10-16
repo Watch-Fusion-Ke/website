@@ -2,18 +2,12 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect } from "react";
-import { useWixClient } from "@/hooks/useWixClient";
 import { useCartStore } from "@/hooks/useCartStore";
 
-// Cart shortcut for the phone header. The desktop header has its own cart popup in NavIcons.
+// Cart shortcut for the phone header. NavIcons is mounted on every screen size (hidden by CSS on phones)
+// and loads the cart into the store, so this only reads the item count.
 const MobileCartLink = () => {
-  const wixClient = useWixClient();
-  const { counter, getCart } = useCartStore();
-
-  useEffect(() => {
-    getCart(wixClient);
-  }, [wixClient, getCart]);
+  const { counter } = useCartStore();
 
   return (
     <Link

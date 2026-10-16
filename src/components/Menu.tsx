@@ -41,6 +41,16 @@ const Menu = () => {
 
   const close = () => setOpen(false);
 
+  // Escape closes the menu
+  useEffect(() => {
+    if (!open) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpen(false);
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [open]);
+
   const navLinks = [
     { label: "Homepage", href: "/" },
     { label: "Shop", href: "/shop" },
@@ -73,9 +83,11 @@ const Menu = () => {
 
       {/* Slide-in drawer from the left. No shadow while closed, so nothing leaks onto the page edge. */}
       <div
-        aria-hidden={!open}
-        className={`fixed top-0 left-0 h-full w-72 bg-white z-50 flex flex-col transition-transform duration-300 ease-in-out ${
-          open ? "translate-x-0 shadow-2xl" : "-translate-x-full"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Menu"
+        className={`fixed top-0 left-0 h-full w-72 bg-white z-50 flex flex-col transition-[transform,visibility] duration-300 ease-in-out ${
+          open ? "visible translate-x-0 shadow-2xl" : "invisible -translate-x-full"
         }`}
       >
         {/* Drawer header */}

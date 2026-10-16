@@ -13,7 +13,7 @@ const MobileCartLink = () => {
     <Link
       href="/cart"
       aria-label={counter > 0 ? `Cart, ${counter} items` : "Cart"}
-      className="relative ml-auto p-2"
+      className="relative p-2"
     >
       <Image src="/cart.png" alt="" width={24} height={24} />
       {counter > 0 && (

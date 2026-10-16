@@ -31,6 +31,23 @@ describe("Navbar on a phone", () => {
     expect(logo).toBeGreaterThan(menu);
   });
 
+  it("centres the logo between the menu button and the cart", () => {
+    const html = phoneHeader();
+    expect(html).toContain("grid-cols-[1fr_auto_1fr]");
+    const menu = html.indexOf('aria-label="Open menu"');
+    const logo = html.indexOf('alt="Watch Fusion Kenya"');
+    const cart = html.indexOf('aria-label="Cart"');
+    expect(menu).toBeGreaterThan(-1);
+    expect(logo).toBeGreaterThan(menu);
+    expect(cart).toBeGreaterThan(logo);
+  });
+
+  it("keeps the logo small so the header looks calm", () => {
+    const logoTag = phoneHeader().match(/<img[^>]*alt="Watch Fusion Kenya"[^>]*>/)?.[0] ?? "";
+    expect(logoTag).toContain("h-6");
+    expect(logoTag).not.toContain("h-8");
+  });
+
   it("shows the header's own cart link, not only the one inside the menu", () => {
     expect(phoneHeader()).toContain('aria-label="Cart"');
   });

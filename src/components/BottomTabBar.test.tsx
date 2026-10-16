@@ -91,5 +91,6 @@ describe("WhatsAppButton", () => {
     const classes = html().match(/class="([^"]*)"/)?.[1].split(" ") ?? [];
     expect(classes).toContain("w-14");
     expect(classes).toContain("h-14");
+    expect(classes).toContain("md:hover:scale-110");
   });
 });

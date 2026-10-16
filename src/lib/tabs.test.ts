@@ -43,5 +43,4 @@ describe("activeTab", () => {
     expect(activeTab("/cartier-style-watch", null)).toBeNull();
     expect(activeTab("/cartoon-kids-watch", null)).toBeNull();
   });
-
 });

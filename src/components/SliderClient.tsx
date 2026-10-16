@@ -100,13 +100,13 @@ const SliderClient = ({ slides }: { slides: SlideData[] }) => {
                                 src={slide.img}
                                 alt={slide.title}
                                 fill
-                                sizes="100vw"
+                                sizes="(min-width: 1536px) 73vw, (min-width: 768px) 90vw, 100vw"
                                 className="object-cover"
                                 priority={index === 0}
                             />
                             <div className="absolute inset-0 bg-gradient-to-t md:bg-gradient-to-r from-[#1E2235]/90 via-[#1E2235]/45 to-transparent" />
 
-                            <div className="absolute inset-0 flex flex-col items-start justify-end md:justify-center gap-3 px-4 pb-10 md:pb-0 md:px-16 text-left">
+                            <div className="absolute inset-0 flex flex-col items-start justify-end md:justify-center gap-3 px-4 pb-10 md:pb-0 md:pl-16 md:pr-20 text-left">
                                 <h1 className="max-w-xl text-2xl sm:text-3xl lg:text-4xl xl:text-5xl font-semibold text-white whitespace-pre-line leading-tight">
                                     {slide.title}
                                 </h1>

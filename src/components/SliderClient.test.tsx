@@ -76,6 +76,12 @@ describe("SliderClient", () => {
 
   it("does not add the page margins a second time inside the banner", () => {
     const html = render([slide(1)]);
-    expect(html).not.toContain("xl:px-32 2xl:px-64 text-left");
+    expect(html.match(/2xl:px-64/g)).toHaveLength(1);
+  });
+
+  it("keeps the headline clear of the arrows on large screens", () => {
+    const html = render([slide(1)]);
+    expect(html).toContain("md:pl-16");
+    expect(html).toContain("md:pr-20");
   });
 });

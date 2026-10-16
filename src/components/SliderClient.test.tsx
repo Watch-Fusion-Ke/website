@@ -62,4 +62,20 @@ describe("SliderClient", () => {
   it("renders nothing when there are no slides", () => {
     expect(render([])).toBe("");
   });
+
+  it("lines the banner up with the product grid on large screens and runs edge to edge on phones", () => {
+    const html = render([slide(1)]);
+    const outer = html.match(/^<div class="([^"]*)"/)?.[1].split(" ") ?? [];
+    for (const c of ["md:px-8", "lg:px-16", "xl:px-32", "2xl:px-64"]) expect(outer).toContain(c);
+    expect(outer).not.toContain("px-4");
+  });
+
+  it("rounds the banner corners on large screens only", () => {
+    expect(render([slide(1)])).toContain("md:rounded-lg");
+  });
+
+  it("does not add the page margins a second time inside the banner", () => {
+    const html = render([slide(1)]);
+    expect(html).not.toContain("xl:px-32 2xl:px-64 text-left");
+  });
 });

@@ -111,7 +111,7 @@ export const buildSearchBody = (params: ProductListParams): SearchBody => {
 
   const body: SearchBody = {
     search: { cursorPaging: { limit: SEARCH_LIMIT } },
-    fields: ["CURRENCY"],
+    fields: ["CURRENCY", "MEDIA_ITEMS_INFO"],
   };
   if (conditions.length > 0) body.search.filter = { $and: conditions };
 

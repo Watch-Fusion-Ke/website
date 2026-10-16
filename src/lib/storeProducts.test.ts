@@ -38,6 +38,10 @@ const fakeFetch = (products: unknown[], status = 200, body?: unknown) => {
 };
 
 describe("buildSearchBody", () => {
+  it("asks Wix for each product's full photo list, which the hover photo on a card needs", () => {
+    expect(buildSearchBody({}).fields).toContain("MEDIA_ITEMS_INFO");
+  });
+
   it("sends no filter when nothing is asked for", () => {
     const body = buildSearchBody({});
     expect(body.search.filter).toBeUndefined();

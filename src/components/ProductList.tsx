@@ -69,7 +69,7 @@ const ProductList = async ({
                             alt=""
                             fill
                             sizes="25vw"
-                            className="absolute object-cover rounded-md z-10 hover:opacity-0 transition-opacity easy duration-500"
+                            className={`absolute object-cover rounded-md z-10 transition-opacity duration-500 ${product.hoverImageUrl ? "hover:opacity-0" : ""}`}
                         />
                         {product.hoverImageUrl && (
                             <Image

@@ -2,14 +2,15 @@ import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 
-// The site uses drawn icons, not emoji. Product text that shop staff type into Wix is not checked here.
+// The site uses drawn icons, not emoji. Checks the code in src and the image and data files in public.
+// Product text that shop staff type into Wix is not checked here.
 const ALLOWED = new Set(["©", "®", "™"]); // copyright, registered, trademark signs
 
 const sourceFiles = (dir: string): string[] =>
   readdirSync(dir, { withFileTypes: true }).flatMap((entry) =>
     entry.isDirectory()
       ? sourceFiles(join(dir, entry.name))
-      : /\.(tsx?|css)$/.test(entry.name) && !/\.test\.tsx?$/.test(entry.name)
+      : /\.(tsx?|css|svg|json|mjs)$/.test(entry.name) && !/\.test\.tsx?$/.test(entry.name)
         ? [join(dir, entry.name)]
         : []
   );
@@ -17,7 +18,7 @@ const sourceFiles = (dir: string): string[] =>
 describe("source files", () => {
   it("contain no emoji", () => {
     const found: string[] = [];
-    for (const file of sourceFiles("src")) {
+    for (const file of [...sourceFiles("src"), ...sourceFiles("public")]) {
       readFileSync(file, "utf8")
         .split("\n")
         .forEach((line, i) => {

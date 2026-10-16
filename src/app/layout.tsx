@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Suspense } from "react";
 import { Jost } from "next/font/google";
 import "./globals.css";
@@ -12,6 +12,11 @@ const jost = Jost({
   variable: "--font-jost",
   subsets: ["latin"],
 });
+
+// Lets the page use the whole screen on iPhones, so the tab bar can sit above the home indicator.
+export const viewport: Viewport = {
+  viewportFit: "cover",
+};
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://watchfusionkenya.com"),
@@ -85,7 +90,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${jost.className} antialiased pb-16 md:pb-0`}>
+      <body className={`${jost.className} antialiased pb-[calc(4rem_+_env(safe-area-inset-bottom))] md:pb-0`}>
         <WixClientContextProvider>
           <Navbar />
           {children}

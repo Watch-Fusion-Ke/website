@@ -41,6 +41,11 @@ describe("activeTab", () => {
     expect(activeTab("/cart", null)).toBe("cart");
   });
 
+  it("does not mark Cart on a product whose address merely starts with 'cart'", () => {
+    expect(activeTab("/cartier-style-watch", null)).toBeNull();
+    expect(activeTab("/cartoon-kids-watch", null)).toBeNull();
+  });
+
   it("never marks Chat, which leaves the site", () => {
     expect(activeTab("/anything", "x")).not.toBe("chat");
   });

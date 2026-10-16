@@ -16,7 +16,7 @@ export const TABS: Tab[] = [
 // Which tab matches the page the shopper is on. Chat leaves the site, so it is never current.
 export const activeTab = (pathname: string, cat: string | null): TabKey | null => {
   if (pathname === "/") return "home";
-  if (pathname.startsWith("/cart")) return "cart";
+  if (pathname === "/cart" || pathname.startsWith("/cart/")) return "cart";
   if (pathname === "/list" || pathname === "/shop") {
     if (cat === "gents-watches") return "gents";
     if (cat === "ladies-watches") return "ladies";

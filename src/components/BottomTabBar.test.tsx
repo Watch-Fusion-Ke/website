@@ -28,8 +28,14 @@ describe("BottomTabBar", () => {
     expect(html).toContain('href="/cart"');
   });
 
-  it("is only for phones", () => {
-    expect(render()).toContain("md:hidden");
+  it("is only for phones, and is the page's main navigation landmark", () => {
+    const html = render();
+    expect(html).toContain("md:hidden");
+    expect(html).toContain('<nav aria-label="Main"');
+  });
+
+  it("tells screen reader users that Chat opens WhatsApp in a new tab", () => {
+    expect(render()).toContain('aria-label="Chat on WhatsApp (opens in a new tab)"');
   });
 
   it("marks the current page for screen readers", () => {

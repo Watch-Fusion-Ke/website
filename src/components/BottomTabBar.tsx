@@ -58,7 +58,13 @@ export const TabBarView = ({
           return (
             <li key={tab.key}>
               {tab.external ? (
-                <a href={tab.href} target="_blank" rel="noopener noreferrer" className={className}>
+                <a
+                  href={tab.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="Chat on WhatsApp (opens in a new tab)"
+                  className={className}
+                >
                   {content}
                 </a>
               ) : (

@@ -44,3 +44,36 @@ export const ChatIcon = ({ className }: IconProps) => (
     <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
   </Icon>
 );
+
+export const HomeIcon = ({ className }: IconProps) => (
+  <Icon className={className}>
+    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+    <polyline points="9 22 9 12 15 12 15 22" />
+  </Icon>
+);
+
+// A wrist watch with a square face, for the gents' category.
+export const WatchSquareIcon = ({ className }: IconProps) => (
+  <Icon className={className}>
+    <rect x="6" y="6" width="12" height="12" rx="2.5" />
+    <path d="M8.5 6V3h7v3M8.5 18v3h7v-3" />
+    <path d="M12 9.5V12l1.8 1.2" />
+  </Icon>
+);
+
+// A wrist watch with a round face, for the ladies' category.
+export const WatchRoundIcon = ({ className }: IconProps) => (
+  <Icon className={className}>
+    <circle cx="12" cy="12" r="5.5" />
+    <path d="M9 7V3h6v4M9 17v4h6v-4" />
+    <path d="M12 9.5V12l1.8 1.2" />
+  </Icon>
+);
+
+export const BagIcon = ({ className }: IconProps) => (
+  <Icon className={className}>
+    <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
+    <line x1="3" y1="6" x2="21" y2="6" />
+    <path d="M16 10a4 4 0 0 1-8 0" />
+  </Icon>
+);

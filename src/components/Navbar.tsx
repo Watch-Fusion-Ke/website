@@ -6,28 +6,32 @@ import SearchBar from './SearchBar'
 import Categories from './CategoryList'
 import Menu from './Menu'
 import NavIcons from './NavIcons'
+import MobileCartLink from './MobileCartLink'
 
 const Navbar = () => {
   return (
-    <div className="h-20 px-4 md:px-8 lg:px-16 xl:px-32 2xl:px-64 relative">
-      {/* Mobile Navbar */}
-      <div className='md:hidden h-full flex items-center justify-between border-b border-gray-200 pb-4'>
-        {/* Left - Logo */}
-        <Link href="/" className='flex items-center flex-shrink-0 bg-brand-black rounded-lg px-3 py-1.5'>
-          <Image
-            src="/logo.png"
-            alt="Watch Fusion Kenya"
-            width={118}
-            height={50}
-            priority
-            className='h-8 w-auto'
-          />
-        </Link>
-        <Menu />
+    <div className="md:h-20 px-4 md:px-8 lg:px-16 xl:px-32 2xl:px-64 relative">
+      {/* Mobile Navbar: menu button on the left, then the logo, cart on the right, search underneath */}
+      <div data-testid="phone-header" className='md:hidden border-b border-gray-200 pb-3'>
+        <div className='flex items-center gap-3 h-16'>
+          <Menu />
+          <Link href="/" className='flex items-center flex-shrink-0 bg-brand-black rounded-lg px-3 py-1.5'>
+            <Image
+              src="/logo.png"
+              alt="Watch Fusion Kenya"
+              width={118}
+              height={50}
+              priority
+              className='h-8 w-auto'
+            />
+          </Link>
+          <MobileCartLink />
+        </div>
+        <SearchBar />
       </div>
 
       {/* Desktop Navbar */}
-      <div className='hidden md:flex items-center justify-between gap-8 h-full'>
+      <div data-testid="desktop-header" className='hidden md:flex items-center justify-between gap-8 h-full'>
         {/* Left Section */}
         <div className='w-1/3 xl:w-1/2 flex items-center gap-12'>
           <Link href="/" className="flex items-center flex-shrink-0 bg-brand-black rounded-lg px-3 py-1.5">

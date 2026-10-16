@@ -20,16 +20,17 @@ const SearchBar = () => {
 
   return (
     <form
-      className="flex items-center justify-between gap-4 bg-gray-100 p-2 rounded-md flex-1"
+      className="flex items-center justify-between gap-3 bg-gray-100 px-4 py-2.5 rounded-lg flex-1"
       onSubmit={handleSearch}
     >
       <input
         type="text"
         name="name"
-        placeholder="Search"
+        placeholder="Search watches"
+        aria-label="Search watches"
         className="flex-1 bg-transparent outline-none"
       />
-      <button className="cursor-pointer">
+      <button className="cursor-pointer" aria-label="Search">
         <Image src="/search.png" alt="" width={16} height={16} />
       </button>
     </form>

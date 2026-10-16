@@ -50,42 +50,32 @@ const Menu = () => {
 
   return (
     <div className="relative">
-      {/* Hamburger / Close button */}
+      {/* Menu button: sits on the left of the phone header */}
       <button
-        aria-label={open ? "Close menu" : "Open menu"}
-        onClick={() => setOpen((prev) => !prev)}
-        className="flex flex-col justify-center items-center w-8 h-8 gap-1.5 z-30 relative"
+        aria-label="Open menu"
+        aria-expanded={open}
+        onClick={() => setOpen(true)}
+        className="flex flex-col justify-center items-center w-10 h-10 gap-1.5"
       >
-        <span
-          className={`block h-0.5 w-6 bg-current transition-all duration-300 ${
-            open ? "rotate-45 translate-y-2" : ""
-          }`}
-        />
-        <span
-          className={`block h-0.5 w-6 bg-current transition-all duration-300 ${
-            open ? "opacity-0" : ""
-          }`}
-        />
-        <span
-          className={`block h-0.5 w-6 bg-current transition-all duration-300 ${
-            open ? "-rotate-45 -translate-y-2" : ""
-          }`}
-        />
+        <span className="block h-0.5 w-6 bg-current" />
+        <span className="block h-0.5 w-6 bg-current" />
+        <span className="block h-0.5 w-6 bg-current" />
       </button>
 
       {/* Overlay backdrop */}
       {open && (
         <div
-          className="fixed inset-0 bg-black/40 z-10"
+          className="fixed inset-0 bg-black/40 z-40"
           onClick={close}
           aria-hidden="true"
         />
       )}
 
-      {/* Slide-in drawer */}
+      {/* Slide-in drawer from the left. No shadow while closed, so nothing leaks onto the page edge. */}
       <div
-        className={`fixed top-0 right-0 h-full w-72 bg-white z-20 shadow-2xl flex flex-col transition-transform duration-300 ease-in-out ${
-          open ? "translate-x-0" : "translate-x-full"
+        aria-hidden={!open}
+        className={`fixed top-0 left-0 h-full w-72 bg-white z-50 flex flex-col transition-transform duration-300 ease-in-out ${
+          open ? "translate-x-0 shadow-2xl" : "-translate-x-full"
         }`}
       >
         {/* Drawer header */}

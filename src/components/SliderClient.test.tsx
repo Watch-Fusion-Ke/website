@@ -33,7 +33,20 @@ describe("SliderClient", () => {
   });
 
   it("never sizes the banner to the full height of the screen", () => {
-    expect(render([slide(1), slide(2)])).not.toContain("100vh");
+    const html = render([slide(1), slide(2)]);
+    expect(html).not.toContain("100vh");
+    expect(html).not.toContain("h-screen");
+  });
+
+  it("takes slides that are off screen out of the tab order and away from screen readers", () => {
+    const html = render([slide(1), slide(2)]);
+    expect(html).toContain('aria-hidden="false"');
+    expect(html).toContain('aria-hidden="true"');
+    expect(html).toContain('tabindex="-1"');
+  });
+
+  it("uses a single link as the button, not a button inside a link", () => {
+    expect(render([slide(1)])).not.toContain("<button class=\"rounded-lg");
   });
 
   it("has one dot per slide, labelled for screen readers", () => {

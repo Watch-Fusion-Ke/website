@@ -2,6 +2,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useState, useEffect, useCallback, useRef } from "react";
+import { isTypingOrControl } from "@/lib/keyboard";
 
 export type SlideData = {
     id: string;
@@ -41,6 +42,7 @@ const SliderClient = ({ slides }: { slides: SlideData[] }) => {
     // Keyboard navigation
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
+            if (isTypingOrControl(e.target)) return;
             if (e.key === 'ArrowLeft') prevSlide();
             if (e.key === 'ArrowRight') nextSlide();
             if (e.key === ' ') { e.preventDefault(); setIsAutoPlaying(p => !p); }
@@ -58,10 +60,11 @@ const SliderClient = ({ slides }: { slides: SlideData[] }) => {
         touchEndX.current = e.touches[0].clientX;
     };
     const handleTouchEnd = () => {
-        if (touchStartX.current === null || touchEndX.current === null) return;
-        const diff = touchStartX.current - touchEndX.current;
-        if (Math.abs(diff) > 50) {
-            diff > 0 ? nextSlide() : prevSlide();
+        if (touchStartX.current !== null && touchEndX.current !== null) {
+            const diff = touchStartX.current - touchEndX.current;
+            if (Math.abs(diff) > 50) {
+                diff > 0 ? nextSlide() : prevSlide();
+            }
         }
         touchStartX.current = null;
         touchEndX.current = null;
@@ -86,6 +89,7 @@ const SliderClient = ({ slides }: { slides: SlideData[] }) => {
                 {slides.map((slide, index) => (
                     <div
                         key={slide.id}
+                        aria-hidden={current !== index}
                         className={`relative bg-gradient-to-br ${slide.bg} w-full flex-shrink-0 h-56 sm:h-64 md:h-72 xl:h-[22rem]`}
                         style={{ minWidth: "100%" }}
                     >
@@ -101,7 +105,7 @@ const SliderClient = ({ slides }: { slides: SlideData[] }) => {
                         />
                         <div className="absolute inset-0 bg-gradient-to-t md:bg-gradient-to-r from-[#1E2235]/90 via-[#1E2235]/45 to-transparent" />
 
-                        <div className="absolute inset-0 flex flex-col items-start justify-end md:justify-center gap-3 px-4 pb-10 md:pb-0 md:px-8 lg:px-16 xl:px-32 2xl:px-64 text-left">
+                        <div className="absolute inset-0 flex flex-col items-start justify-end md:justify-center gap-3 px-4 pb-10 md:pb-0 md:px-16 xl:px-32 2xl:px-64 text-left">
                             <h1 className="max-w-xl text-2xl sm:text-3xl lg:text-4xl xl:text-5xl font-semibold text-white whitespace-pre-line leading-tight">
                                 {slide.title}
                             </h1>
@@ -110,10 +114,12 @@ const SliderClient = ({ slides }: { slides: SlideData[] }) => {
                                     {slide.subtitle}
                                 </p>
                             )}
-                            <Link href={slide.url || "/"}>
-                                <button className="rounded-lg bg-brand-gold text-black font-bold py-2.5 px-6 text-sm hover:bg-brand-gold-dark active:scale-95 transition-all duration-200">
-                                    {slide.buttonText || "SHOP NOW"}
-                                </button>
+                            <Link
+                                href={slide.url || "/"}
+                                tabIndex={current === index ? 0 : -1}
+                                className="inline-block rounded-lg bg-brand-gold text-black font-bold py-2.5 px-6 text-sm hover:bg-brand-gold-dark active:scale-95 transition-all duration-200"
+                            >
+                                {slide.buttonText || "SHOP NOW"}
                             </Link>
                         </div>
                     </div>

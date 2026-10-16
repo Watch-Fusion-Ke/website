@@ -18,9 +18,9 @@ beforeEach(() => {
 });
 
 describe("BottomTabBar", () => {
-  it("shows the five tabs in order, as links", () => {
+  it("shows the four tabs in order, as links", () => {
     const html = render();
-    const order = ["Home", "Gents", "Ladies", "Cart", "Chat"].map((l) => html.indexOf(`>${l}<`));
+    const order = ["Home", "Gents", "Ladies", "Cart"].map((l) => html.indexOf(`>${l}<`));
     expect(order.every((i) => i > -1)).toBe(true);
     expect([...order].sort((a, b) => a - b)).toEqual(order);
     expect(html).toContain('href="/list?cat=gents-watches"');
@@ -32,10 +32,6 @@ describe("BottomTabBar", () => {
     const html = render();
     expect(html).toContain("md:hidden");
     expect(html).toContain('<nav aria-label="Main"');
-  });
-
-  it("tells screen reader users that Chat opens WhatsApp in a new tab", () => {
-    expect(render()).toContain('aria-label="Chat on WhatsApp (opens in a new tab)"');
   });
 
   it("marks the current page for screen readers", () => {
@@ -61,18 +57,39 @@ describe("BottomTabBar", () => {
     expect(full).toContain('aria-label="Cart, 3 items"');
   });
 
-  it("opens WhatsApp in a new tab without giving the new page access to this one", () => {
+  it("has no WhatsApp link and splits the bar into four equal columns", () => {
     const html = render();
-    expect(html).toContain('href="https://wa.me/254796044969"');
-    expect(html).toContain('target="_blank"');
-    expect(html).toContain('rel="noopener noreferrer"');
+    expect(html).not.toContain("wa.me");
+    expect(html).not.toContain("WhatsApp");
+    expect(html).toContain("grid-cols-4");
   });
 });
 
 describe("WhatsAppButton", () => {
-  it("is hidden on phones, where the Chat tab replaces it", () => {
-    const html = renderToStaticMarkup(<WhatsAppButton />);
-    expect(html).toContain("max-md:hidden");
-    expect(html).toContain('href="https://wa.me/254796044969"');
+  const html = () => renderToStaticMarkup(<WhatsAppButton />);
+
+  it("opens the shop's WhatsApp chat in a new tab without giving the new page access to this one", () => {
+    expect(html()).toContain('href="https://wa.me/254796044969"');
+    expect(html()).toContain('target="_blank"');
+    expect(html()).toContain('rel="noopener noreferrer"');
+    expect(html()).toContain('aria-label="Chat on WhatsApp (opens in a new tab)"');
+  });
+
+  it("shows on phones as well as large screens", () => {
+    expect(html()).not.toContain("max-md:hidden");
+    expect(html()).not.toContain("hidden");
+  });
+
+  it("floats above the phone tab bar and the iPhone home strip, then drops to the corner on large screens", () => {
+    const classes = html().match(/class="([^"]*)"/)?.[1].split(" ") ?? [];
+    expect(classes).toContain("fixed");
+    expect(classes).toContain("bottom-[calc(5rem_+_env(safe-area-inset-bottom))]");
+    expect(classes).toContain("md:bottom-6");
+  });
+
+  it("is a tap target of at least 44 px", () => {
+    const classes = html().match(/class="([^"]*)"/)?.[1].split(" ") ?? [];
+    expect(classes).toContain("w-14");
+    expect(classes).toContain("h-14");
   });
 });

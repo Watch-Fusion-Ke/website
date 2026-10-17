@@ -114,4 +114,26 @@ describe("Footer", () => {
     expect(links.length).toBeGreaterThan(0);
     for (const a of links) expect(a).toMatch(/opens in a new tab/i);
   });
+
+  it("centres the brand, the link columns, the details and the copyright on a phone, and keeps them left aligned from tablet width up", async () => {
+    const html = await render();
+    const grid = html.match(/<div class="grid[^"]*">([\s\S]*)<\/div><\/div><\/footer>/)?.[1] ?? "";
+    for (const part of [
+      /<div class="[^"]*col-span-2[^"]*"[^>]*><a /, // brand block
+      /<nav aria-label="Shop" class="[^"]*"/,
+      /<nav aria-label="Explore" class="[^"]*"/,
+      /<div class="[^"]*col-span-2[^"]*"[^>]*><h2[^>]*>Visit us/,
+    ]) {
+      const tag = grid.match(part)?.[0] ?? "";
+      expect(tag).toMatch(/\btext-center\b/);
+      expect(tag).toMatch(/\bmd:text-left\b/);
+    }
+    expect(html).toMatch(/<p class="[^"]*text-center[^"]*md:text-left[^"]*">© Watch/);
+  });
+
+  it("centres the social buttons and the opening hours on a phone", async () => {
+    const html = await render();
+    expect(html).toMatch(/<div class="[^"]*justify-center[^"]*md:justify-start[^"]*"><a [^>]*aria-label="Instagram"/);
+    expect(html).toMatch(/<dl class="[^"]*mx-auto[^"]*md:mx-0/);
+  });
 });

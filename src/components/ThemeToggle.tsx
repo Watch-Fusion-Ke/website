@@ -33,8 +33,7 @@ const ThemeToggle = ({ showLabel = false }: { showLabel?: boolean }) => {
     <button
       type="button"
       onClick={toggle}
-      aria-label="Dark mode"
-      aria-pressed={dark}
+      {...(showLabel ? {} : { "aria-label": "Dark mode", "aria-pressed": dark })}
       className={`flex items-center gap-2 h-11 text-gray-800 hover:bg-gray-100 transition-colors ${showLabel ? "w-full justify-start rounded-lg px-4" : "w-11 justify-center rounded-full"}`}
     >
       <MoonIcon className="w-6 h-6 dark:hidden" />

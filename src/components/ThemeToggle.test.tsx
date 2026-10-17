@@ -16,6 +16,12 @@ describe("ThemeToggle", () => {
     expect(html).toMatch(/<svg[^>]*class="[^"]*\bhidden dark:block\b/);
   });
 
+  it("names itself by the words it shows when it has a written label, so voice control can say them", () => {
+    const tag = renderToStaticMarkup(<ThemeToggle showLabel />).match(/<button[^>]*>/)?.[0] ?? "";
+    expect(tag).not.toContain("aria-label");
+    expect(tag).not.toContain("aria-pressed");
+  });
+
   it("lines its label up to the left when it fills a row, without a competing centre rule", () => {
     const classes = renderToStaticMarkup(<ThemeToggle showLabel />).match(/<button[^>]*class="([^"]*)"/)?.[1].split(" ") ?? [];
     expect(classes).toContain("justify-start");

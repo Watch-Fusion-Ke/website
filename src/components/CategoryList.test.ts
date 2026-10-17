@@ -11,4 +11,11 @@ describe("category names above the banner", () => {
   it("are not marked as main page headings", () => {
     expect(source).not.toMatch(/<h1[\s>]/);
   });
+
+
+  it("fade the right end of the phone strip into the page colour in both themes", () => {
+    expect(source).toMatch(/from-white/);
+    expect(source).toMatch(/dark:from-\[#0a0a0a\]/i);
+    expect(source).toMatch(/dark:via-\[#0a0a0a\]/i);
+  });
 });

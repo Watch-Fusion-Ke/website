@@ -131,3 +131,39 @@ describe("dark rules for black text", () => {
     expect(css).toMatch(/\.dark \.bg-brand-gold\.text-black[^{]*{[^}]*color:\s*var\(--on-gold\)/);
   });
 });
+
+describe("dark rules for gold backgrounds", () => {
+  it("keep the text on every gold background dark, whichever text colour the light theme gave it", () => {
+    for (const cls of ["text-gray-900", "text-black", "text-brand-navy"]) {
+      expect(css).toContain(`.dark .bg-brand-gold.${cls}`);
+    }
+    expect(css).toMatch(/\.dark \.bg-brand-gold\s*{[^}]*color:\s*var\(--on-gold\)/);
+  });
+
+  it("give the choice pills on the product page their own colours for each theme", () => {
+    for (const name of ["choice-bg", "choice-text", "choice-on-bg", "choice-on-text"]) {
+      expect(light[name]).toBeTruthy();
+      expect(dark[name]).toBeTruthy();
+    }
+    expect(contrast(dark["choice-on-text"], dark["choice-on-bg"])).toBeGreaterThanOrEqual(7);
+    expect(contrast(dark["choice-text"], dark["choice-bg"])).toBeGreaterThanOrEqual(7);
+  });
+});
+
+describe("navy hover text", () => {
+  it("is used only together with a gold hover background, since dark mode turns it dark", () => {
+    const { readdirSync } = require("node:fs") as typeof import("node:fs");
+    const { join } = require("node:path") as typeof import("node:path");
+    const files = (dir: string): string[] =>
+      readdirSync(dir, { withFileTypes: true }).flatMap((e) =>
+        e.isDirectory() ? files(join(dir, e.name)) : /\.tsx$/.test(e.name) && !/\.test\./.test(e.name) ? [join(dir, e.name)] : []
+      );
+    const bad: string[] = [];
+    for (const f of files("src")) {
+      readFileSync(f, "utf8").split("\n").forEach((line, i) => {
+        if (/hover:text-brand-navy/.test(line) && !/hover:bg-brand-gold/.test(line)) bad.push(`${f}:${i + 1}`);
+      });
+    }
+    expect(bad).toEqual([]);
+  });
+});

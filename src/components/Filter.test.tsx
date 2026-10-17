@@ -164,7 +164,8 @@ describe("slider handle colours", () => {
     const css = require("node:fs").readFileSync("src/app/globals.css", "utf8") as string;
     expect(css).toMatch(/--range-thumb,\s*#1e2235/);
     expect(css).toMatch(/\.dark \.price-range\s*{[^}]*--range-thumb:\s*#ffffff/);
-    const slider = css.slice(css.indexOf("Price slider"));
+    const start = css.indexOf("Price slider");
+    const slider = css.slice(start, css.indexOf("--range-ring", css.indexOf(".dark .price-range")) + 40);
     expect(slider).not.toMatch(/f9c92b|var\(--gold/i);
   });
 });

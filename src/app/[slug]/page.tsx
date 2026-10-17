@@ -69,7 +69,7 @@ const SinglePage = async ({ params }: Props) => {
     const product = products.items[0];
 
     return (
-        <div className="px-4 md:px-8 lg:px-16 xl:px-32 2xl:px-64 relative flex flex-col lg:flex-row gap-16 py-8">
+        <div className="px-4 md:px-8 lg:px-16 xl:px-32 2xl:px-64 relative flex flex-col lg:flex-row gap-6 lg:gap-16 py-4 lg:py-8">
             {/* JSON-LD Structured Data */}
             <script
                 type="application/ld+json"
@@ -95,24 +95,13 @@ const SinglePage = async ({ params }: Props) => {
                 }}
             />
             {/* IMG */}
-            <div className="w-full lg:w-1/2 lg:sticky top-20 h-max">
-                <ProductImages items={product.media?.items} />
+            <div className="w-full lg:w-1/2 lg:sticky top-20 h-max min-w-0">
+                <ProductImages key={product._id} items={product.media?.items} />
             </div>
 
             {/* TEXTS */}
             <div className="w-full lg:w-1/2 flex flex-col gap-6">
-                <h1 className="font-display text-4xl font-bold leading-tight">{product.name}</h1>
-
-                {product.description && (
-                    <div
-                        className="text-gray-600 leading-relaxed"
-                        dangerouslySetInnerHTML={{
-                            __html: DOMPurify.sanitize(product.description),
-                        }}
-                    />
-                )}
-
-                <div className="h-[2px] bg-gray-100" />
+                <h1 className="font-display text-2xl font-bold leading-tight sm:text-4xl">{product.name}</h1>
 
                 {/* Price */}
                 {product.price?.price === product.price?.discountedPrice ? (
@@ -148,6 +137,15 @@ const SinglePage = async ({ params }: Props) => {
                 )}
 
                 <div className="h-[2px] bg-gray-100" />
+
+                {product.description && (
+                    <div
+                        className="text-gray-600 leading-relaxed"
+                        dangerouslySetInnerHTML={{
+                            __html: DOMPurify.sanitize(product.description),
+                        }}
+                    />
+                )}
 
                 {/* Additional Info */}
                 {product.additionalInfoSections?.map((section: any) => (

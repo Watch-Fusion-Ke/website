@@ -101,6 +101,15 @@ describe("WhatsAppButton", () => {
     expect(classes).not.toContain("md:right-6");
   });
 
+  it("starts visible, fades out of the way while the page scrolls, and cannot be tapped while hidden", () => {
+    const classes = html().match(/class="([^"]*)"/)?.[1].split(" ") ?? [];
+    expect(classes).toContain("opacity-100");
+    expect(classes).toContain("transition-[transform,opacity]");
+    expect(classes).toContain("focus-visible:opacity-100");
+    expect(classes).not.toContain("opacity-0");
+    expect(classes).not.toContain("pointer-events-none");
+  });
+
   it("is a tap target of at least 44 px", () => {
     const classes = html().match(/class="([^"]*)"/)?.[1].split(" ") ?? [];
     expect(classes).toContain("w-14");

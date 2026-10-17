@@ -60,7 +60,17 @@ const ProductList = async ({
     }
 
     if (page.items.length === 0) {
-        return <p className="mt-6 text-gray-600">{emptyMessage ?? "No products found."}</p>;
+        return (
+            <div className="mt-6">
+                <p className="text-gray-600">{emptyMessage ?? "No products found."}</p>
+                {/* A filter can leave the shopper on a page past the end, so keep a way back. */}
+                {page.hasPrev && (
+                    <div className="flex">
+                        <Pagination currentPage={page.page} hasPrev={page.hasPrev} hasNext={page.hasNext} />
+                    </div>
+                )}
+            </div>
+        );
     }
 
     return (

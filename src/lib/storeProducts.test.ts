@@ -65,6 +65,14 @@ describe("buildSearchBody", () => {
     expect(buildSearchBody({ categoryId: "" }).search.filter).toBeUndefined();
   });
 
+  it("asks Wix only for products that have a compare-at price when listing sales, so the 100-product limit is not spent on the rest", () => {
+    const body = buildSearchBody({ onSale: true });
+    expect(body.search.filter).toEqual({
+      $and: [{ "compareAtPriceRange.minValue.amount": { $gt: "0" } }],
+    });
+    expect(buildSearchBody({}).search.filter).toBeUndefined();
+  });
+
   it("never uses the two catalog V1 fields that Wix rejects on a V3 store", () => {
     const text = JSON.stringify(
       buildSearchBody({ categoryId: CATEGORY, type: "physical", name: "n" })

@@ -7,7 +7,7 @@ const WhatsAppButton = () => {
       target="_blank"
       rel="noopener noreferrer"
       aria-label="Chat on WhatsApp (opens in a new tab)"
-      className="whatsapp-float fixed right-4 md:right-6 bottom-[calc(5rem_+_env(safe-area-inset-bottom))] md:bottom-6 z-[35] flex items-center justify-center w-14 h-14 md:w-[60px] md:h-[60px] rounded-full bg-[#25D366] shadow-lg transition-transform md:hover:scale-110"
+      className="whatsapp-float fixed right-[max(1rem,env(safe-area-inset-right))] md:right-[max(1.5rem,env(safe-area-inset-right))] bottom-[calc(5rem_+_env(safe-area-inset-bottom))] md:bottom-6 z-[35] flex items-center justify-center w-14 h-14 md:w-[60px] md:h-[60px] rounded-full bg-[#25D366] shadow-lg transition-transform md:hover:scale-110"
     >
       <svg
         width="32"

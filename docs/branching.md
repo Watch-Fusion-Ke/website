@@ -29,5 +29,5 @@ Vercel marks every preview with `X-Robots-Tag: noindex`, so search engines do no
 
 - The preview uses the live store. Adding to the cart works the same, and an order placed from the preview is a real order. Checkout also sends the shopper back to the live site, because the return addresses are fixed to www.watchfusionkenya.com in `src/components/CartModal.tsx` and `src/app/cart/page.tsx`.
 - Everything in `develop` goes live together. To hold a change back, keep it out of `develop` until it is approved.
-- The Wix settings for the build (client ID, app ID, featured category) must exist for Vercel's Preview environment as well as Production. They do today, since previews build.
+- The Wix settings for the build (client ID, app ID, featured category and new-products category) must exist for Vercel's Preview environment as well as Production. Check all four in the Vercel project settings. A build succeeds even when one is missing, so a green build does not prove they are set.
 - Signing in and registering on a preview has not been tried. The Wix app lists only the live addresses as allowed, so it may need a setting there.

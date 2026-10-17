@@ -86,7 +86,7 @@ const Menu = () => {
         role="dialog"
         aria-modal="true"
         aria-label="Menu"
-        className={`fixed top-0 left-0 h-full w-72 bg-white z-50 flex flex-col transition-[transform,visibility] duration-300 ease-in-out ${
+        className={`fixed top-0 left-0 h-full w-72 pl-[env(safe-area-inset-left)] bg-white z-50 flex flex-col transition-[transform,visibility] duration-300 ease-in-out ${
           open ? "visible translate-x-0 shadow-2xl" : "invisible -translate-x-full"
         }`}
       >

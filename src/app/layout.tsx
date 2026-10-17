@@ -90,7 +90,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${jost.className} antialiased pb-[calc(4rem_+_env(safe-area-inset-bottom))] md:pb-0`}>
+      <body className={`${jost.className} antialiased pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)] pb-[calc(4rem_+_env(safe-area-inset-bottom))] md:pb-0`}>
         <WixClientContextProvider>
           <Navbar />
           {children}

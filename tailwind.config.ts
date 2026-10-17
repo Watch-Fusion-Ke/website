@@ -24,7 +24,7 @@ const config: Config = {
           [50, 100, 200, 300, 400, 500, 600, 700, 800, 900].map((n) => [String(n), `rgb(var(--gray-${n}) / <alpha-value>)`])
         ),
         brand: {
-          gold: "#F9C92B",
+          gold: "rgb(var(--gold-rgb) / <alpha-value>)",
           "gold-dark": "#DCA918",
           black: "#0A0A0A",
           navy: "#1E2235",

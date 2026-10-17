@@ -19,6 +19,7 @@
   --card: #faf7f0;
   --text: #000000;
   --gold: #f9c92b;
+  --gold-rgb: 249 201 43;
   --on-gold: #1e2235;
   --choice-bg: #ffffff;
   --choice-text: #1e2235;
@@ -43,11 +44,12 @@
   --surface: #12141f;
   --card: #171a2a;
   --text: #faf7f0;
-  --gold: #f9c92b;
+  --gold: #d4ae53;
+  --gold-rgb: 212 174 83;
   --on-gold: #1e2235;
   --choice-bg: #12141f;
   --choice-text: #faf7f0;
-  --choice-on-bg: #f9c92b;
+  --choice-on-bg: #d4ae53;
   --choice-on-text: #1e2235;
 }
 
@@ -79,14 +81,20 @@ body {
 .dark ::placeholder {
   color: rgb(var(--gray-400));
 }
-/* Navy buttons and highlights become gold, with dark text and a soft glow. */
+/* Navy buttons and highlights become a thin gold outline with gold text, like the gold on the logo: used sparingly,
+   on black, with no glow. They fill with gold only when pointed at. */
 .dark .bg-brand-navy {
+  background-color: rgb(var(--gold-rgb) / 0.1);
+  color: var(--gold);
+  box-shadow: inset 0 0 0 1px var(--gold);
+}
+.dark .bg-brand-navy:hover {
   background-color: var(--gold);
   color: var(--on-gold);
-  box-shadow: 0 0 18px rgb(249 201 43 / 0.28);
 }
+/* Prices and link text are the soft white. Gold is kept for the accents. */
 .dark .text-brand-navy {
-  color: var(--gold);
+  color: var(--text);
 }
 .dark .ring-brand-navy {
   --tw-ring-color: var(--gold);
@@ -107,7 +115,6 @@ body {
 }
 .dark .bg-brand-gold {
   color: var(--on-gold);
-  box-shadow: 0 0 14px rgb(249 201 43 / 0.25);
 }
 /* Whatever text colour the light theme gave a gold background, the text on it stays dark. */
 .dark .bg-brand-gold.text-gray-900,

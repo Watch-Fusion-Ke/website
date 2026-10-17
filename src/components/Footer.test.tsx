@@ -28,7 +28,7 @@ describe("Footer", () => {
   it("is laid out as a grid, four columns on a computer and two on a phone", async () => {
     const html = await render();
     expect(html).toContain("grid-cols-2");
-    expect(html).toContain("md:grid-cols-4");
+    expect(html).toMatch(/md:grid-cols-\[[^\]]+\]/);
   });
 
   it("has a column each for the brand, the shop, the pages and the shop's details", async () => {
@@ -135,5 +135,26 @@ describe("Footer", () => {
     const html = await render();
     expect(html).toMatch(/<div class="[^"]*justify-center[^"]*md:justify-start[^"]*"><a [^>]*aria-label="Instagram"/);
     expect(html).toMatch(/<dl class="[^"]*mx-auto[^"]*md:mx-0/);
+  });
+
+  it("shows a large full logo, with its slogan, on computers only", async () => {
+    const html = await render();
+    const link = html.match(/<a [^>]*class="[^"]*hidden md:block[^"]*"[^>]*><img[^>]*>/)?.[0] ?? "";
+    expect(link).not.toBe("");
+    expect(link).toContain("Wear the Moment, Own the Legacy");
+    expect(link).toMatch(/\bw-full\b/);
+    expect(link).toMatch(/max-w-\[(2[0-9]|3[0-9])rem\]/);
+    expect(link).not.toContain("object-cover");
+  });
+
+  it("keeps the small logo, name and written tagline for phones, and hides them on computers", async () => {
+    const html = await render();
+    expect(html).toMatch(/<div class="[^"]*md:hidden[^"]*"><a [^>]*><img[^>]*alt="Watch Fusion Kenya"[^>]*>/);
+    expect(html).toMatch(/<p class="[^"]*md:hidden[^"]*">Watches and gifts in Nairobi\./);
+  });
+
+  it("gives the brand column more room than the others on computers, so the logo can be big", async () => {
+    const html = await render();
+    expect(html).toMatch(/md:grid-cols-\[1\.6fr_1fr_1fr_1\.3fr\]/);
   });
 });

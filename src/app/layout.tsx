@@ -9,7 +9,7 @@ import BottomTabBar from "@/components/BottomTabBar";
 import { WixClientContextProvider } from "@/context/wixContext";
 
 // Montserrat is the brand typeface and carries all text. Cormorant Garamond is the display face for
-// section titles, which gives the shop a boutique, watchmaker feel next to the geometric text face.
+// section titles (loaded in bold only), which gives the shop a boutique, watchmaker feel next to the geometric text face.
 const montserrat = Montserrat({
   variable: "--font-montserrat",
   subsets: ["latin"],
@@ -19,7 +19,7 @@ const montserrat = Montserrat({
 const cormorant = Cormorant_Garamond({
   variable: "--font-display",
   subsets: ["latin"],
-  weight: ["600", "700"],
+  weight: "700",
   display: "swap",
 });
 

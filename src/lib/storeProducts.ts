@@ -63,6 +63,7 @@ const PRICE_FIELD = "actualPriceRange.minValue.amount";
 const SORT_FIELDS: Record<string, string> = {
   price: PRICE_FIELD,
   lastUpdated: "updatedDate",
+  created: "createdDate",
   name: "name",
 };
 

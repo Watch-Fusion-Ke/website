@@ -1,6 +1,7 @@
 "use client";
 
-import { useId, useMemo, useState } from "react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
+import { attachDismiss } from "@/lib/dismiss";
 import { WHATSAPP_URL } from "@/lib/contact";
 import { formatKes, searchAreas, type DeliveryArea } from "@/lib/delivery";
 
@@ -16,6 +17,9 @@ type ViewProps = {
   selectedPrice?: number | null;
   activeIndex?: number;
   onKeyDown?: (e: React.KeyboardEvent<HTMLInputElement>) => void;
+  // Whether the list of matches is showing. It closes on Escape or a press outside, and opens again on typing.
+  open?: boolean;
+  onFocusInput?: () => void;
 };
 
 // What the shopper sees: a search box for the delivery area, the matching areas with their fee, or the chosen area.
@@ -31,11 +35,13 @@ export const DeliveryPickerView = ({
   selectedPrice,
   activeIndex = -1,
   onKeyDown,
+  open = true,
+  onFocusInput,
 }: ViewProps) => {
   const id = useId();
   const listId = `${id}-list`;
   const matches = useMemo(() => searchAreas(areas, query, 40), [areas, query]);
-  const typed = query.trim().length >= 2;
+  const typed = query.trim().length >= 2 && open;
 
   if (selectedLabel) {
     return (
@@ -68,6 +74,7 @@ export const DeliveryPickerView = ({
         readOnly={busy}
         onChange={(e) => onQuery(e.target.value)}
         onKeyDown={onKeyDown}
+        onFocus={onFocusInput}
         placeholder="Type your area, for example Kilimani"
         className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm text-gray-900 focus:border-brand-navy focus:outline-none focus:ring-2 focus:ring-brand-gold read-only:opacity-60"
       />
@@ -127,6 +134,11 @@ const DeliveryPicker = ({ areas, selectedLabel, selectedPrice, onChosen }: Props
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [active, setActive] = useState(-1);
+  const [open, setOpen] = useState(true);
+  const box = useRef<HTMLDivElement>(null);
+
+  // Escape, or a press outside the box, closes the list.
+  useEffect(() => attachDismiss(document, (node) => !!box.current && node instanceof Node && box.current.contains(node), () => setOpen(false)), []);
   const matches = useMemo(() => searchAreas(areas, query, 40), [areas, query]);
 
   const pick = async (area: DeliveryArea) => {
@@ -156,19 +168,22 @@ const DeliveryPicker = ({ areas, selectedLabel, selectedPrice, onChosen }: Props
       e.preventDefault();
       void pick(matches[active] ?? matches[0]);
     } else if (e.key === "Escape") {
-      setQuery("");
       setActive(-1);
     }
   };
 
   return (
+    <div ref={box}>
     <DeliveryPickerView
       areas={areas}
       query={query}
       onQuery={(q) => {
         setQuery(q);
         setActive(-1);
+        setOpen(true);
       }}
+      open={open}
+      onFocusInput={() => setOpen(true)}
       onPick={pick}
       onChange={() => setEditing(true)}
       busy={busy}
@@ -178,6 +193,7 @@ const DeliveryPicker = ({ areas, selectedLabel, selectedPrice, onChosen }: Props
       activeIndex={active}
       onKeyDown={onKeyDown}
     />
+    </div>
   );
 };
 

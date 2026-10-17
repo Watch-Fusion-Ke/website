@@ -103,6 +103,21 @@ describe("DeliveryPickerView list", () => {
   });
 });
 
+describe("DeliveryPickerView open and closed", () => {
+  it("hides the list of areas, and the no-match note, while it is closed, but keeps what was typed", () => {
+    const closed = view({ query: "gig", open: false });
+    expect(closed).not.toContain('role="listbox"');
+    expect(closed).toContain('value="gig"');
+    expect(closed).toContain('aria-expanded="false"');
+    expect(view({ query: "zzzz", open: false })).not.toMatch(/No area matches/i);
+  });
+
+  it("is open by default once two letters are typed", () => {
+    expect(view({ query: "gig" })).toContain('role="listbox"');
+    expect(view({ query: "gig" })).toContain('aria-expanded="true"');
+  });
+});
+
 describe("DeliveryPicker", () => {
   it("renders on the server as the empty search, before any scripts run", () => {
     const html = renderToStaticMarkup(<DeliveryPicker areas={areas} selectedLabel={null} selectedPrice={null} onChosen={async () => {}} />);

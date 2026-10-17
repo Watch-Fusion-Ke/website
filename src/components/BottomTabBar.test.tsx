@@ -28,6 +28,12 @@ describe("BottomTabBar", () => {
     expect(html).toContain('href="/cart"');
   });
 
+  it("keeps the first and last tab clear of the notch when the phone is turned sideways", () => {
+    const html = render();
+    expect(html).toContain("pl-[env(safe-area-inset-left)]");
+    expect(html).toContain("pr-[env(safe-area-inset-right)]");
+  });
+
   it("is only for phones, and is the page's main navigation landmark", () => {
     const html = render();
     expect(html).toContain("md:hidden");
@@ -85,6 +91,12 @@ describe("WhatsAppButton", () => {
     expect(classes).toContain("fixed");
     expect(classes).toContain("bottom-[calc(5rem_+_env(safe-area-inset-bottom))]");
     expect(classes).toContain("md:bottom-6");
+  });
+
+  it("stays clear of the notch when the phone is turned sideways", () => {
+    const classes = html().match(/class="([^"]*)"/)?.[1].split(" ") ?? [];
+    expect(classes).toContain("right-[max(1rem,env(safe-area-inset-right))]");
+    expect(classes).not.toContain("right-4");
   });
 
   it("is a tap target of at least 44 px", () => {

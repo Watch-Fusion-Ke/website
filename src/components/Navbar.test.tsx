@@ -79,4 +79,8 @@ describe("Navbar on a phone", () => {
     expect(html).toContain('role="dialog"');
     expect(html).not.toContain('aria-hidden="false"');
   });
+
+  it("keeps the menu drawer's content clear of the notch when the phone is turned sideways", () => {
+    expect(phoneHeader()).toContain("pl-[env(safe-area-inset-left)]");
+  });
 });

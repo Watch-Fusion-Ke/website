@@ -28,7 +28,7 @@ export const TabBarView = ({
   return (
     <nav
       aria-label="Main"
-      className="fixed bottom-0 inset-x-0 z-30 md:hidden bg-white border-t border-gray-200 pb-[env(safe-area-inset-bottom)]"
+      className="fixed bottom-0 inset-x-0 z-30 md:hidden bg-white border-t border-gray-200 pb-[env(safe-area-inset-bottom)] pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)]"
     >
       <ul className="grid grid-cols-4">
         {TABS.map((tab) => {

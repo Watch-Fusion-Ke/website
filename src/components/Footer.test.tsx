@@ -119,7 +119,6 @@ describe("Footer", () => {
     const html = await render();
     const grid = html.match(/<div class="grid[^"]*">([\s\S]*)<\/div><\/div><\/footer>/)?.[1] ?? "";
     for (const part of [
-      /<div class="[^"]*col-span-2[^"]*"[^>]*><a /, // brand block
       /<nav aria-label="Shop" class="[^"]*"/,
       /<nav aria-label="Explore" class="[^"]*"/,
       /<div class="[^"]*col-span-2[^"]*"[^>]*><h2[^>]*>Visit us/,
@@ -131,9 +130,9 @@ describe("Footer", () => {
     expect(html).toMatch(/<p class="[^"]*text-center[^"]*md:text-left[^"]*">© Watch/);
   });
 
-  it("centres the social buttons and the opening hours on a phone", async () => {
+  it("centres the social buttons on phones and computers, and the opening hours on a phone", async () => {
     const html = await render();
-    expect(html).toMatch(/<div class="[^"]*justify-center[^"]*md:justify-start[^"]*"><a [^>]*aria-label="Instagram"/);
+    expect(html).toMatch(/<div class="[^"]*justify-center[^"]*"><a [^>]*aria-label="Instagram"/);
     expect(html).toMatch(/<dl class="[^"]*mx-auto[^"]*md:mx-0/);
   });
 
@@ -143,7 +142,8 @@ describe("Footer", () => {
     expect(link).not.toBe("");
     expect(link).toContain("Wear the Moment, Own the Legacy");
     expect(link).toMatch(/\bw-full\b/);
-    expect(link).toMatch(/max-w-\[(2[0-9]|3[0-9])rem\]/);
+    expect(link).toMatch(/max-w-\[12\.5rem\]/);
+    expect(link).toMatch(/\bmd:mx-auto\b/);
     expect(link).not.toContain("object-cover");
   });
 
@@ -156,5 +156,13 @@ describe("Footer", () => {
   it("gives the brand column more room than the others on computers, so the logo can be big", async () => {
     const html = await render();
     expect(html).toMatch(/md:grid-cols-\[1\.6fr_1fr_1fr_1\.3fr\]/);
+  });
+
+  it("centres the brand column on computers too: the logo sits in the middle of its column with the social buttons under it, while the other columns stay left aligned", async () => {
+    const html = await render();
+    const brand = html.match(/<div class="([^"]*col-span-2[^"]*)"[^>]*><a [^>]*hidden md:block/)?.[1] ?? "";
+    expect(brand).toMatch(/\bmd:text-center\b/);
+    expect(brand).not.toMatch(/md:text-left/);
+    expect(html).toMatch(/<nav aria-label="Shop" class="[^"]*md:text-left/);
   });
 });

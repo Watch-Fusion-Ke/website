@@ -7,6 +7,8 @@ import { useWixClient } from "@/hooks/useWixClient";
 import { currentCart } from "@wix/ecom";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import useDelivery from "@/hooks/useDelivery";
+import { formatKes, isDeliveryLine, needsDeliveryArea } from "@/lib/delivery";
 
 interface CartModalProps {
   onClose: () => void;
@@ -17,9 +19,24 @@ const CartModal = ({ onClose }: CartModalProps) => {
   const { cart, isLoading, removeItem } = useCartStore();
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
   const router = useRouter();
+  const delivery = useDelivery();
+
+  // The delivery fee is a line in the cart, shown on the cart page and not here as a product.
+  const allLines = cart.lineItems ?? [];
+  const products = allLines.filter((item) => !isDeliveryLine(item));
+  const fee = allLines.find(isDeliveryLine);
+  const feeAmount = fee ? Number(fee.price?.amount) : NaN;
+  const total = Number(cart.subtotal?.amount);
+  const subtotalLabel = Number.isFinite(feeAmount) && Number.isFinite(total) ? formatKes(total - feeAmount) : cart.subtotal?.formattedAmount;
 
   const handleCheckout = async () => {
   setCheckoutError(null);
+  // With delivery fees on, the shopper picks a delivery area on the cart page first.
+  if (needsDeliveryArea(delivery.enabled, allLines, delivery.unavailable)) {
+    onClose();
+    router.push("/cart");
+    return;
+  }
   try {
     const checkout =
       await wixClient.currentCart.createCheckoutFromCurrentCart({
@@ -81,7 +98,7 @@ const CartModal = ({ onClose }: CartModalProps) => {
         </div>
 
         {/* Empty state */}
-        {!cart.lineItems || cart.lineItems.length === 0 ? (
+        {products.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-10 gap-3 text-gray-400">
             <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
               <circle cx="9" cy="21" r="1" />
@@ -100,7 +117,7 @@ const CartModal = ({ onClose }: CartModalProps) => {
           <>
             {/* Items list */}
             <div className="flex flex-col gap-5 max-h-72 overflow-y-auto pr-1">
-              {cart.lineItems.map((item) => (
+              {products.map((item) => (
                 <div className="flex gap-4" key={item._id}>
                   {item.image && (
                     <Image
@@ -158,10 +175,10 @@ const CartModal = ({ onClose }: CartModalProps) => {
             <div className="border-t border-gray-100 pt-4 flex flex-col gap-3">
               <div className="flex items-center justify-between font-semibold text-gray-900">
                 <span>Subtotal</span>
-                <span>{cart.subtotal?.formattedAmount ?? "KES 0.00"}</span>
+                <span>{subtotalLabel ?? "KES 0.00"}</span>
               </div>
               <p className="text-xs text-gray-400">
-                Shipping and taxes calculated at checkout.
+                {delivery.enabled ? "Delivery fee is added on the cart page." : "Shipping and taxes calculated at checkout."}
               </p>
 
               {/* Checkout error */}
@@ -180,7 +197,7 @@ const CartModal = ({ onClose }: CartModalProps) => {
                 </button>
                 <button
                   className="flex-1 rounded-lg py-2.5 px-4 text-sm font-medium bg-brand-navy text-white hover:bg-brand-gold hover:text-brand-navy transition-colors disabled:cursor-not-allowed disabled:opacity-60"
-                  disabled={isLoading}
+                  disabled={isLoading || !delivery.loaded}
                   onClick={handleCheckout}
                 >
                   {isLoading ? "Loading..." : "Checkout"}

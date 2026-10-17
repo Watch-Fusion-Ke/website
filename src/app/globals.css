@@ -66,6 +66,63 @@ body {
   scrollbar-width: none;
 }
 
+/* Price slider: two handles on one bar. Only the handles take taps, so both can be reached. */
+.price-range {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  background: transparent;
+  pointer-events: none;
+  -webkit-appearance: none;
+  appearance: none;
+}
+.price-range::-webkit-slider-runnable-track {
+  background: transparent;
+  height: 100%;
+}
+.price-range::-moz-range-track {
+  background: transparent;
+}
+.price-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  pointer-events: auto;
+  width: 28px;
+  height: 28px;
+  margin-top: 2px;
+  border-radius: 9999px;
+  border: 3px solid var(--range-ring, #ffffff);
+  background: var(--range-thumb, #1e2235);
+  box-shadow: 0 1px 4px rgb(0 0 0 / 0.35);
+  cursor: grab;
+}
+.price-range::-moz-range-thumb {
+  pointer-events: auto;
+  width: 22px;
+  height: 22px;
+  border-radius: 9999px;
+  border: 3px solid var(--range-ring, #ffffff);
+  background: var(--range-thumb, #1e2235);
+  box-shadow: 0 1px 4px rgb(0 0 0 / 0.35);
+  cursor: grab;
+}
+.price-range:focus-visible::-webkit-slider-thumb {
+  outline: 2px solid #1e2235;
+  outline-offset: 2px;
+}
+.price-range:focus-visible::-moz-range-thumb {
+  outline: 2px solid #1e2235;
+  outline-offset: 2px;
+}
+
+/* In the dark theme the handles are white with a dark rim. */
+.dark .price-range {
+  --range-thumb: #ffffff;
+  --range-ring: #0a0a0a;
+}
+
 /* Dark theme: the few places where the light classes need a different meaning, not just a flipped grey. */
 .dark .bg-white {
   background-color: var(--surface);

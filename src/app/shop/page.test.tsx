@@ -8,9 +8,11 @@ vi.mock("@/components/ProductList", () => ({
     return <div data-testid="product-list" />;
   },
 }));
-vi.mock("@/components/Filter", () => ({ default: () => <div data-testid="filter" /> }));
+const filterProps = vi.hoisted(() => vi.fn());
+vi.mock("@/components/Filter", () => ({ default: (p: unknown) => { filterProps(p); return <div data-testid="filter" />; } }));
 vi.mock("@/lib/wixClientServer", () => ({
   wixClientServer: async () => ({
+    fetchWithAuth: async () => new Response(JSON.stringify({ products: [{ actualPriceRange: { minValue: { amount: "10" } } }, { actualPriceRange: { minValue: { amount: "6450" } } }] }), { status: 200 }),
     collections: {
       queryCollections: () => ({
         find: async () => ({
@@ -72,6 +74,11 @@ describe("Shop page", () => {
     const html = await render({ cat: "no-such-category" });
     expect(html).toMatch(/could not find that category/i);
     expect(html.match(/aria-current="page"/g)).toHaveLength(1);
+  });
+
+  it("gives the filter the shop's price range for the slider", async () => {
+    await render();
+    expect(filterProps).toHaveBeenCalledWith(expect.objectContaining({ bounds: { min: 0, max: 6500 } }));
   });
 
   it("has one main heading in the title face and no black or pink chips", async () => {

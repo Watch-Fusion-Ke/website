@@ -3,6 +3,8 @@
 // so listing goes through the V3 product search instead.
 // Docs: https://dev.wix.com/docs/api-reference/business-solutions/stores/catalog-v3/products-v3/search-products
 
+import { roundBounds, type Bounds } from "@/lib/priceRange";
+
 export const PRODUCTS_SEARCH_URL = "https://www.wixapis.com/stores/v3/products/search";
 
 // One search call returns up to 100 products. The store has 48. Paging happens in memory,
@@ -185,6 +187,27 @@ const toCard = (product: WixProduct): ProductCard => ({
   priceLabel: priceLabel(product),
   ...saleInfo(product),
 });
+
+// The cheapest and dearest price in the shop, rounded outward, for the price slider. Nothing when the shop cannot be read.
+export const getPriceBounds = async (fetchLike: FetchLike): Promise<Bounds | null> => {
+  try {
+    const response = await fetchLike(PRODUCTS_SEARCH_URL, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ search: { cursorPaging: { limit: SEARCH_LIMIT } } }),
+    });
+    if (!response.ok) return null;
+    const json = await response.json();
+    if (!Array.isArray(json.products)) return null;
+    const prices = (json.products as WixProduct[])
+      .map((p) => Number(p.actualPriceRange?.minValue?.amount))
+      .filter((n) => Number.isFinite(n));
+    if (prices.length === 0) return null;
+    return roundBounds(Math.min(...prices), Math.max(...prices));
+  } catch {
+    return null;
+  }
+};
 
 export const listProducts = async (
   fetchLike: FetchLike,

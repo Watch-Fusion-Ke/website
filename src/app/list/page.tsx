@@ -2,11 +2,13 @@ import Filter from "@/components/Filter";
 import ProductList from "@/components/ProductList";
 import Skeleton from "@/components/Skeleton";
 import { wixClientServer } from "@/lib/wixClientServer";
+import { getPriceBounds } from "@/lib/storeProducts";
 import Image from "next/image";
 import { Suspense } from "react";
 
 const ListPage = async ({ searchParams }: { searchParams: any }) => {
     const wixClient = await wixClientServer();
+    const bounds = await getPriceBounds((url, init) => wixClient.fetchWithAuth(url, init));
 
     const cat = await wixClient.collections.getCollectionBySlug(
         searchParams.cat || "all-products"
@@ -18,7 +20,7 @@ const ListPage = async ({ searchParams }: { searchParams: any }) => {
             
             {/* FILTER */}
             <div className="mt-8">
-                <Filter />
+                <Filter bounds={bounds} />
             </div>
             {/* PRODUCTS */}
             <h1 className="font-display mt-12 text-3xl font-bold">{cat?.collection?.name} For You!</h1>

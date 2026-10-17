@@ -10,9 +10,9 @@ vi.mock("next/navigation", () => ({
 
 import Filter, { cleanPrice, nextUrl, orderedPrices } from "@/components/Filter";
 
-const render = (query = "") => {
+const render = (query = "", bounds?: { min: number; max: number }) => {
   nav.query = query;
-  return renderToStaticMarkup(<Filter />);
+  return renderToStaticMarkup(<Filter bounds={bounds} />);
 };
 
 describe("Filter", () => {
@@ -103,5 +103,69 @@ describe("Filter boxes", () => {
     const without = render("");
     expect(withPrice).toContain('value="3000"');
     expect(without).not.toContain('value="3000"');
+  });
+});
+
+describe("Filter price slider", () => {
+  const bounds = { min: 0, max: 6500 };
+
+  it("replaces the typed boxes with two handles on one bar, each named for screen readers", () => {
+    const html = render("", bounds);
+    expect(html.match(/<input[^>]*type="range"/g)).toHaveLength(2);
+    expect(html).toContain('aria-label="Minimum price"');
+    expect(html).toContain('aria-label="Maximum price"');
+    expect(html).not.toContain('name="min"');
+    expect(html).not.toContain(">Apply<");
+  });
+
+  it("covers the whole price range of the shop in steps of 100", () => {
+    const html = render("", bounds);
+    for (const input of html.match(/<input[^>]*type="range"[^>]*>/g) ?? []) {
+      expect(input).toContain('min="0"');
+      expect(input).toContain('max="6500"');
+      expect(input).toContain('step="100"');
+    }
+  });
+
+  it("starts at the full range and shows the prices in words", () => {
+    const t = render("", bounds).replace(/<[^>]+>/g, " ").replace(/\s+/g, " ");
+    expect(t).toContain("KES 0");
+    expect(t).toContain("KES 6,500");
+  });
+
+  it("starts at the shopper's chosen range", () => {
+    const html = render("min=3000&max=4500", bounds);
+    expect(html).toContain('value="3000"');
+    expect(html).toContain('value="4500"');
+    expect(html.replace(/<[^>]+>/g, " ")).toContain("KES 3,000");
+    expect(html).toContain("Clear");
+  });
+
+  it("shows no Clear link while the whole range is chosen", () => {
+    expect(render("", bounds)).not.toContain("Clear");
+  });
+
+  it("is drawn in the brand colours and fills the bar between the handles", () => {
+    const html = render("min=1000&max=3000", bounds);
+    expect(html).toContain("bg-brand-navy");
+    expect(html).toMatch(/style="[^"]*left:\s*15\.\d+%/);
+    expect(html).not.toMatch(/pink|rose/);
+  });
+
+  it("still offers the typed boxes when the shop's price range is unknown", () => {
+    const html = render("", undefined);
+    expect(html).toContain('name="min"');
+    expect(html).not.toContain('type="range"');
+  });
+});
+
+describe("slider handle colours", () => {
+  it("have their own colours in both themes, whether or not the theme variables exist", () => {
+    const css = require("node:fs").readFileSync("src/app/globals.css", "utf8") as string;
+    expect(css).toMatch(/--range-thumb,\s*#1e2235/);
+    expect(css).toMatch(/\.dark \.price-range\s*{[^}]*--range-thumb:\s*#ffffff/);
+    const start = css.indexOf("Price slider");
+    const slider = css.slice(start, css.indexOf("--range-ring", css.indexOf(".dark .price-range")) + 40);
+    expect(slider).not.toMatch(/f9c92b|var\(--gold/i);
   });
 });

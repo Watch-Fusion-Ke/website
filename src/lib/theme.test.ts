@@ -203,3 +203,10 @@ describe("calm gold in the dark theme", () => {
     expect(rule).toMatch(/color:\s*var\(--text\)/);
   });
 });
+
+describe("globals.css", () => {
+  it("has every block closed, since an unclosed block stops the whole site from building", () => {
+    const text = css.replace(/\/\*[\s\S]*?\*\//g, "");
+    expect((text.match(/{/g) ?? []).length).toBe((text.match(/}/g) ?? []).length);
+  });
+});

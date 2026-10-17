@@ -2,7 +2,9 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import ThemeToggle from "./ThemeToggle";
 import { useEffect, useState } from "react";
+import { useAllCategories } from "@/hooks/useCategories";
 import { useRouter } from "next/navigation";
 import { useWixClient } from "@/hooks/useWixClient";
 import { useCartStore } from "@/hooks/useCartStore";
@@ -13,22 +15,13 @@ type Category = { _id?: string | null; name?: string | null; slug?: string | nul
 const Menu = () => {
   const [open, setOpen] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
-  const [cats, setCats] = useState<Category[]>([]);
+  const allCats = useAllCategories();
+  const cats: Category[] = open ? allCats : [];
 
   const router = useRouter();
   const wixClient = useWixClient();
   const isLoggedIn = wixClient.auth.loggedIn();
   const { counter } = useCartStore();
-
-  // Fetch categories the first time the drawer opens
-  useEffect(() => {
-    if (!open || cats.length > 0) return;
-    wixClient.collections
-      .queryCollections()
-      .find()
-      .then((res) => setCats(res.items))
-      .catch(() => {});
-  }, [open, cats.length, wixClient]);
 
   const handleLogout = async () => {
     setLoggingOut(true);
@@ -102,6 +95,11 @@ const Menu = () => {
               <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
             </svg>
           </button>
+        </div>
+
+        {/* Theme switch */}
+        <div className="px-6 pt-4">
+          <ThemeToggle showLabel />
         </div>
 
         {/* Nav links */}

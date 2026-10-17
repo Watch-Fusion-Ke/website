@@ -89,11 +89,15 @@ const CustomizeProducts = ({
                                     style={{
                                         cursor: disabled ? "not-allowed" : "pointer",
                                         backgroundColor: selected
-                                            ? "#1E2235"
+                                            ? "var(--choice-on-bg)"
                                             : disabled
-                                                ? "#E5E7EB"
-                                                : "white",
-                                        color: selected ? "white" : disabled ? "#6B7280" : "#1E2235",
+                                                ? "rgb(var(--gray-200))"
+                                                : "var(--choice-bg)",
+                                        color: selected
+                                            ? "var(--choice-on-text)"
+                                            : disabled
+                                                ? "rgb(var(--gray-500))"
+                                                : "var(--choice-text)",
                                         boxShadow: disabled ? "none" : "",
 
                                     }}

@@ -30,13 +30,13 @@ const Footer = () => {
     <footer className="mt-16 border-t border-white/10 bg-black text-gray-400">
       <div className="px-4 py-12 md:px-8 lg:px-16 xl:px-32 2xl:px-64">
         <div className="grid grid-cols-2 gap-x-6 gap-y-10 md:grid-cols-4">
-          <div className="col-span-2 md:col-span-1">
+          <div className="col-span-2 text-center md:col-span-1 md:text-left">
             <Link href="/" className="inline-flex items-center gap-3">
               <Image src="/logo.png" alt="Watch Fusion Kenya" width={44} height={44} />
               <span className="text-base font-semibold tracking-wide text-white">Watch Fusion Kenya</span>
             </Link>
-            <p className="mt-4 max-w-xs text-sm">Watches and gifts in Nairobi.</p>
-            <div className="mt-5 flex gap-3">
+            <p className="mx-auto mt-4 max-w-xs text-sm md:mx-0">Watches and gifts in Nairobi.</p>
+            <div className="mt-5 flex justify-center gap-3 md:justify-start">
               <a href={INSTAGRAM_URL} {...outside} aria-label="Instagram" className={social}>
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                   <path d={INSTAGRAM_PATH} />
@@ -52,12 +52,12 @@ const Footer = () => {
             </div>
           </div>
 
-          <nav aria-label="Shop">
+          <nav aria-label="Shop" className="text-center md:text-left">
             <h2 className={heading}>Shop</h2>
             <FooterShopLinks />
           </nav>
 
-          <nav aria-label="Explore">
+          <nav aria-label="Explore" className="text-center md:text-left">
             <h2 className={heading}>Explore</h2>
             <ul>
               <li><Link href="/" className={link}>Homepage</Link></li>
@@ -67,7 +67,7 @@ const Footer = () => {
             </ul>
           </nav>
 
-          <div className="col-span-2 md:col-span-1">
+          <div className="col-span-2 text-center md:col-span-1 md:text-left">
             <h2 className={heading}>Visit us</h2>
             <address className="text-sm not-italic">
               {ADDRESS_LINES.map((line) => (
@@ -76,7 +76,7 @@ const Footer = () => {
               <a href={MAP_URL} {...outside} className="mt-1 inline-block py-1 text-white underline underline-offset-4 decoration-brand-gold hover:decoration-white">
                 Get directions{newTab}
               </a>
-              <dl className="mt-4">
+              <dl className="mx-auto mt-4 max-w-[16rem] md:mx-0">
                 {OPENING_HOURS.map(({ days, hours }) => (
                   <div key={days} className="flex max-w-[16rem] justify-between gap-4">
                     <dt>{days}</dt>
@@ -94,7 +94,7 @@ const Footer = () => {
         </div>
 
         <div className="mt-10 border-t border-white/10 pt-6 text-sm">
-          <p>© Watch Fusion Kenya. All rights reserved.</p>
+          <p className="text-center md:text-left">© Watch Fusion Kenya. All rights reserved.</p>
         </div>
       </div>
     </footer>

@@ -157,7 +157,7 @@ const Filter = ({ bounds }: { bounds?: Bounds | null }) => {
         {hasPrice && (
           <Link
             href={nextUrl(pathname, searchParams, { min: "", max: "" })}
-            className="py-2 text-sm font-medium text-gray-600 underline underline-offset-4 hover:text-brand-navy"
+            className="py-2 text-sm font-medium text-gray-600 underline underline-offset-4 hover:text-gray-900"
           >
             Clear
           </Link>

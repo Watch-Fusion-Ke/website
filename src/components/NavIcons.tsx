@@ -70,7 +70,7 @@ const NavIcons = () => {
                 alt=""
                 width={22}
                 height={22}
-                className="cursor-pointer"
+                className="cursor-pointer dark:invert"
                 // onClick={login}
                 onClick={handleProfile}
             />
@@ -87,13 +87,13 @@ const NavIcons = () => {
                 alt=""
                 width={22}
                 height={22}
-                className="cursor-pointer"
+                className="dark:invert cursor-pointer"
             />
             <div
                 className="relative cursor-pointer"
                 onClick={() => setIsCartOpen((prev) => !prev)}
             >
-                <Image src="/cart.png" alt="" width={22} height={22} />
+                <Image src="/cart.png" alt="" width={22} height={22} className="dark:invert" />
                 {counter > 0 && (
                     <div
                         key={counter}

@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import ThemeToggle from "./ThemeToggle";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useWixClient } from "@/hooks/useWixClient";
@@ -102,6 +103,11 @@ const Menu = () => {
               <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
             </svg>
           </button>
+        </div>
+
+        {/* Theme switch */}
+        <div className="px-6 pt-4">
+          <ThemeToggle showLabel />
         </div>
 
         {/* Nav links */}

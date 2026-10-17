@@ -7,6 +7,7 @@ import Footer from "@/components/Footer";
 import WhatsAppButton from "@/components/WhatsAppButton";
 import BottomTabBar from "@/components/BottomTabBar";
 import { WixClientContextProvider } from "@/context/wixContext";
+import { THEME_SCRIPT } from "@/lib/theme";
 
 // Montserrat is the brand typeface and carries all text. Cormorant Garamond is the display face for
 // section titles (loaded in bold only), which gives the shop a boutique, watchmaker feel next to the geometric text face.
@@ -99,7 +100,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
+      </head>
       <body className={`${montserrat.variable} ${cormorant.variable} font-sans antialiased pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)] pb-[calc(4rem_+_env(safe-area-inset-bottom))] md:pb-0`}>
         <WixClientContextProvider>
           <Navbar />

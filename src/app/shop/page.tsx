@@ -1,6 +1,7 @@
 import ProductList from "@/components/ProductList";
 import Filter from "@/components/Filter";
 import { wixClientServer } from "@/lib/wixClientServer";
+import { getPriceBounds } from "@/lib/storeProducts";
 import Link from "next/link";
 import { Suspense } from "react";
 
@@ -16,6 +17,7 @@ export default async function ShopPage({
     const catSlug = typeof resolvedParams.cat === "string" ? resolvedParams.cat : "";
 
     const wixClient = await wixClientServer();
+    const bounds = await getPriceBounds((url, init) => wixClient.fetchWithAuth(url, init));
 
     let categoryId = "";
     let categoryName = "";
@@ -88,7 +90,7 @@ export default async function ShopPage({
 
             <div className="mt-6 border-y border-gray-200 py-5">
                 <Suspense fallback={<div className="h-16" />}>
-                    <Filter />
+                    <Filter bounds={bounds} />
                 </Suspense>
             </div>
 

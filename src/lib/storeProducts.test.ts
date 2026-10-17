@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   PRODUCTS_SEARCH_URL,
+  getPriceBounds,
   buildSearchBody,
   listProducts,
   type FetchLike,
@@ -310,5 +311,22 @@ describe("listProducts", () => {
       details: { applicationError: { code: "SE-1105" } },
     });
     await expect(listProducts(fetchLike, {})).rejects.toThrow(/400.*SE-1105.*Invalid filter/);
+  });
+});
+
+describe("getPriceBounds", () => {
+  const priced = (amount: string) => ({ id: amount, slug: amount, name: amount, actualPriceRange: { minValue: { amount }, maxValue: { amount } } });
+  const fetchWith = (products: unknown[], ok = true): FetchLike => async () =>
+    new Response(JSON.stringify({ products }), { status: ok ? 200 : 500 });
+
+  it("is the cheapest and dearest price in the shop, rounded outward to whole hundreds", async () => {
+    expect(await getPriceBounds(fetchWith([priced("10"), priced("3500"), priced("6450")]))).toEqual({ min: 0, max: 6500 });
+  });
+
+  it("is nothing when the shop cannot be read or has no usable range", async () => {
+    expect(await getPriceBounds(fetchWith([], false))).toBeNull();
+    expect(await getPriceBounds(fetchWith([]))).toBeNull();
+    expect(await getPriceBounds(fetchWith([priced("500")]))).toBeNull();
+    expect(await getPriceBounds(async () => { throw new Error("down"); })).toBeNull();
   });
 });

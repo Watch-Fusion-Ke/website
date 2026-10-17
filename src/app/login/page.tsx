@@ -190,7 +190,7 @@ const LoginPage = () => {
           </div>
         )}
         <button
-          className="bg-brand-navy text-white p-2 rounded-md hover:bg-brand-gold hover:text-brand-navy disabled:bg-gray-300 disabled:cursor-not-allowed"
+          className="bg-brand-navy text-white p-2 rounded-md hover:bg-brand-gold hover:text-brand-navy disabled:bg-gray-200 disabled:text-gray-500 disabled:cursor-not-allowed"
           disabled={isLoading}
         >
           {isLoading ? "Loading..." : buttonTitle}

@@ -92,7 +92,7 @@ const CartPage = () => {
         </svg>
         <p className="text-xl font-semibold text-gray-600">Your cart is empty</p>
         <p className="text-sm text-gray-400">Add some products and come back!</p>
-        <Link href="/shop" className="bg-black text-white px-6 py-3 rounded-lg text-sm font-medium hover:bg-gray-800 transition-colors">
+        <Link href="/shop" className="bg-brand-navy text-white px-6 py-3 rounded-lg text-sm font-medium hover:bg-brand-gold hover:text-brand-navy transition-colors">
           Browse Products
         </Link>
       </div>
@@ -186,7 +186,7 @@ const CartPage = () => {
             <button
               onClick={handleCheckout}
               disabled={isLoading}
-              className="w-full mt-5 bg-black text-white py-3.5 rounded-xl font-semibold text-sm hover:bg-gray-800 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+              className="w-full mt-5 bg-brand-navy text-white py-3.5 rounded-xl font-semibold text-sm hover:bg-brand-gold hover:text-brand-navy transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
             >
               Proceed to Checkout
             </button>

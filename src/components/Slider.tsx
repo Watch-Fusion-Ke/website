@@ -2,8 +2,8 @@ import { wixClientServer } from "@/lib/wixClientServer";
 import SliderClient, { SlideData } from "./SliderClient";
 import { media as wixMedia } from "@wix/sdk";
 
-// Fallback slides used when no CMS promotions exist
-const fallbackSlides: SlideData[] = [
+// Fallback slides used when no CMS promotions exist. Two slides, as the shop owner asked.
+export const fallbackSlides: SlideData[] = [
     {
         id: 'hero',
         title: 'WEAR THE MOMENT\nOWN THE LEGACY',
@@ -24,17 +24,6 @@ const fallbackSlides: SlideData[] = [
         img: '/products/megirb.jpg',
         url: '/shop',
         bg: 'from-[#3a2d08] via-[#1c1604] to-black',
-    },
-    {
-        id: 'arrivals',
-        title: 'NEW ARRIVALS\nJUST LANDED',
-        subtitle: 'FRESH STYLES',
-        description: 'Be the first to rock the latest additions to our curated collection. Limited pieces, unlimited style.',
-        categoryTag: 'Just Dropped',
-        buttonText: 'Shop New In',
-        img: '/products/cap1.jpeg',
-        url: '/shop?cat=gents-watches',
-        bg: 'from-neutral-800 via-neutral-900 to-black',
     }
 ];
 

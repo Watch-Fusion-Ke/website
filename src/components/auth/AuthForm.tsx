@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Cookies from "js-cookie";
 import { LoginState } from "@wix/sdk";
 import { useWixClient } from "@/hooks/useWixClient";
-import { interpretAuth, PASSWORD_HELP, type AuthMode } from "@/lib/auth";
+import { interpretAuth, PASSWORD_HELP, signupProblem, type AuthMode } from "@/lib/auth";
 import PasswordField, { fieldClass, labelClass } from "@/components/auth/PasswordField";
 import AuthShowcase, { type ShowcaseWatch } from "@/components/auth/AuthShowcase";
 
@@ -66,6 +66,17 @@ const AuthForm = ({ initialMode = "LOGIN", watches }: { initialMode?: AuthMode; 
     if (wixClient.auth.loggedIn()) router.push("/");
   }, [wixClient, router]);
 
+  // When the shopper switches forms the link they pressed disappears, so focus moves to the new heading.
+  const heading = useRef<HTMLHeadingElement>(null);
+  const firstRender = useRef(true);
+  useEffect(() => {
+    if (firstRender.current) {
+      firstRender.current = false;
+      return;
+    }
+    heading.current?.focus();
+  }, [mode]);
+
   const switchTo = (next: AuthMode) => {
     setMode(next);
     setError("");
@@ -83,9 +94,17 @@ const AuthForm = ({ initialMode = "LOGIN", watches }: { initialMode?: AuthMode; 
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
     setError("");
     setMessage("");
+    if (mode === "REGISTER") {
+      const problem = signupProblem(password);
+      if (problem) {
+        setError(problem);
+        return;
+      }
+    }
+    setIsLoading(true);
+    let leaving = false;
 
     try {
       if (mode === "RESET_PASSWORD") {
@@ -105,6 +124,7 @@ const AuthForm = ({ initialMode = "LOGIN", watches }: { initialMode?: AuthMode; 
       if (outcome.kind === "success") {
         if (response?.loginState !== LoginState.SUCCESS) throw new Error("Wix said success without a session");
         await signedIn(response.data.sessionToken!);
+        leaving = true; // the button stays off while the page changes, so a second tap cannot send it again
       } else if (outcome.kind === "verify") {
         setMode("EMAIL_VERIFICATION");
         setMessage(outcome.message);
@@ -122,7 +142,7 @@ const AuthForm = ({ initialMode = "LOGIN", watches }: { initialMode?: AuthMode; 
           : "Something went wrong. Please try again."
       );
     } finally {
-      setIsLoading(false);
+      if (!leaving) setIsLoading(false);
     }
   };
 
@@ -134,7 +154,9 @@ const AuthForm = ({ initialMode = "LOGIN", watches }: { initialMode?: AuthMode; 
         <div className="flex flex-col justify-center">
           <form onSubmit={handleSubmit} className="flex flex-col gap-5">
             <div>
-              <h1 className="font-display text-3xl font-bold">{TITLES[mode]}</h1>
+              <h1 ref={heading} tabIndex={-1} className="font-display text-3xl font-bold focus:outline-none">
+                {TITLES[mode]}
+              </h1>
               <p className="mt-2 text-sm text-gray-600">{INTRO[mode]}</p>
             </div>
 

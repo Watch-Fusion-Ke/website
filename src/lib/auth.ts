@@ -24,6 +24,9 @@ export const interpretAuth = (response: WixAnswer, mode: AuthMode): AuthOutcome 
     case LoginState.OWNER_APPROVAL_REQUIRED:
       return { kind: "pending", message: "Your account is waiting for approval. You can log in once it is approved." };
     case LoginState.FAILURE:
+      if (mode === "EMAIL_VERIFICATION") {
+        return { kind: "error", message: "That code is not right. Check the email and try again." };
+      }
       switch (response.errorCode) {
         case "invalidEmail":
           return {
@@ -70,4 +73,12 @@ export const passwordStrength = (pw: string): Strength => {
   if (/[a-z]/.test(pw) && /[A-Z]/.test(pw)) score += 1;
   if (/[^A-Za-z0-9]/.test(pw) || pw.length >= 12) score += 1;
   return { score: score as 2 | 3 | 4, label: ["", "", "Okay", "Good", "Strong"][score], meetsMinimum, rules };
+};
+
+// Checked before a sign-up is sent, so a weak password never costs a round trip to Wix.
+export const signupProblem = (password: string): string | null => {
+  const strength = passwordStrength(password);
+  if (!strength.meetsMinimum) return PASSWORD_HELP;
+  if (strength.label === "Too common") return "That password is too common. Choose one that is harder to guess.";
+  return null;
 };

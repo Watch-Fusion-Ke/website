@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { LoginState } from "@wix/sdk";
-import { interpretAuth, passwordStrength } from "@/lib/auth";
+import { interpretAuth, passwordStrength, signupProblem } from "@/lib/auth";
 
 const failure = (errorCode?: string) => ({ loginState: LoginState.FAILURE, errorCode }) as never;
 
@@ -54,6 +54,30 @@ describe("interpretAuth", () => {
   it("gives a plain message for anything else, including no response", () => {
     expect(interpretAuth(failure("unheardOf"), "LOGIN")).toMatchObject({ kind: "error" });
     expect(interpretAuth(undefined, "LOGIN")).toMatchObject({ kind: "error" });
+  });
+});
+
+describe("interpretAuth when verifying the email code", () => {
+  it("says the code is wrong, not that something went wrong", () => {
+    const result = interpretAuth(failure("invalidCode"), "EMAIL_VERIFICATION") as { kind: string; message: string };
+    expect(result.kind).toBe("error");
+    expect(result.message).toMatch(/code/i);
+    expect(result.message).not.toMatch(/something went wrong/i);
+  });
+});
+
+describe("signupProblem", () => {
+  it("accepts a password that meets the rules", () => {
+    expect(signupProblem("abcdefg1")).toBeNull();
+  });
+
+  it("explains what is missing before anything is sent to Wix", () => {
+    expect(signupProblem("abc")).toMatch(/8 characters/);
+    expect(signupProblem("")).not.toBeNull();
+  });
+
+  it("refuses a very common password", () => {
+    expect(signupProblem("password1")).toMatch(/common/i);
   });
 });
 

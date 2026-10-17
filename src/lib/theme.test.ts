@@ -167,3 +167,39 @@ describe("navy hover text", () => {
     expect(bad).toEqual([]);
   });
 });
+
+describe("calm gold in the dark theme", () => {
+  const hexToTriplet = (hex: string) => [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16)).join(" ");
+
+  it("is a softer gold than the bright yellow of the light theme, and still clearly readable on black", () => {
+    expect(dark.gold.toLowerCase()).not.toBe(light.gold.toLowerCase());
+    expect(contrast(dark.gold, dark.page)).toBeGreaterThanOrEqual(7);
+  });
+
+  it("is the same colour whether a rule uses the hex or the Tailwind colour", () => {
+    expect(dark["gold-rgb"]).toBe(hexToTriplet(dark.gold));
+    expect(light["gold-rgb"]).toBe(hexToTriplet(light.gold));
+  });
+
+  it("lets every gold class of the site follow the theme, through the Tailwind colour", () => {
+    const gold = (config.theme?.extend as { colors?: { brand?: Record<string, string> } })?.colors?.brand?.gold;
+    expect(gold).toBe("rgb(var(--gold-rgb) / <alpha-value>)");
+  });
+
+  it("has no glow around buttons or gold marks", () => {
+    expect(css).not.toMatch(/box-shadow:\s*0 0 \d+px rgb\(\s*(249|226)/);
+  });
+
+  it("draws buttons that were navy as a thin gold outline with gold text, filling with gold only on hover", () => {
+    const rule = css.match(/\.dark \.bg-brand-navy\s*{([^}]*)}/)?.[1] ?? "";
+    expect(rule).toMatch(/color:\s*var\(--gold\)/);
+    expect(rule).toMatch(/box-shadow:\s*inset 0 0 0 1px/);
+    expect(rule).not.toMatch(/background-color:\s*var\(--gold\)/);
+    expect(css).toMatch(/\.dark \.bg-brand-navy:hover[^{]*{[^}]*background-color:\s*var\(--gold\)/);
+  });
+
+  it("shows prices and link text in the soft white, keeping gold for the accents", () => {
+    const rule = css.match(/\.dark \.text-brand-navy\s*{([^}]*)}/)?.[1] ?? "";
+    expect(rule).toMatch(/color:\s*var\(--text\)/);
+  });
+});

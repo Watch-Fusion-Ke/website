@@ -108,6 +108,9 @@ export const buildSearchBody = (params: ProductListParams): SearchBody => {
     conditions.push({ productType: { $eq: PRODUCT_TYPES[typeKey] } });
   }
 
+  // For sales, only products that hold a compare-at price can qualify, so Wix does that first cut.
+  if (params.onSale) conditions.push({ "compareAtPriceRange.minValue.amount": { $gt: "0" } });
+
   const min = asNumberString(params.min);
   if (min !== null) conditions.push({ [PRICE_FIELD]: { $gte: min } });
 

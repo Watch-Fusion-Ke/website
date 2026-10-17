@@ -26,7 +26,7 @@ const Navbar = () => {
                 width={118}
                 height={50}
                 priority
-                className='h-6 w-auto'
+                className='h-6 dark:h-9 w-auto dark:drop-shadow-[0_0_8px_rgba(249,201,43,0.5)]'
               />
             </span>
           </Link>
@@ -49,7 +49,7 @@ const Navbar = () => {
               width={118}
               height={50}
               priority
-              className='h-10 w-auto'
+              className='h-10 dark:h-12 w-auto dark:drop-shadow-[0_0_8px_rgba(249,201,43,0.5)]'
             />
           </Link>
           <div className="hidden xl:flex gap-4">

@@ -112,4 +112,14 @@ describe("Navbar on a phone", () => {
     const desktop = html.slice(html.indexOf('data-testid="desktop-header"'));
     expect((desktop.match(/<img[^>]*dark:invert[^>]*>/g) ?? []).length).toBeGreaterThanOrEqual(4);
   });
+
+  it("makes the logo bigger and gives it a soft gold glow in the dark theme, where it sits straight on the black page", () => {
+    const phone = phoneHeader().match(/<img[^>]*alt="Watch Fusion Kenya"[^>]*>/)?.[0] ?? "";
+    expect(phone).toContain("dark:h-9");
+    expect(phone).toMatch(/dark:drop-shadow-\[/);
+    const html = renderToStaticMarkup(<Navbar />);
+    const desktop = html.slice(html.indexOf('data-testid="desktop-header"')).match(/<img[^>]*alt="Watch Fusion Kenya"[^>]*>/)?.[0] ?? "";
+    expect(desktop).toContain("dark:h-12");
+    expect(desktop).toMatch(/dark:drop-shadow-\[/);
+  });
 });

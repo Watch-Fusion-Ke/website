@@ -45,6 +45,13 @@ export const ChatIcon = ({ className }: IconProps) => (
   </Icon>
 );
 
+export const ClockIcon = ({ className }: IconProps) => (
+  <Icon className={className}>
+    <circle cx="12" cy="12" r="10" />
+    <polyline points="12 6 12 12 16 14" />
+  </Icon>
+);
+
 export const HomeIcon = ({ className }: IconProps) => (
   <Icon className={className}>
     <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />

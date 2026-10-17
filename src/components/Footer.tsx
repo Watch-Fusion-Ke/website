@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { WHATSAPP_URL } from "@/lib/contact";
+import { INSTAGRAM_URL, TIKTOK_URL, WHATSAPP_URL } from "@/lib/contact";
 
 const Footer = () => {
   return (
@@ -12,12 +12,12 @@ const Footer = () => {
             Watch Fusion Kenya
           </p>
         </Link>
-        <p className="text-sm text-gray-400">© 2025 Watch Fusion Kenya.</p>
+        <p className="text-sm text-gray-400">© Watch Fusion Kenya.</p>
         <p className="text-sm text-gray-400">All rights reserved.</p>
         {/* Social Media Icons */}
         <div className="flex gap-4 mt-2">
           <a
-            href="https://www.instagram.com/watchfusion_kenya"
+            href={INSTAGRAM_URL}
             target="_blank"
             rel="noopener noreferrer"
             className="text-gray-400 hover:text-brand-gold transition-colors"
@@ -28,7 +28,7 @@ const Footer = () => {
             </svg>
           </a>
           <a
-            href="https://www.tiktok.com/@watchfusion_kenya"
+            href={TIKTOK_URL}
             target="_blank"
             rel="noopener noreferrer"
             className="text-gray-400 hover:text-white transition-colors"
@@ -57,7 +57,7 @@ const Footer = () => {
       <div className="flex flex-col gap-4 text-sm text-gray-400 items-center md:items-start">
         <p className="text-sm text-amber-50">Connect</p>
         <a
-          href="https://www.instagram.com/watchfusion_kenya"
+          href={INSTAGRAM_URL}
           target="_blank"
           rel="noopener noreferrer"
           className="hover:text-brand-gold transition-colors"
@@ -65,7 +65,7 @@ const Footer = () => {
           Instagram
         </a>
         <a
-          href="https://www.tiktok.com/@watchfusion_kenya"
+          href={TIKTOK_URL}
           target="_blank"
           rel="noopener noreferrer"
           className="hover:text-white transition-colors"

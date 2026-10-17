@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Suspense } from "react";
-import { Jost } from "next/font/google";
+import { Cormorant_Garamond, Montserrat } from "next/font/google";
 import "./globals.css";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -8,9 +8,19 @@ import WhatsAppButton from "@/components/WhatsAppButton";
 import BottomTabBar from "@/components/BottomTabBar";
 import { WixClientContextProvider } from "@/context/wixContext";
 
-const jost = Jost({
-  variable: "--font-jost",
+// Montserrat is the brand typeface and carries all text. Cormorant Garamond is the display face for
+// section titles (loaded in bold only), which gives the shop a boutique, watchmaker feel next to the geometric text face.
+const montserrat = Montserrat({
+  variable: "--font-montserrat",
   subsets: ["latin"],
+  display: "swap",
+});
+
+const cormorant = Cormorant_Garamond({
+  variable: "--font-display",
+  subsets: ["latin"],
+  weight: "700",
+  display: "swap",
 });
 
 // Lets the page use the whole screen on iPhones, so the tab bar can sit above the home indicator.
@@ -90,7 +100,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${jost.className} antialiased pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)] pb-[calc(4rem_+_env(safe-area-inset-bottom))] md:pb-0`}>
+      <body className={`${montserrat.variable} ${cormorant.variable} font-sans antialiased pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)] pb-[calc(4rem_+_env(safe-area-inset-bottom))] md:pb-0`}>
         <WixClientContextProvider>
           <Navbar />
           {children}

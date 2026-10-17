@@ -11,11 +11,15 @@ const ProductList = async ({
     categoryName,
     limit,
     searchParams,
+    onSale,
+    emptyMessage,
 }: {
     categoryId: string;
     categoryName?: string;
     limit?: number;
     searchParams?: any;
+    onSale?: boolean;
+    emptyMessage?: string;
 }) => {
     const wixClient = await wixClientServer();
 
@@ -44,6 +48,7 @@ const ProductList = async ({
             sort: searchParams?.sort,
             page: searchParams?.page,
             limit,
+            onSale,
         });
     } catch (e) {
         console.error("ProductList: product search failed", e);
@@ -51,6 +56,20 @@ const ProductList = async ({
             <p className="mt-12 text-gray-500">
                 We could not load the products right now. Please refresh in a moment.
             </p>
+        );
+    }
+
+    if (page.items.length === 0) {
+        return (
+            <div className="mt-6">
+                <p className="text-gray-600">{emptyMessage ?? "No products found."}</p>
+                {/* A filter can leave the shopper on a page past the end, so keep a way back. */}
+                {page.hasPrev && (
+                    <div className="flex">
+                        <Pagination currentPage={page.page} hasPrev={page.hasPrev} hasNext={page.hasNext} />
+                    </div>
+                )}
+            </div>
         );
     }
 

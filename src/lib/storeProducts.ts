@@ -156,15 +156,17 @@ const priceLabel = (product: WixProduct): string => {
 };
 
 // A product is on sale when Wix holds a "compare at" price above the price a shopper pays.
-// Smaller than a 1% saving is not shown as a sale.
+// Only products with one price qualify: with several variants the old price may belong to a different
+// variant than the cheapest one. A saving under 1% is not shown, and the percent never reaches 100.
 const saleInfo = (product: WixProduct): { compareAtLabel: string | null; discountPercent: number | null } => {
+  const none = { compareAtLabel: null, discountPercent: null };
   const price = Number(product.actualPriceRange?.minValue?.amount);
+  const top = Number(product.actualPriceRange?.maxValue?.amount);
   const was = Number(product.compareAtPriceRange?.minValue?.amount);
-  if (!Number.isFinite(price) || !Number.isFinite(was) || was <= price) {
-    return { compareAtLabel: null, discountPercent: null };
-  }
-  const percent = Math.round((1 - price / was) * 100);
-  if (percent < 1) return { compareAtLabel: null, discountPercent: null };
+  if (!Number.isFinite(price) || !Number.isFinite(was) || price <= 0 || was <= price) return none;
+  if (Number.isFinite(top) && top !== price) return none;
+  const percent = Math.min(99, Math.round((1 - price / was) * 100));
+  if (percent < 1) return none;
   return { compareAtLabel: `KES ${formatKes(was)}`, discountPercent: percent };
 };
 

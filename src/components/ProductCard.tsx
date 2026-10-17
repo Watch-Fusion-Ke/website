@@ -17,7 +17,7 @@ const ProductCardView = ({ product }: { product: ProductCard }) => {
                     alt=""
                     fill
                     sizes={SIZES}
-                    className={`absolute object-cover rounded-md z-10 transition-opacity duration-500 ${product.hoverImageUrl ? "group-hover:opacity-0" : ""}`}
+                    className={`absolute object-cover rounded-md z-10 transition-opacity duration-500 ${product.hoverImageUrl ? "md:group-hover:opacity-0" : ""}`}
                 />
                 {product.hoverImageUrl && (
                     <Image
@@ -46,7 +46,7 @@ const ProductCardView = ({ product }: { product: ProductCard }) => {
                     <span className="font-semibold text-brand-navy">{product.priceLabel}</span>
                 )}
             </p>
-            <span className="block w-full rounded-lg bg-brand-navy py-3 px-4 text-center text-sm font-semibold text-white transition-colors duration-300 group-hover:bg-brand-gold group-hover:text-brand-navy">
+            <span aria-hidden="true" className="block w-full rounded-lg bg-brand-navy py-3 px-4 text-center text-sm font-semibold text-white transition-colors duration-300 md:group-hover:bg-brand-gold md:group-hover:text-brand-navy">
                 Add to cart
             </span>
         </Link>

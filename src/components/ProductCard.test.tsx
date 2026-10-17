@@ -33,7 +33,7 @@ describe("ProductCardView", () => {
 
   it("shows no sale marks on a product that is not on sale", () => {
     const html = render(card());
-    expect(html).not.toContain("line-through");
+    expect(html).not.toMatch(/<s[\s>]/);
     expect(html).not.toContain("Sale");
   });
 
@@ -60,6 +60,23 @@ describe("ProductCardView", () => {
 
   it("uses no pink", () => {
     expect(render(card({ compareAtLabel: "KES 4,375", discountPercent: 20 }))).not.toMatch(/pink|rose|red-/);
+  });
+
+  it("fades the first photo on hover only when there is a second photo to show", () => {
+    const first = (html: string) => html.match(/<img[^>]*>/)?.[0] ?? "";
+    expect(first(render(card()))).toContain("md:group-hover:opacity-0");
+    expect(first(render(card({ hoverImageUrl: null })))).not.toContain("opacity-0");
+  });
+
+  it("changes on hover only on devices that can hover, so a tap does not leave a card stuck", () => {
+    const html = render(card());
+    expect(html).not.toMatch(/(^|[\s"])group-hover:/);
+    expect(html).toContain("md:group-hover:bg-brand-gold");
+  });
+
+  it("keeps the button look out of the link's spoken name, since the card only opens the product page", () => {
+    const html = render(card());
+    expect(html).toMatch(/<span[^>]*aria-hidden="true"[^>]*>Add to cart<\/span>/);
   });
 
   it("shows the second photo on hover only when there is one", () => {

@@ -34,7 +34,7 @@ export const DeliveryPickerView = ({
 }: ViewProps) => {
   const id = useId();
   const listId = `${id}-list`;
-  const matches = useMemo(() => searchAreas(areas, query), [areas, query]);
+  const matches = useMemo(() => searchAreas(areas, query, 40), [areas, query]);
   const typed = query.trim().length >= 2;
 
   if (selectedLabel) {
@@ -73,12 +73,15 @@ export const DeliveryPickerView = ({
       />
 
       {typed && matches.length > 0 && (
-        <ul id={listId} role="listbox" aria-label="Delivery areas" className="mt-2 overflow-hidden rounded-lg border border-gray-200 bg-white">
+        <ul id={listId} role="listbox" aria-label="Delivery areas" className="mt-2 max-h-64 overflow-y-auto overscroll-contain rounded-lg border border-gray-200 bg-white">
           {matches.map((area, i) => (
             <li
               key={area.id}
               id={`${id}-opt-${i}`}
               role="option"
+              ref={(el) => {
+                if (i === activeIndex) el?.scrollIntoView?.({ block: "nearest" });
+              }}
               aria-selected={i === activeIndex}
               onClick={() => onPick(area)}
               className={`flex min-h-11 cursor-pointer items-center justify-between gap-3 px-4 py-2 text-sm hover:bg-gray-100 ${i === activeIndex ? "bg-gray-100" : ""}`}
@@ -124,7 +127,7 @@ const DeliveryPicker = ({ areas, selectedLabel, selectedPrice, onChosen }: Props
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [active, setActive] = useState(-1);
-  const matches = useMemo(() => searchAreas(areas, query), [areas, query]);
+  const matches = useMemo(() => searchAreas(areas, query, 40), [areas, query]);
 
   const pick = async (area: DeliveryArea) => {
     if (busy) return;

@@ -84,6 +84,25 @@ describe("DeliveryPicker saving", () => {
   });
 });
 
+describe("DeliveryPickerView list", () => {
+  it("scrolls inside its own box, so the page behind it stays still", () => {
+    const list = view({ query: "gig" }).match(/<ul[^>]*role="listbox"[^>]*>/)?.[0] ?? "";
+    const classes = list.match(/class="([^"]*)"/)?.[1].split(" ") ?? [];
+    expect(classes).toContain("overflow-y-auto");
+    expect(classes).toContain("overscroll-contain");
+    expect(classes.some((c) => /^max-h-/.test(c))).toBe(true);
+    expect(classes).not.toContain("overflow-hidden");
+  });
+
+  it("shows more than a handful of areas, since the box scrolls", () => {
+    const many = areasFromRates(Array.from({ length: 40 }, (_, n) => ({ id: `r${n}`, places: `Thika Spot ${n}`, road: "Thika Road", price: 300 })));
+    const html = renderToStaticMarkup(
+      <DeliveryPickerView areas={many} query="thika" onQuery={noop} onPick={noop} onChange={noop} busy={false} error={null} />
+    );
+    expect((html.match(/role="option"/g) ?? []).length).toBeGreaterThan(8);
+  });
+});
+
 describe("DeliveryPicker", () => {
   it("renders on the server as the empty search, before any scripts run", () => {
     const html = renderToStaticMarkup(<DeliveryPicker areas={areas} selectedLabel={null} selectedPrice={null} onChosen={async () => {}} />);

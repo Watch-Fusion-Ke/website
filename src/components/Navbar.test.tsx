@@ -43,15 +43,19 @@ describe("Navbar on a phone", () => {
     expect(cart).toBeGreaterThan(logo);
   });
 
-  it("keeps the logo small so the header looks calm", () => {
-    const logoTag = phoneHeader().match(/<img[^>]*alt="Watch Fusion Kenya"[^>]*>/)?.[0] ?? "";
-    const classes = (logoTag.match(/class="([^"]*)"/)?.[1] ?? "").split(" ");
-    expect(classes).toContain("h-6");
-    expect(classes.filter((c) => /^h-/.test(c))).toEqual(["h-6"]);
+  it("shows the logo without its small slogan, cropped from the picture so the name can be bigger", () => {
+    const html = phoneHeader();
+    const wrapper = html.match(/<span class="([^"]*)"[^>]*><img[^>]*alt="Watch Fusion Kenya"/)?.[1].split(" ") ?? [];
+    expect(wrapper).toContain("h-7");
+    expect(wrapper).toContain("overflow-hidden");
+    expect(wrapper.some((c) => c.startsWith("aspect-["))).toBe(true);
+    const img = html.match(/<img[^>]*alt="Watch Fusion Kenya"[^>]*>/)?.[0] ?? "";
+    expect(img).toContain("object-cover");
+    expect(img).toMatch(/object-\[50%_44%\]/);
   });
 
   it("gives the logo link a tap area at least 44 px tall", () => {
-    const link = phoneHeader().match(/<a[^>]*href="\/"[^>]*>(?=<span[^>]*><img[^>]*alt="Watch Fusion Kenya")/)?.[0] ?? "";
+    const link = phoneHeader().match(/<a[^>]*href="\/"[^>]*>(?=<span[^>]*><span[^>]*><img[^>]*alt="Watch Fusion Kenya")/)?.[0] ?? "";
     expect(link).not.toBe("");
     expect(link.match(/class="([^"]*)"/)?.[1].split(" ")).toContain("h-11");
   });
@@ -111,5 +115,14 @@ describe("Navbar on a phone", () => {
     const html = renderToStaticMarkup(<Navbar />);
     const desktop = html.slice(html.indexOf('data-testid="desktop-header"'));
     expect((desktop.match(/<img[^>]*dark:invert[^>]*>/g) ?? []).length).toBeGreaterThanOrEqual(4);
+  });
+
+  it("gives the logo a soft gold glow in the dark theme, where it sits straight on the black page", () => {
+    const phone = phoneHeader().match(/<img[^>]*alt="Watch Fusion Kenya"[^>]*>/)?.[0] ?? "";
+    expect(phone).toMatch(/dark:drop-shadow-\[/);
+    const html = renderToStaticMarkup(<Navbar />);
+    const desktop = html.slice(html.indexOf('data-testid="desktop-header"')).match(/<img[^>]*alt="Watch Fusion Kenya"[^>]*>/)?.[0] ?? "";
+    expect(desktop).toMatch(/dark:drop-shadow-\[/);
+    expect(desktop).toContain("object-cover");
   });
 });

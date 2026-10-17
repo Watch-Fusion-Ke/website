@@ -20,14 +20,16 @@ const Navbar = () => {
           </div>
           <Link href="/" className='flex items-center h-11'>
             <span className='flex items-center bg-brand-black rounded-md px-2.5 py-1'>
-              <Image
-                src="/logo.png"
-                alt="Watch Fusion Kenya"
-                width={118}
-                height={50}
-                priority
-                className='h-6 w-auto'
-              />
+              <span className='relative block h-7 aspect-[2000/665] overflow-hidden'>
+                <Image
+                  src="/logo.png"
+                  alt="Watch Fusion Kenya"
+                  fill
+                  sizes="96px"
+                  priority
+                  className='object-cover object-[50%_44%] dark:drop-shadow-[0_0_8px_rgba(249,201,43,0.5)]'
+                />
+              </span>
             </span>
           </Link>
           <div className='flex items-center justify-end gap-1'>
@@ -43,14 +45,16 @@ const Navbar = () => {
         {/* Left Section */}
         <div className='w-1/3 xl:w-1/2 flex items-center gap-12'>
           <Link href="/" className="flex items-center flex-shrink-0 bg-brand-black rounded-lg px-3 py-1.5">
-            <Image
-              src="/logo.png"
-              alt="Watch Fusion Kenya"
-              width={118}
-              height={50}
-              priority
-              className='h-10 w-auto'
-            />
+            <span className='relative block h-10 dark:h-12 aspect-[2000/665] overflow-hidden'>
+              <Image
+                src="/logo.png"
+                alt="Watch Fusion Kenya"
+                fill
+                sizes="150px"
+                priority
+                className='object-cover object-[50%_44%] dark:drop-shadow-[0_0_8px_rgba(249,201,43,0.5)]'
+              />
+            </span>
           </Link>
           <div className="hidden xl:flex gap-4">
             <Link href="/" className="hover:text-gray-600 transition-colors">

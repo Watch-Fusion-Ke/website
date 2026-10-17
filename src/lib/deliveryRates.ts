@@ -6,13 +6,14 @@ export const DELIVERY_COLLECTION = "DeliveryRates";
 
 const MAX_PRICE = 100000;
 
-type Row = { _id?: string | null; data?: Record<string, unknown> | null };
+// A row as the Wix client returns it: the fields sit beside _id.
+type Row = { _id?: string | null } & Record<string, unknown>;
 
 // Turns rows of the collection into rates, skipping anything that is off, empty or not a sensible price.
 export const parseRates = (rows: Row[]): DeliveryRate[] =>
   rows.flatMap((row) => {
-    const data = row.data;
-    if (!row._id || !data) return [];
+    const data = row;
+    if (!row._id) return [];
     if (data.isActive === false) return [];
     const places = typeof data.title === "string" ? data.title.trim() : "";
     const text = String(data.price ?? "").replace(/kes|ksh/gi, "").replace(/[,\s]/g, "");

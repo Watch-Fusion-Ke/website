@@ -62,6 +62,18 @@ describe("Shop page", () => {
     expect(html.indexOf('data-testid="filter"')).toBeLessThan(html.indexOf('data-testid="product-list"'));
   });
 
+  it("treats the store's own All Products address as the whole shop and highlights the All chip", async () => {
+    const html = await render({ cat: "all-products" });
+    const all = html.match(/<a [^>]*href="\/shop"[^>]*>/)?.[0] ?? "";
+    expect(all).toContain('aria-current="page"');
+  });
+
+  it("tells the shopper when the category in the address does not exist", async () => {
+    const html = await render({ cat: "no-such-category" });
+    expect(html).toMatch(/could not find that category/i);
+    expect(html.match(/aria-current="page"/g)).toHaveLength(1);
+  });
+
   it("has one main heading in the title face and no black or pink chips", async () => {
     const html = await render();
     expect(html.match(/<h1/g)).toHaveLength(1);

@@ -104,6 +104,10 @@ describe("buildSearchBody", () => {
     ]);
   });
 
+  it("sorts by the day a product was added, so editing an old product does not make it new", () => {
+    expect(buildSearchBody({ sort: "desc created" }).search.sort).toEqual([{ fieldName: "createdDate", order: "DESC" }]);
+  });
+
   it("ignores values that only exist on every object, such as 'constructor'", () => {
     expect(buildSearchBody({ type: "constructor" }).search.filter).toBeUndefined();
     expect(buildSearchBody({ type: "__proto__" }).search.filter).toBeUndefined();

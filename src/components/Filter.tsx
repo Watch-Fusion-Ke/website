@@ -20,8 +20,18 @@ export const nextUrl = (
   return query ? `${pathname}?${query}` : pathname;
 };
 
+// A price typed by a shopper: keeps whole numbers, strips commas, spaces and "KES", drops anything else.
+export const cleanPrice = (raw: string): string => {
+  const trimmed = raw.replace(/kes/gi, "").replace(/[,\s]/g, "");
+  return /^\d+$/.test(trimmed) ? String(parseInt(trimmed, 10)) : "";
+};
+
+// A minimum above the maximum would show nothing, so the two are swapped.
+export const orderedPrices = (min: string, max: string): { min: string; max: string } =>
+  min !== "" && max !== "" && Number(min) > Number(max) ? { min: max, max: min } : { min, max };
+
 const SORTS = [
-  { value: "desc lastUpdated", label: "Newest first" },
+  { value: "desc created", label: "Newest first" },
   { value: "asc price", label: "Price: low to high" },
   { value: "desc price", label: "Price: high to low" },
 ];
@@ -44,16 +54,17 @@ const Filter = () => {
     event.preventDefault();
     const data = new FormData(event.currentTarget);
     replace(
-      nextUrl(pathname, searchParams, {
-        min: String(data.get("min") ?? "").trim(),
-        max: String(data.get("max") ?? "").trim(),
-      })
+      nextUrl(
+        pathname,
+        searchParams,
+        orderedPrices(cleanPrice(String(data.get("min") ?? "")), cleanPrice(String(data.get("max") ?? "")))
+      )
     );
   };
 
   return (
     <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-      <form onSubmit={applyPrice} className="flex flex-wrap items-end gap-3">
+      <form key={`${min}|${max}`} onSubmit={applyPrice} className="flex flex-wrap items-end gap-3">
         <div>
           <label htmlFor="filter-min" className={label}>Min price</label>
           <input
@@ -97,6 +108,7 @@ const Filter = () => {
       <div>
         <label htmlFor="filter-sort" className={label}>Sort by</label>
         <select
+          key={sort}
           id="filter-sort"
           name="sort"
           defaultValue={sort}

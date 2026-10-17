@@ -19,14 +19,16 @@ export default async function ShopPage({
 
     let categoryId = "";
     let categoryName = "";
-    if (catSlug) {
+    let unknownCategory = false;
+    if (catSlug && !isAllProducts(catSlug)) {
         try {
             const cat = await wixClient.collections.getCollectionBySlug(catSlug);
             categoryId = cat.collection?._id || "";
             categoryName = cat.collection?.name || "";
         } catch {
-            // Unknown category: show the whole shop.
+            // Unknown category: show the whole shop and say so.
         }
+        unknownCategory = categoryId === "";
     }
 
     // The chips come from the store's real categories, so none of them is a dead link.
@@ -57,6 +59,12 @@ export default async function ShopPage({
                     {categoryName ? `Browse our ${categoryName} collection` : "Browse our complete collection"}
                 </p>
             </div>
+
+            {unknownCategory && (
+                <p role="status" className="mb-4 rounded-lg bg-brand-cream px-4 py-3 text-sm text-gray-700">
+                    We could not find that category, so here is everything.
+                </p>
+            )}
 
             <nav aria-label="Categories" className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-2 scrollbar-hide md:mx-0 md:flex-wrap md:px-0">
                 <Link

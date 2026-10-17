@@ -8,7 +8,7 @@ vi.mock("next/navigation", () => ({
   useRouter: () => ({ replace: () => {} }),
 }));
 
-import Filter, { nextUrl } from "@/components/Filter";
+import Filter, { cleanPrice, nextUrl, orderedPrices } from "@/components/Filter";
 
 const render = (query = "") => {
   nav.query = query;
@@ -30,7 +30,7 @@ describe("Filter", () => {
     const html = render();
     expect(html).toContain('value="asc price">Price: low to high');
     expect(html).toContain('value="desc price">Price: high to low');
-    expect(html).toContain('value="desc lastUpdated">Newest first');
+    expect(html).toContain('value="desc created">Newest first');
     expect(html).not.toContain("Oldest");
   });
 
@@ -74,5 +74,34 @@ describe("nextUrl", () => {
 
   it("goes to the bare page when nothing is left", () => {
     expect(nextUrl("/list", new URLSearchParams("min=100"), { min: "" })).toBe("/list");
+  });
+});
+
+describe("cleanPrice", () => {
+  it("keeps whole numbers and strips commas, spaces and a currency mark", () => {
+    expect(cleanPrice("3000")).toBe("3000");
+    expect(cleanPrice(" 3,500 ")).toBe("3500");
+    expect(cleanPrice("KES 1,200")).toBe("1200");
+  });
+
+  it("drops anything that is not a price", () => {
+    for (const junk of ["abc", "", "-5", "0x10", "1.5.2", "  "]) expect(cleanPrice(junk)).toBe("");
+  });
+});
+
+describe("orderedPrices", () => {
+  it("swaps a minimum that is above the maximum", () => {
+    expect(orderedPrices("5000", "1000")).toEqual({ min: "1000", max: "5000" });
+    expect(orderedPrices("1000", "5000")).toEqual({ min: "1000", max: "5000" });
+    expect(orderedPrices("", "5000")).toEqual({ min: "", max: "5000" });
+  });
+});
+
+describe("Filter boxes", () => {
+  it("are rebuilt when the address changes, so they never show a price the list is no longer filtered by", () => {
+    const withPrice = render("min=3000");
+    const without = render("");
+    expect(withPrice).toContain('value="3000"');
+    expect(without).not.toContain('value="3000"');
   });
 });

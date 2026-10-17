@@ -20,4 +20,9 @@ describe("the Wix admin login", () => {
     const readers = files("src").filter((f) => readFileSync(f, "utf8").includes("WIX_CLIENT_SECRET") && !f.endsWith("wixAdmin.ts"));
     expect(readers).toEqual([]);
   });
+
+  it("is imported by the delivery route and nothing else, so no other file can pass it on to the browser", () => {
+    const importers = files("src").filter((f) => /from ["']@\/lib\/wixAdmin["']/.test(readFileSync(f, "utf8")));
+    expect(importers).toEqual(["src/app/api/delivery/route.ts"]);
+  });
 });

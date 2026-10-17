@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import type { DeliveryArea } from "@/lib/delivery";
+import { loadDeliveryOptions } from "@/lib/deliveryClient";
 
 type State = { enabled: boolean; areas: DeliveryArea[]; loaded: boolean; unavailable: boolean };
 
@@ -13,10 +14,7 @@ const useDelivery = () => {
 
   useEffect(() => {
     let live = true;
-    fetch("/api/delivery")
-      .then((r) => (r.ok ? r.json() : { enabled: false, areas: [] }))
-      .then((json) => live && setState((s) => ({ ...s, enabled: Boolean(json.enabled), areas: json.areas ?? [], loaded: true })))
-      .catch(() => live && setState((s) => ({ ...s, enabled: false, areas: [], loaded: true })));
+    loadDeliveryOptions().then((options) => live && setState((s) => ({ ...s, ...options, loaded: true })));
     return () => {
       live = false;
     };
@@ -43,11 +41,14 @@ const useDelivery = () => {
     setState((s) => ({ ...s, unavailable: false }));
   }, []);
 
+  // Used when a fee was reported as added but never showed up in the cart.
+  const markUnavailable = useCallback(() => setState((s) => ({ ...s, unavailable: true })), []);
+
   const clear = useCallback(async (): Promise<void> => {
     await fetch("/api/delivery", { method: "DELETE" }).catch(() => {});
   }, []);
 
-  return { ...state, choose, clear };
+  return { ...state, choose, clear, markUnavailable };
 };
 
 export default useDelivery;

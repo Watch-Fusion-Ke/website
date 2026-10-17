@@ -86,13 +86,18 @@ export const chooseDeliveryArea = async (deps: DeliveryDeps, areaId: unknown): P
         body: JSON.stringify({ lineItemIds: staleIds }),
       });
       if (!remove.ok) {
+        let rolledBack = !newId;
         if (newId) {
-          await deps.adminFetch(`/ecom/v2/carts/${cartId}/remove-line-items`, {
+          const undo = await deps.adminFetch(`/ecom/v2/carts/${cartId}/remove-line-items`, {
             method: "POST",
             body: JSON.stringify({ lineItemIds: [newId] }),
-          });
+          }).catch(() => null);
+          rolledBack = Boolean(undo?.ok);
         }
-        return { status: 502, body: { error: "We could not replace the earlier delivery fee.", unavailable: true } };
+        const error = rolledBack
+          ? "We could not replace the earlier delivery fee."
+          : "We could not set the delivery fee. Please check your cart before paying.";
+        return { status: 502, body: { error, unavailable: true } };
       }
     }
   } catch {

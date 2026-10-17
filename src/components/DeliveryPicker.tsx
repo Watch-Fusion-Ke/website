@@ -127,6 +127,7 @@ const DeliveryPicker = ({ areas, selectedLabel, selectedPrice, onChosen }: Props
   const matches = useMemo(() => searchAreas(areas, query), [areas, query]);
 
   const pick = async (area: DeliveryArea) => {
+    if (busy) return;
     setBusy(true);
     setError(null);
     try {

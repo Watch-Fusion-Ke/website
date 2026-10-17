@@ -225,6 +225,11 @@ const CartPage = () => {
                   onChosen={async (area) => {
                     await delivery.choose(area);
                     await getCart(wixClient);
+                    // The shop said the fee was added. If it is not in the cart, do not leave the shopper stuck.
+                    if (!(useCartStore.getState().cart.lineItems ?? []).some(isDeliveryLine)) {
+                      delivery.markUnavailable();
+                      throw new Error("We could not add the delivery fee online.");
+                    }
                   }}
                 />
               </div>

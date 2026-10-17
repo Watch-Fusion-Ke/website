@@ -111,6 +111,13 @@ describe("chooseDeliveryArea", () => {
     expect(JSON.stringify(removes.at(-1)!.body)).toContain("new-1");
   });
 
+  it("tells the shopper to check the cart when even taking the new line back out fails", async () => {
+    const { deps } = setup({ existing: [{ id: "old-1", name: "Delivery: A, X" }], wixStatus: { "POST remove-line-items": 500 } });
+    const r = await chooseDeliveryArea(deps, gigiri.id);
+    expect(r.status).toBe(502);
+    expect(JSON.stringify(r.body)).toMatch(/check your cart/i);
+  });
+
   it("does not remove anything when there was no earlier delivery line", async () => {
     const { deps, calls } = setup();
     await chooseDeliveryArea(deps, gigiri.id);

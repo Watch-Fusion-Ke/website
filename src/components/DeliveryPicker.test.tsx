@@ -77,6 +77,13 @@ describe("DeliveryPickerView", () => {
   });
 });
 
+describe("DeliveryPicker saving", () => {
+  it("ignores a second choice while the first is still being saved", () => {
+    const source = require("node:fs").readFileSync("src/components/DeliveryPicker.tsx", "utf8") as string;
+    expect(source).toMatch(/const pick = async \(area: DeliveryArea\) => {\s*if \(busy\) return;/);
+  });
+});
+
 describe("DeliveryPicker", () => {
   it("renders on the server as the empty search, before any scripts run", () => {
     const html = renderToStaticMarkup(<DeliveryPicker areas={areas} selectedLabel={null} selectedPrice={null} onChosen={async () => {}} />);

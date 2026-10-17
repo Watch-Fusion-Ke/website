@@ -130,10 +130,11 @@ const CartPage = () => {
   return (
     <div className="px-4 md:px-8 lg:px-16 xl:px-32 2xl:px-64 py-10 min-h-[calc(100vh-180px)]">
       {/* Page Header */}
-      <div className="flex items-center justify-between mb-8 border-b pb-4">
-        <h1 className="font-display text-4xl font-bold">Shopping Cart</h1>
-        <Link href="/shop" className="text-sm text-gray-500 hover:text-black transition-colors">
-          ← Continue Shopping
+      <div className="flex items-center justify-between gap-3 mb-8 border-b pb-4">
+        <h1 className="font-display text-3xl sm:text-4xl font-bold">Shopping Cart</h1>
+        <Link href="/shop" className="whitespace-nowrap text-sm text-gray-500 hover:text-black transition-colors">
+          <span className="sm:hidden">← Back</span>
+          <span className="hidden sm:inline">← Continue Shopping</span>
         </Link>
       </div>
 

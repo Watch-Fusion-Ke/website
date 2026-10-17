@@ -1,9 +1,25 @@
 import { describe, expect, it } from "vitest";
 import { parseRates } from "@/lib/deliveryRates";
 
-const row = (data: Record<string, unknown>, id = "i1") => ({ _id: id, data });
+// Rows as the Wix client returns them: the fields sit beside _id, not inside a "data" object.
+const row = (fields: Record<string, unknown>, id = "i1") => ({ _id: id, ...fields });
 
 describe("parseRates", () => {
+  it("reads a row exactly as Wix returns it", () => {
+    const fromWix = {
+      _id: "533a3e0b",
+      _owner: "6e72d89e",
+      _createdDate: "2026-10-17T08:56:17.677Z",
+      price: 200,
+      isActive: true,
+      road: "CBD",
+      title: "Uhuru Highway / University Way",
+    };
+    expect(parseRates([fromWix])).toEqual([
+      { id: "533a3e0b", places: "Uhuru Highway / University Way", road: "CBD", price: 200 },
+    ]);
+  });
+
   it("reads the places, road and price of each row", () => {
     expect(parseRates([row({ title: "UNEP / GIGIRI", road: "Limuru Road", price: 450 })])).toEqual([
       { id: "i1", places: "UNEP / GIGIRI", road: "Limuru Road", price: 450 },

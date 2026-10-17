@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const state = vi.hoisted(() => ({
   configured: true,
-  rows: [{ _id: "r1", data: { title: "UNEP / GIGIRI", road: "Limuru Road", price: 450 } }] as unknown[],
+  rows: [{ _id: "r1", title: "UNEP / GIGIRI", road: "Limuru Road", price: 450 }] as unknown[],
   cartId: "cart-1" as string | null,
   adminCalls: [] as { path: string; method: string }[],
 }));

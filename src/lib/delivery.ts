@@ -1,0 +1,68 @@
+// Delivery areas and their fees. The shop's own table of rates (kept in Wix, where Mercy edits it) has one
+// row per rate: "UNEP / GIGIRI / VILLAGE MARKET", a road and a price. The picker turns each place on a row
+// into its own searchable area.
+
+export type DeliveryRate = { id: string; places: string; road: string; price: number };
+export type DeliveryArea = { id: string; place: string; road: string; price: number };
+
+// Every delivery line in a cart is named "Delivery: place, road", which is how the site recognises it.
+export const DELIVERY_PREFIX = "Delivery: ";
+
+export const deliveryLineName = (area: Pick<DeliveryArea, "place" | "road">): string =>
+  `${DELIVERY_PREFIX}${area.place}${area.road ? `, ${area.road}` : ""}`;
+
+export const isDeliveryLine = (item: { productName?: { original?: string | null } | null }): boolean =>
+  (item.productName?.original ?? "").startsWith(DELIVERY_PREFIX);
+
+// With delivery fees on, a cart cannot go to checkout until it holds a delivery line.
+export const needsDeliveryArea = (
+  enabled: boolean,
+  lines: { productName?: { original?: string | null } | null }[]
+): boolean => enabled && !lines.some(isDeliveryLine);
+
+export const formatKes = (n: number): string => `KES ${n.toLocaleString("en-US", { maximumFractionDigits: 0 })}`;
+
+const toTitleCase = (s: string) => s.toLowerCase().replace(/(^|[\s(-])([a-z])/g, (_, p, c) => p + c.toUpperCase());
+
+// Trims, drops stray marks such as a leading "*", and writes shouting capitals in normal capitals.
+const tidy = (raw: string): string => {
+  const place = raw.replace(/^[*\s]+/, "").replace(/\s+/g, " ").trim();
+  return place && place === place.toUpperCase() && /[A-Z]/.test(place) ? toTitleCase(place) : place;
+};
+
+export const areasFromRates = (rates: DeliveryRate[]): DeliveryArea[] =>
+  rates.flatMap((rate) =>
+    rate.places
+      .split(/[/,]/)
+      .map(tidy)
+      .filter(Boolean)
+      .map((place, index) => ({ id: `${rate.id}:${index}`, place, road: rate.road, price: rate.price }))
+  );
+
+const normalise = (s: string) => s.toLowerCase().replace(/[^a-z0-9\s]/g, " ").replace(/\s+/g, " ").trim();
+
+// Areas that match what the shopper typed, best first: places starting with the typing, then places with a word
+// that starts with it, then places containing it, then matches on the road name only.
+export const searchAreas = (areas: DeliveryArea[], query: string, limit = 8): DeliveryArea[] => {
+  const q = normalise(query);
+  if (q.length < 2) return [];
+  const tokens = q.split(" ");
+
+  const scored = areas.flatMap((area) => {
+    const place = normalise(area.place);
+    const road = normalise(area.road);
+    const hay = `${place} ${road}`;
+    if (!tokens.every((t) => hay.includes(t))) return [];
+    let score = 4;
+    if (place === q) score = 0;
+    else if (place.startsWith(q)) score = 1;
+    else if (place.split(" ").some((w) => w.startsWith(tokens[0]))) score = 2;
+    else if (tokens.every((t) => place.includes(t))) score = 3;
+    return [{ area, score }];
+  });
+
+  return scored
+    .sort((a, b) => a.score - b.score || a.area.place.localeCompare(b.area.place) || a.area.road.localeCompare(b.area.road))
+    .slice(0, limit)
+    .map((s) => s.area);
+};

@@ -5,7 +5,7 @@ import { describe, expect, it } from "vitest";
 // The brand is navy and gold. The pink and purple of the original template must not come back.
 // Red stays for errors and the remove button. Pages still waiting for their own redesign are listed
 // here and must be taken off the list when they are done.
-const WAITING_FOR_REDESIGN = new Set(["src/app/contact/page.tsx", "src/app/deals/page.tsx"]);
+const WAITING_FOR_REDESIGN = new Set(["src/app/contact/page.tsx"]);
 
 const sourceFiles = (dir: string): string[] =>
   readdirSync(dir, { withFileTypes: true }).flatMap((entry) =>

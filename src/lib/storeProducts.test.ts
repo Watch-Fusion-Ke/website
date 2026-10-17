@@ -231,6 +231,23 @@ describe("listProducts", () => {
     });
   });
 
+  it("lists only products on sale when asked, and pages through those", async () => {
+    const sale = (n: number) =>
+      wixProduct(n, { compareAtPriceRange: { minValue: { amount: "5000.00" }, maxValue: { amount: "5000.00" } } });
+    const products = [wixProduct(1), sale(2), wixProduct(3), sale(4), sale(5)];
+    const page0 = await listProducts(fakeFetch(products).fetchLike, { onSale: true, limit: 2 });
+    expect(page0.items.map((c) => c.id)).toEqual(["id-2", "id-4"]);
+    expect(page0.hasNext).toBe(true);
+    const page1 = await listProducts(fakeFetch(products).fetchLike, { onSale: true, limit: 2, page: 1 });
+    expect(page1.items.map((c) => c.id)).toEqual(["id-5"]);
+    expect(page1.hasNext).toBe(false);
+  });
+
+  it("lists every product when not asked for sales only", async () => {
+    const products = [wixProduct(1), wixProduct(2)];
+    expect((await listProducts(fakeFetch(products).fetchLike, {})).items).toHaveLength(2);
+  });
+
   it("returns an empty page for an empty category", async () => {
     const page = await listProducts(fakeFetch([]).fetchLike, { categoryId: CATEGORY });
     expect(page).toEqual({ items: [], page: 0, hasPrev: false, hasNext: false });

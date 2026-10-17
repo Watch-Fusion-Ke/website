@@ -24,6 +24,8 @@ export type ProductListParams = {
   sort?: QueryValue;
   page?: QueryValue;
   limit?: number;
+  // Keep only products that are on sale (see saleInfo).
+  onSale?: boolean;
 };
 
 export type ProductCard = {
@@ -203,7 +205,8 @@ export const listProducts = async (
   if (!Array.isArray(json.products)) {
     throw new Error("Wix product search returned an unexpected response");
   }
-  const all: WixProduct[] = json.products;
+  const found: WixProduct[] = json.products;
+  const all = params.onSale ? found.filter((product) => saleInfo(product).discountPercent !== null) : found;
   const start = page * limit;
   return {
     items: all.slice(start, start + limit).map(toCard),

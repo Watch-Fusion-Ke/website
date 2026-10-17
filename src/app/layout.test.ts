@@ -45,3 +45,13 @@ describe("fonts", () => {
     expect(bodyTag).toContain("font-sans");
   });
 });
+
+describe("theme", () => {
+  const source = readFileSync("src/app/layout.tsx", "utf8");
+
+  it("sets the theme before the page paints, so a dark page never flashes white", () => {
+    expect(source).toContain("THEME_SCRIPT");
+    expect(source).toMatch(/<head>[\s\S]*dangerouslySetInnerHTML[\s\S]*<\/head>/);
+    expect(source).toContain("suppressHydrationWarning");
+  });
+});

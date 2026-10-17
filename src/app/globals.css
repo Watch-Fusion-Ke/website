@@ -2,10 +2,111 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Light theme. The greys are Tailwind's own, so the site looks exactly as before. */
+:root {
+  --gray-50: 249 250 251;
+  --gray-100: 243 244 246;
+  --gray-200: 229 231 235;
+  --gray-300: 209 213 219;
+  --gray-400: 156 163 175;
+  --gray-500: 107 114 128;
+  --gray-600: 75 85 99;
+  --gray-700: 55 65 81;
+  --gray-800: 31 41 55;
+  --gray-900: 17 24 39;
+  --page: #ffffff;
+  --surface: #ffffff;
+  --card: #faf7f0;
+  --text: #000000;
+  --gold: #f9c92b;
+  --on-gold: #1e2235;
+}
+
+/* Dark theme. The page is the logo's black, cards are a lifted navy, text is the brand off-white,
+   and the gold carries the buttons and prices, with a soft glow. */
+.dark {
+  --gray-50: 18 20 33;
+  --gray-100: 24 27 43;
+  --gray-200: 38 42 64;
+  --gray-300: 58 63 90;
+  --gray-400: 150 156 178;
+  --gray-500: 168 173 194;
+  --gray-600: 188 192 208;
+  --gray-700: 208 211 224;
+  --gray-800: 230 232 240;
+  --gray-900: 250 247 240;
+  --page: #0a0a0a;
+  --surface: #12141f;
+  --card: #171a2a;
+  --text: #faf7f0;
+  --gold: #f9c92b;
+  --on-gold: #1e2235;
+}
+
+body {
+  background-color: var(--page);
+  color: var(--text);
+}
+
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
 }
 
 .scrollbar-hide{
   scrollbar-width: none;
+}
+
+/* Dark theme: the few places where the light classes need a different meaning, not just a flipped grey. */
+.dark .bg-white {
+  background-color: var(--surface);
+}
+.dark .bg-brand-cream {
+  background-color: var(--card);
+}
+.dark input,
+.dark select,
+.dark textarea {
+  color: var(--text);
+}
+.dark ::placeholder {
+  color: rgb(var(--gray-400));
+}
+/* Navy buttons and highlights become gold, with dark text and a soft glow. */
+.dark .bg-brand-navy {
+  background-color: var(--gold);
+  color: var(--on-gold);
+  box-shadow: 0 0 18px rgb(249 201 43 / 0.28);
+}
+.dark .text-brand-navy {
+  color: var(--gold);
+}
+.dark .ring-brand-navy {
+  --tw-ring-color: var(--gold);
+}
+.dark .focus\:border-brand-navy:focus {
+  border-color: var(--gold);
+}
+/* Dark text on a gold background stays dark. */
+.dark .bg-brand-gold.text-brand-navy,
+.dark .bg-brand-gold .text-brand-navy,
+.dark .hover\:text-brand-navy:hover {
+  color: var(--on-gold);
+}
+@media (min-width: 768px) {
+  .dark .group:hover .md\:group-hover\:text-brand-navy {
+    color: var(--on-gold);
+  }
+}
+.dark .bg-brand-gold {
+  box-shadow: 0 0 14px rgb(249 201 43 / 0.25);
+}
+
+.dark .text-black,
+.dark .hover\:text-black:hover {
+  color: var(--text);
+}
+/* Black text on a gold background stays dark, whatever the theme. */
+.dark .bg-brand-gold.text-black,
+.dark .hover\:bg-brand-gold.hover\:text-black:hover {
+  color: var(--on-gold);
 }

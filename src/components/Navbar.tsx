@@ -7,6 +7,7 @@ import Categories from './CategoryList'
 import Menu from './Menu'
 import NavIcons from './NavIcons'
 import MobileCartLink from './MobileCartLink'
+import ThemeToggle from './ThemeToggle'
 
 const Navbar = () => {
   return (
@@ -29,7 +30,8 @@ const Navbar = () => {
               />
             </span>
           </Link>
-          <div className='flex justify-end'>
+          <div className='flex items-center justify-end gap-1'>
+            <ThemeToggle />
             <MobileCartLink />
           </div>
         </div>
@@ -69,7 +71,10 @@ const Navbar = () => {
         {/* Right Section */}
         <div className='w-2/3 xl:w-1/2 flex items-center justify-between gap-8'>
           <SearchBar />
-          <NavIcons />
+          <div className='flex items-center gap-2'>
+            <ThemeToggle />
+            <NavIcons />
+          </div>
         </div>
       </div>
     </div>

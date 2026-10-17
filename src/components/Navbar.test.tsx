@@ -84,4 +84,32 @@ describe("Navbar on a phone", () => {
     const drawer = phoneHeader().match(/role="dialog"[^>]*class="([^"]*)"/)?.[1].split(" ") ?? [];
     expect(drawer).toContain("pl-[env(safe-area-inset-left)]");
   });
+
+  it("puts a visible dark mode switch in the phone header, next to the cart", () => {
+    const html = phoneHeader();
+    const toggle = html.lastIndexOf('aria-label="Dark mode"');
+    expect(toggle).toBeGreaterThan(html.indexOf('alt="Watch Fusion Kenya"'));
+    expect(toggle).toBeLessThan(html.indexOf('aria-label="Cart"'));
+  });
+
+  it("puts the same switch, with its written label, in the menu panel", () => {
+    expect(phoneHeader()).toMatch(/role="dialog"[\s\S]*Dark mode[\s\S]*Light mode/);
+  });
+
+  it("puts the switch in the computer header too", () => {
+    const html = renderToStaticMarkup(<Navbar />);
+    const desktop = html.slice(html.indexOf('data-testid="desktop-header"'));
+    expect(desktop).toContain('aria-label="Dark mode"');
+  });
+
+  it("turns the black cart and search icons light in the dark theme, so they can be seen", () => {
+    const icons = phoneHeader().match(/<img[^>]*dark:invert[^>]*>/g) ?? [];
+    expect(icons.length).toBeGreaterThanOrEqual(2);
+  });
+
+  it("does the same for the profile, bell, cart and search icons in the computer header", () => {
+    const html = renderToStaticMarkup(<Navbar />);
+    const desktop = html.slice(html.indexOf('data-testid="desktop-header"'));
+    expect((desktop.match(/<img[^>]*dark:invert[^>]*>/g) ?? []).length).toBeGreaterThanOrEqual(4);
+  });
 });

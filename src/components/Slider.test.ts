@@ -19,7 +19,7 @@ describe("banner slides shown until promotions exist in the shop's content", () 
     for (const slide of fallbackSlides) {
       expect(slide.title.length).toBeGreaterThan(0);
       expect(slide.buttonText.length).toBeGreaterThan(0);
-      expect(slide.url.startsWith("/")).toBe(true);
+      expect(slide.url).toMatch(/^\/(?!\/)/);
     }
   });
 });

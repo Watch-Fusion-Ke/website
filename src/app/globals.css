@@ -20,6 +20,10 @@
   --text: #000000;
   --gold: #f9c92b;
   --on-gold: #1e2235;
+  --choice-bg: #ffffff;
+  --choice-text: #1e2235;
+  --choice-on-bg: #1e2235;
+  --choice-on-text: #ffffff;
 }
 
 /* Dark theme. The page is the logo's black, cards are a lifted navy, text is the brand off-white,
@@ -41,6 +45,10 @@
   --text: #faf7f0;
   --gold: #f9c92b;
   --on-gold: #1e2235;
+  --choice-bg: #12141f;
+  --choice-text: #faf7f0;
+  --choice-on-bg: #f9c92b;
+  --choice-on-text: #1e2235;
 }
 
 body {
@@ -98,7 +106,14 @@ body {
   }
 }
 .dark .bg-brand-gold {
+  color: var(--on-gold);
   box-shadow: 0 0 14px rgb(249 201 43 / 0.25);
+}
+/* Whatever text colour the light theme gave a gold background, the text on it stays dark. */
+.dark .bg-brand-gold.text-gray-900,
+.dark .bg-brand-gold.text-black,
+.dark .bg-brand-gold.text-brand-navy {
+  color: var(--on-gold);
 }
 
 .dark .text-black,

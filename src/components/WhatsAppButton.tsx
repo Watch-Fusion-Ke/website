@@ -4,11 +4,8 @@ import { useEffect, useState } from "react";
 import { WHATSAPP_URL } from "@/lib/contact";
 import { hideWhileScrolling } from "@/lib/scrollHider";
 
-const WhatsAppButton = () => {
-  // Out of the way while the page scrolls, so it never covers a price or a button the shopper is reading.
-  const [hidden, setHidden] = useState(false);
-  useEffect(() => hideWhileScrolling(window, setHidden), []);
-
+// The icon itself. `hidden` fades it out and makes it untouchable.
+export const WhatsAppButtonView = ({ hidden }: { hidden: boolean }) => {
   return (
     <a
       href={WHATSAPP_URL}
@@ -27,6 +24,13 @@ const WhatsAppButton = () => {
       </svg>
     </a>
   );
+};
+
+// Out of the way while the page scrolls, so it never covers a price or a button the shopper is reading.
+const WhatsAppButton = () => {
+  const [hidden, setHidden] = useState(false);
+  useEffect(() => hideWhileScrolling(window, setHidden), []);
+  return <WhatsAppButtonView hidden={hidden} />;
 };
 
 export default WhatsAppButton;

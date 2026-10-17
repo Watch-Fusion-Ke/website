@@ -8,7 +8,7 @@ vi.mock("next/navigation", () => ({
 }));
 
 import BottomTabBar, { TabBarView } from "@/components/BottomTabBar";
-import WhatsAppButton from "@/components/WhatsAppButton";
+import WhatsAppButton, { WhatsAppButtonView } from "@/components/WhatsAppButton";
 
 const render = () => renderToStaticMarkup(<BottomTabBar />);
 
@@ -108,6 +108,13 @@ describe("WhatsAppButton", () => {
     expect(classes).toContain("focus-visible:opacity-100");
     expect(classes).not.toContain("opacity-0");
     expect(classes).not.toContain("pointer-events-none");
+  });
+
+  it("fades out and cannot be tapped while hidden", () => {
+    const classes = renderToStaticMarkup(<WhatsAppButtonView hidden />).match(/class="([^"]*)"/)?.[1].split(" ") ?? [];
+    expect(classes).toContain("opacity-0");
+    expect(classes).toContain("pointer-events-none");
+    expect(classes).not.toContain("opacity-100");
   });
 
   it("is a tap target of at least 44 px", () => {

@@ -145,25 +145,25 @@ const CartPage = () => {
             <div key={item._id} className="flex gap-5 p-4 rounded-xl border border-gray-100 shadow-sm bg-white">
               {/* Product Image */}
               {item.image && (
-                <Image
-                  src={wixMedia.getScaledToFillImageUrl(item.image, 100, 130, {})}
-                  alt={item.productName?.original || "Product"}
-                  width={100}
-                  height={130}
-                  className="object-cover rounded-lg flex-shrink-0"
-                />
+                <div className="w-20 sm:w-24 flex-shrink-0">
+                  <Image
+                    src={wixMedia.getScaledToFillImageUrl(item.image, 100, 130, {})}
+                    alt={item.productName?.original || "Product"}
+                    width={100}
+                    height={130}
+                    className="h-auto w-full object-cover rounded-lg"
+                  />
+                </div>
               )}
 
               {/* Product Info */}
               <div className="flex flex-col justify-between flex-1 min-w-0">
-                <div className="flex items-start justify-between gap-4">
-                  <div>
-                    <h3 className="font-semibold text-gray-900">{item.productName?.original}</h3>
-                    <p className="text-xs text-gray-400 mt-0.5">{item.availability?.status}</p>
-                  </div>
-                  <span className="font-bold text-gray-900 whitespace-nowrap">
+                <div>
+                  <h3 className="line-clamp-3 break-words font-semibold leading-snug text-gray-900">{item.productName?.original}</h3>
+                  <p className="mt-1 whitespace-nowrap font-bold text-gray-900">
                     {item.price?.formattedAmount ?? `KES ${item.price?.amount}`}
-                  </span>
+                  </p>
+                  <p className="mt-0.5 text-xs text-gray-400">{item.availability?.status}</p>
                 </div>
 
                 <div className="flex items-center justify-between mt-4">

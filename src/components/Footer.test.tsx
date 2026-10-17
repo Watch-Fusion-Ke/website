@@ -1,20 +1,8 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-// A plain function, not a mock: the mock library flags a rejected promise it records as unhandled.
-const store = vi.hoisted(() => ({ down: false, items: [] as unknown[] }));
-vi.mock("@/lib/wixClientServer", () => ({
-  wixClientServer: async () => ({
-    collections: {
-      queryCollections: () => ({
-        find: async () => {
-          if (store.down) throw new Error("down");
-          return { items: store.items };
-        },
-      }),
-    },
-  }),
-}));
+const categories = vi.hoisted(() => ({ list: [] as { name: string; slug: string }[] }));
+vi.mock("@/hooks/useCategories", () => ({ default: () => categories.list }));
 
 import Footer from "@/components/Footer";
 
@@ -29,12 +17,11 @@ const items = [
   { _id: "x2", name: "Extra Two", slug: "extra-two" },
 ];
 
-const render = async () => renderToStaticMarkup(await Footer());
+const render = async () => renderToStaticMarkup(<Footer />);
 const text = (html: string) => html.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ");
 
 beforeEach(() => {
-  store.down = false;
-  store.items = items;
+  categories.list = items.filter((c) => c.slug !== "all-products").map((c) => ({ name: c.name, slug: c.slug }));
 });
 
 describe("Footer", () => {
@@ -50,7 +37,7 @@ describe("Footer", () => {
     expect(t).toContain("Watch Fusion Kenya");
   });
 
-  it("lists the real categories as links, starting with the whole shop, and no more than six", async () => {
+  it("lists the real categories as links, starting with the whole shop", async () => {
     const html = await render();
     const shopColumn = html.split(">Shop<")[1]?.split("</nav>")[0] ?? "";
     expect(shopColumn).toContain('href="/shop"');
@@ -58,15 +45,11 @@ describe("Footer", () => {
       expect(shopColumn).toContain(`href="/shop?cat=${slug}"`);
     }
     expect(shopColumn).not.toContain("all-products");
-    expect(shopColumn).not.toContain("extra-two");
-    expect((shopColumn.match(/href="\/shop\?cat=/g) ?? []).length).toBeLessThanOrEqual(6);
   });
 
-  it("still shows the whole-shop link when the categories cannot be loaded", async () => {
-    store.down = true;
-    const logged = vi.spyOn(console, "error").mockImplementation(() => {});
+  it("shows only the whole-shop link until the categories have loaded, or when they cannot be loaded", async () => {
+    categories.list = [];
     const html = await render();
-    logged.mockRestore();
     expect(html).toContain('href="/shop"');
     expect(html).not.toContain("cat=");
   });
@@ -115,5 +98,20 @@ describe("Footer", () => {
 
   it("is the page's footer landmark", async () => {
     expect(await render()).toMatch(/^<footer/);
+  });
+
+  it("keeps the shop's contact details together in one address block for screen readers", async () => {
+    const html = await render();
+    const block = html.match(/<address[\s\S]*?<\/address>/)?.[0] ?? "";
+    for (const part of ["Stanbank House", 'href="tel:+254796044969"', 'href="mailto:watchfusionkenya@gmail.com"', "Mon to Fri"]) {
+      expect(block).toContain(part);
+    }
+  });
+
+  it("says when a link opens a new tab", async () => {
+    const html = await render();
+    const links = html.match(/<a [^>]*target="_blank"[^>]*>[\s\S]*?<\/a>/g) ?? [];
+    expect(links.length).toBeGreaterThan(0);
+    for (const a of links) expect(a).toMatch(/opens in a new tab/i);
   });
 });

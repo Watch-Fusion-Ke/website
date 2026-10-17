@@ -1,4 +1,4 @@
-import { ChatIcon, MailIcon, MapPinIcon, PhoneIcon } from "@/components/icons";
+import { ChatIcon, ClockIcon, MailIcon, MapPinIcon, PhoneIcon } from "@/components/icons";
 import {
     ADDRESS_LINES,
     EMAIL,
@@ -36,8 +36,9 @@ export default function ContactPage() {
                 <div className={card}>
                     <PhoneIcon className="mb-3 h-8 w-8 text-brand-navy" />
                     <h2 className="mb-2 text-lg font-semibold">Call or WhatsApp</h2>
-                    <p className="text-gray-700">
+                    <p className="flex flex-wrap gap-x-6 gap-y-1 text-gray-700">
                         <a href={PHONE_TEL} className={link}>{PHONE_DISPLAY}</a>
+                        <a href={WHATSAPP_URL} {...outside} className={link}>WhatsApp</a>
                     </p>
                 </div>
 
@@ -63,7 +64,7 @@ export default function ContactPage() {
                 </div>
 
                 <div className={card}>
-                    <ChatIcon className="mb-3 h-8 w-8 text-brand-navy" />
+                    <ClockIcon className="mb-3 h-8 w-8 text-brand-navy" />
                     <h2 className="mb-2 text-lg font-semibold">Opening hours</h2>
                     <dl className="text-gray-700">
                         {OPENING_HOURS.map(({ days, hours }) => (
@@ -73,7 +74,12 @@ export default function ContactPage() {
                             </div>
                         ))}
                     </dl>
-                    <p className="mt-4 flex gap-6">
+                </div>
+
+                <div className={card}>
+                    <ChatIcon className="mb-3 h-8 w-8 text-brand-navy" />
+                    <h2 className="mb-2 text-lg font-semibold">Follow us</h2>
+                    <p className="flex gap-6 text-gray-700">
                         <a href={INSTAGRAM_URL} {...outside} className={link}>Instagram</a>
                         <a href={TIKTOK_URL} {...outside} className={link}>TikTok</a>
                     </p>

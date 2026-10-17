@@ -12,7 +12,7 @@ const Footer = () => {
             Watch Fusion Kenya
           </p>
         </Link>
-        <p className="text-sm text-gray-400">© {new Date().getFullYear()} Watch Fusion Kenya.</p>
+        <p className="text-sm text-gray-400">© Watch Fusion Kenya.</p>
         <p className="text-sm text-gray-400">All rights reserved.</p>
         {/* Social Media Icons */}
         <div className="flex gap-4 mt-2">

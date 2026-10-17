@@ -3,7 +3,9 @@ import { describe, expect, it } from "vitest";
 import Footer from "@/components/Footer";
 
 describe("Footer", () => {
-  it("shows the current year, not a fixed one", () => {
-    expect(renderToStaticMarkup(<Footer />)).toContain(`© ${new Date().getFullYear()} Watch Fusion Kenya`);
+  it("carries the copyright line without a year that could go stale on a page built months ago", () => {
+    const html = renderToStaticMarkup(<Footer />);
+    expect(html).toContain("© Watch Fusion Kenya");
+    expect(html).not.toMatch(/© \d{4}/);
   });
 });

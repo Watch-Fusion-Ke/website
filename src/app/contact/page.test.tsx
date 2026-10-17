@@ -43,6 +43,19 @@ describe("Contact page", () => {
     expect(html).toMatch(/not free/i);
   });
 
+  it("gives social links their own card, not the opening hours card", () => {
+    const hours = html.split("Opening hours")[1]?.split("Follow us")[0] ?? "";
+    expect(hours).toContain("Mon to Fri");
+    expect(hours).not.toContain("instagram.com");
+    expect(text).toContain("Follow us");
+  });
+
+  it("offers both a call and a WhatsApp chat under the phone heading", () => {
+    const card = html.split("Call or WhatsApp")[1]?.split("</div>")[0] ?? "";
+    expect(card).toContain('href="tel:+254796044969"');
+    expect(card).toContain('href="https://wa.me/254796044969"');
+  });
+
   it("has one main heading in the title face, and no pink", () => {
     expect(html.match(/<h1/g)).toHaveLength(1);
     expect(html).toMatch(/<h1[^>]*font-display/);

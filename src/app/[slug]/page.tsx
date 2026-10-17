@@ -101,7 +101,7 @@ const SinglePage = async ({ params }: Props) => {
 
             {/* TEXTS */}
             <div className="w-full lg:w-1/2 flex flex-col gap-6">
-                <h1 className="text-4xl font-bold">{product.name}</h1>
+                <h1 className="font-display text-4xl font-bold leading-tight">{product.name}</h1>
 
                 {product.description && (
                     <div

@@ -1,13 +1,18 @@
-import { WHATSAPP_URL } from "@/lib/contact";
+"use client";
 
-const WhatsAppButton = () => {
+import { useEffect, useState } from "react";
+import { WHATSAPP_URL } from "@/lib/contact";
+import { hideWhileScrolling } from "@/lib/scrollHider";
+
+// The icon itself. `hidden` fades it out and makes it untouchable.
+export const WhatsAppButtonView = ({ hidden }: { hidden: boolean }) => {
   return (
     <a
       href={WHATSAPP_URL}
       target="_blank"
       rel="noopener noreferrer"
       aria-label="Chat on WhatsApp (opens in a new tab)"
-      className="whatsapp-float fixed right-[max(1rem,env(safe-area-inset-right))] md:right-[max(1.5rem,env(safe-area-inset-right))] bottom-[calc(5rem_+_env(safe-area-inset-bottom))] md:bottom-6 z-[35] flex items-center justify-center w-14 h-14 md:w-[60px] md:h-[60px] rounded-full bg-[#25D366] shadow-lg transition-transform md:hover:scale-110"
+      className={`whatsapp-float fixed right-[max(1rem,env(safe-area-inset-right))] md:right-[max(1.5rem,env(safe-area-inset-right))] bottom-[calc(5rem_+_env(safe-area-inset-bottom))] md:bottom-6 z-[35] flex items-center justify-center w-14 h-14 md:w-[60px] md:h-[60px] rounded-full bg-[#25D366] shadow-lg transition-[transform,opacity] duration-200 md:hover:scale-110 ${hidden ? "opacity-0 pointer-events-none" : "opacity-100"} focus-visible:opacity-100`}
     >
       <svg
         width="32"
@@ -19,6 +24,13 @@ const WhatsAppButton = () => {
       </svg>
     </a>
   );
+};
+
+// Out of the way while the page scrolls, so it never covers a price or a button the shopper is reading.
+const WhatsAppButton = () => {
+  const [hidden, setHidden] = useState(false);
+  useEffect(() => hideWhileScrolling(window, setHidden), []);
+  return <WhatsAppButtonView hidden={hidden} />;
 };
 
 export default WhatsAppButton;

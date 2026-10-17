@@ -85,15 +85,15 @@ const CustomizeProducts = ({
                                 </li>
                             ) : (
                                 <li
-                                    className="ring-1 ring-lama text-lama rounded-md py-1 px-4 text-sm"
+                                    className="ring-1 ring-brand-navy text-brand-navy rounded-md py-1 px-4 text-sm"
                                     style={{
                                         cursor: disabled ? "not-allowed" : "pointer",
                                         backgroundColor: selected
-                                            ? "#f35c7a"
+                                            ? "#1E2235"
                                             : disabled
-                                                ? "#FBCFE8"
+                                                ? "#E5E7EB"
                                                 : "white",
-                                        color: selected || disabled ? "white" : "#f35c7a",
+                                        color: selected ? "white" : disabled ? "#6B7280" : "#1E2235",
                                         boxShadow: disabled ? "none" : "",
 
                                     }}
@@ -131,13 +131,13 @@ const CustomizeProducts = ({
             {/* OTHERS */}
             {/* <h4 className="font-medium">Choose a size</h4>
       <ul className="flex items-center gap-3">
-        <li className="ring-1 ring-lama text-lama rounded-md py-1 px-4 text-sm cursor-pointer">
+        <li className="ring-1 ring-brand-navy text-brand-navy rounded-md py-1 px-4 text-sm cursor-pointer">
           Small
         </li>
-        <li className="ring-1 ring-lama text-white bg-lama rounded-md py-1 px-4 text-sm cursor-pointer">
+        <li className="ring-1 ring-brand-navy text-white bg-brand-navy rounded-md py-1 px-4 text-sm cursor-pointer">
           Medium
         </li>
-        <li className="ring-1 ring-pink-200 text-white bg-pink-200 rounded-md py-1 px-4 text-sm cursor-not-allowed">
+        <li className="ring-1 ring-gray-200 text-white bg-gray-200 rounded-md py-1 px-4 text-sm cursor-not-allowed">
           Large
         </li>
       </ul> */}

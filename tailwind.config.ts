@@ -18,12 +18,12 @@ const config: Config = {
         display: ["var(--font-display)", "Georgia", "serif"],
       },
       colors: {
-        lama: "#F35C7A",
         brand: {
           gold: "#F9C92B",
           "gold-dark": "#DCA918",
           black: "#0A0A0A",
           navy: "#1E2235",
+          cream: "#FAF7F0",
         },
       },
     },

@@ -11,14 +11,14 @@ export default async function HomePage({
         <div className="px-4 md:px-8 lg:px-16 xl:px-32 2xl:px-64">
             {/* Hero Section */}
             <section className="py-8 md:py-12">
-                <div className="bg-gradient-to-r from-pink-100 to-purple-100 rounded-2xl p-8 md:p-12 lg:p-16">
+                <div className="bg-brand-cream rounded-2xl p-8 md:p-12 lg:p-16">
                     <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-4">
                         Welcome to Our Store
                     </h1>
                     <p className="text-gray-600 text-lg md:text-xl mb-6 max-w-2xl">
                         Discover amazing products at great prices. Shop the latest trends and exclusive deals.
                     </p>
-                    <button className="bg-[#F35C7A] text-white px-6 py-3 rounded-full hover:bg-[#d14d66] transition-colors">
+                    <button className="bg-brand-navy text-white px-6 py-3 rounded-full hover:bg-brand-gold hover:text-brand-navy transition-colors">
                         Shop Now
                     </button>
                 </div>

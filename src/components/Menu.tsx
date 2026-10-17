@@ -144,7 +144,7 @@ const Menu = () => {
           >
             <span>Cart</span>
             {counter > 0 && (
-              <span className="bg-yellow-400 text-gray-900 text-xs font-bold w-6 h-6 rounded-full flex items-center justify-center">
+              <span className="bg-brand-gold text-gray-900 text-xs font-bold w-6 h-6 rounded-full flex items-center justify-center">
                 {counter}
               </span>
             )}
@@ -168,7 +168,7 @@ const Menu = () => {
               <button
                 onClick={handleLogout}
                 disabled={loggingOut}
-                className="w-full text-sm font-semibold text-white bg-black hover:bg-gray-800 px-4 py-3 rounded-lg transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                className="w-full text-sm font-semibold text-white bg-brand-navy hover:bg-brand-gold hover:text-brand-navy px-4 py-3 rounded-lg transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
               >
                 {loggingOut ? "Logging out..." : "Logout"}
               </button>
@@ -177,7 +177,7 @@ const Menu = () => {
             <Link
               href="/login"
               onClick={close}
-              className="w-full text-sm font-semibold text-white bg-black hover:bg-gray-800 px-4 py-3 rounded-lg transition-colors text-center"
+              className="w-full text-sm font-semibold text-white bg-brand-navy hover:bg-brand-gold hover:text-brand-navy px-4 py-3 rounded-lg transition-colors text-center"
             >
               Login / Register
             </Link>

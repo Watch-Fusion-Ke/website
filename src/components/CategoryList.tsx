@@ -37,7 +37,7 @@ const CategoryList = async () => {
             key={item._id}
           >
             <span
-              className="block text-lg md:text-xl font-semibold text-gray-800 hover:text-yellow-400 transition-colors duration-200 whitespace-nowrap leading-[25.5px]"
+              className="block text-lg md:text-xl font-semibold text-gray-800 hover:underline underline-offset-4 decoration-2 decoration-brand-gold transition-colors duration-200 whitespace-nowrap leading-[25.5px]"
             >
               {item.name}
             </span>

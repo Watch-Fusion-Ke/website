@@ -179,7 +179,7 @@ const CartModal = ({ onClose }: CartModalProps) => {
                   View Cart
                 </button>
                 <button
-                  className="flex-1 rounded-lg py-2.5 px-4 text-sm font-medium bg-black text-white hover:bg-gray-800 transition-colors disabled:cursor-not-allowed disabled:opacity-60"
+                  className="flex-1 rounded-lg py-2.5 px-4 text-sm font-medium bg-brand-navy text-white hover:bg-brand-gold hover:text-brand-navy transition-colors disabled:cursor-not-allowed disabled:opacity-60"
                   disabled={isLoading}
                   onClick={handleCheckout}
                 >

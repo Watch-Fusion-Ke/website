@@ -122,7 +122,7 @@ const SinglePage = async ({ params }: Props) => {
                         <h3 className="text-xl text-gray-500 line-through">
                             KES {product.price?.price}
                         </h3>
-                        <h2 className="font-semibold text-3xl text-rose-600">
+                        <h2 className="font-semibold text-3xl text-brand-navy">
                             KES {product.price?.discountedPrice}
                         </h2>
                     </div>

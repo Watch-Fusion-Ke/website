@@ -7,7 +7,7 @@ const Footer = () => {
     <div className="mt-16 flex flex-col items-center gap-8 md:flex-row md:items-start md:justify-between md:gap-0 bg-black p-8 rounded-lg">
       <div className="flex flex-col gap-4 items-center md:items-start">
         <Link href="/" className="flex items-center">
-          <Image src="/logo.png" alt="TrendLama" width={36} height={36} />
+          <Image src="/logo.png" alt="Watch Fusion Kenya" width={36} height={36} />
           <p className="hidden md:block text-md font-medium tracking-wider text-white">
             Watch Fusion Kenya
           </p>
@@ -20,7 +20,7 @@ const Footer = () => {
             href="https://www.instagram.com/watchfusion_kenya"
             target="_blank"
             rel="noopener noreferrer"
-            className="text-gray-400 hover:text-pink-400 transition-colors"
+            className="text-gray-400 hover:text-brand-gold transition-colors"
             aria-label="Instagram"
           >
             <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
@@ -60,7 +60,7 @@ const Footer = () => {
           href="https://www.instagram.com/watchfusion_kenya"
           target="_blank"
           rel="noopener noreferrer"
-          className="hover:text-pink-400 transition-colors"
+          className="hover:text-brand-gold transition-colors"
         >
           Instagram
         </a>

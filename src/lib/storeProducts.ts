@@ -24,6 +24,8 @@ export type ProductListParams = {
   sort?: QueryValue;
   page?: QueryValue;
   limit?: number;
+  // Keep only products that are on sale (see saleInfo).
+  onSale?: boolean;
 };
 
 export type ProductCard = {
@@ -61,6 +63,7 @@ const PRICE_FIELD = "actualPriceRange.minValue.amount";
 const SORT_FIELDS: Record<string, string> = {
   price: PRICE_FIELD,
   lastUpdated: "updatedDate",
+  created: "createdDate",
   name: "name",
 };
 
@@ -105,6 +108,9 @@ export const buildSearchBody = (params: ProductListParams): SearchBody => {
   if (has(PRODUCT_TYPES, typeKey)) {
     conditions.push({ productType: { $eq: PRODUCT_TYPES[typeKey] } });
   }
+
+  // For sales, only products that hold a compare-at price can qualify, so Wix does that first cut.
+  if (params.onSale) conditions.push({ "compareAtPriceRange.minValue.amount": { $gt: "0" } });
 
   const min = asNumberString(params.min);
   if (min !== null) conditions.push({ [PRICE_FIELD]: { $gte: min } });
@@ -203,7 +209,8 @@ export const listProducts = async (
   if (!Array.isArray(json.products)) {
     throw new Error("Wix product search returned an unexpected response");
   }
-  const all: WixProduct[] = json.products;
+  const found: WixProduct[] = json.products;
+  const all = params.onSale ? found.filter((product) => saleInfo(product).discountPercent !== null) : found;
   const start = page * limit;
   return {
     items: all.slice(start, start + limit).map(toCard),

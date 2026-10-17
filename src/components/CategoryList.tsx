@@ -21,7 +21,7 @@ const CategoryList = async () => {
           ))}
         </div>
         {/* Right-edge fade + chevron: hints that the strip scrolls */}
-        <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center justify-end w-14 bg-gradient-to-l from-white via-white/80 to-transparent">
+        <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center justify-end w-14 bg-gradient-to-l from-white via-white/80 dark:from-[#0a0a0a] dark:via-[#0a0a0a]/80 to-transparent">
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-gray-400 mr-1">
             <polyline points="9 18 15 12 9 6" />
           </svg>
@@ -37,7 +37,7 @@ const CategoryList = async () => {
             key={item._id}
           >
             <span
-              className="block text-lg md:text-xl font-semibold text-gray-800 hover:text-yellow-400 transition-colors duration-200 whitespace-nowrap leading-[25.5px]"
+              className="block text-lg md:text-xl font-semibold text-gray-800 hover:underline underline-offset-4 decoration-2 decoration-brand-gold transition-colors duration-200 whitespace-nowrap leading-[25.5px]"
             >
               {item.name}
             </span>

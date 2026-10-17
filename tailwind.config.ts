@@ -1,6 +1,7 @@
 import type { Config } from "tailwindcss";
 
 const config: Config = {
+  darkMode: "class",
   content: [
     "./src/pages/**/*.{js,ts,jsx,tsx,mdx}",
     "./src/components/**/*.{js,ts,jsx,tsx,mdx}",
@@ -18,12 +19,17 @@ const config: Config = {
         display: ["var(--font-display)", "Georgia", "serif"],
       },
       colors: {
-        lama: "#F35C7A",
+        // The greys read their values from CSS variables, so the dark theme flips every grey on the site at once.
+        gray: Object.fromEntries(
+          [50, 100, 200, 300, 400, 500, 600, 700, 800, 900].map((n) => [String(n), `rgb(var(--gray-${n}) / <alpha-value>)`])
+        ),
         brand: {
-          gold: "#F9C92B",
+          gold: "rgb(var(--gold-rgb) / <alpha-value>)",
           "gold-dark": "#DCA918",
           black: "#0A0A0A",
           navy: "#1E2235",
+          panel: "#1E2235",
+          cream: "#FAF7F0",
         },
       },
     },

@@ -65,6 +65,14 @@ describe("buildSearchBody", () => {
     expect(buildSearchBody({ categoryId: "" }).search.filter).toBeUndefined();
   });
 
+  it("asks Wix only for products that have a compare-at price when listing sales, so the 100-product limit is not spent on the rest", () => {
+    const body = buildSearchBody({ onSale: true });
+    expect(body.search.filter).toEqual({
+      $and: [{ "compareAtPriceRange.minValue.amount": { $gt: "0" } }],
+    });
+    expect(buildSearchBody({}).search.filter).toBeUndefined();
+  });
+
   it("never uses the two catalog V1 fields that Wix rejects on a V3 store", () => {
     const text = JSON.stringify(
       buildSearchBody({ categoryId: CATEGORY, type: "physical", name: "n" })
@@ -94,6 +102,10 @@ describe("buildSearchBody", () => {
     expect(buildSearchBody({ sort: "desc lastUpdated" }).search.sort).toEqual([
       { fieldName: "updatedDate", order: "DESC" },
     ]);
+  });
+
+  it("sorts by the day a product was added, so editing an old product does not make it new", () => {
+    expect(buildSearchBody({ sort: "desc created" }).search.sort).toEqual([{ fieldName: "createdDate", order: "DESC" }]);
   });
 
   it("ignores values that only exist on every object, such as 'constructor'", () => {
@@ -229,6 +241,23 @@ describe("listProducts", () => {
       hoverImageUrl: null,
       priceLabel: "",
     });
+  });
+
+  it("lists only products on sale when asked, and pages through those", async () => {
+    const sale = (n: number) =>
+      wixProduct(n, { compareAtPriceRange: { minValue: { amount: "5000.00" }, maxValue: { amount: "5000.00" } } });
+    const products = [wixProduct(1), sale(2), wixProduct(3), sale(4), sale(5)];
+    const page0 = await listProducts(fakeFetch(products).fetchLike, { onSale: true, limit: 2 });
+    expect(page0.items.map((c) => c.id)).toEqual(["id-2", "id-4"]);
+    expect(page0.hasNext).toBe(true);
+    const page1 = await listProducts(fakeFetch(products).fetchLike, { onSale: true, limit: 2, page: 1 });
+    expect(page1.items.map((c) => c.id)).toEqual(["id-5"]);
+    expect(page1.hasNext).toBe(false);
+  });
+
+  it("lists every product when not asked for sales only", async () => {
+    const products = [wixProduct(1), wixProduct(2)];
+    expect((await listProducts(fakeFetch(products).fetchLike, {})).items).toHaveLength(2);
   });
 
   it("returns an empty page for an empty category", async () => {

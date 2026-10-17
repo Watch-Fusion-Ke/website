@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import { WHATSAPP_URL } from "@/lib/contact";
 
 const Footer = () => {
   return (
@@ -72,7 +73,7 @@ const Footer = () => {
           TikTok
         </a>
         <a
-          href="https://wa.me/254796044969"
+          href={WHATSAPP_URL}
           target="_blank"
           rel="noopener noreferrer"
           className="hover:text-green-400 transition-colors"

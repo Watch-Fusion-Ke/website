@@ -1,37 +1,13 @@
-"use client";
+import { WHATSAPP_URL } from "@/lib/contact";
 
 const WhatsAppButton = () => {
   return (
     <a
-      href="https://wa.me/254796044969"
+      href={WHATSAPP_URL}
       target="_blank"
       rel="noopener noreferrer"
-      aria-label="Chat on WhatsApp"
-      className="whatsapp-float"
-      style={{
-        position: "fixed",
-        bottom: "24px",
-        right: "24px",
-        zIndex: 9999,
-        width: "60px",
-        height: "60px",
-        borderRadius: "50%",
-        backgroundColor: "#25D366",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        boxShadow: "0 4px 12px rgba(0, 0, 0, 0.25)",
-        transition: "transform 0.3s ease, box-shadow 0.3s ease",
-        cursor: "pointer",
-      }}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.transform = "scale(1.1)";
-        e.currentTarget.style.boxShadow = "0 6px 20px rgba(37, 211, 102, 0.5)";
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.transform = "scale(1)";
-        e.currentTarget.style.boxShadow = "0 4px 12px rgba(0, 0, 0, 0.25)";
-      }}
+      aria-label="Chat on WhatsApp (opens in a new tab)"
+      className="whatsapp-float fixed right-4 md:right-6 bottom-[calc(5rem_+_env(safe-area-inset-bottom))] md:bottom-6 z-[35] flex items-center justify-center w-14 h-14 md:w-[60px] md:h-[60px] rounded-full bg-[#25D366] shadow-lg transition-transform md:hover:scale-110"
     >
       <svg
         width="32"

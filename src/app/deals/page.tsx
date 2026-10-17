@@ -42,7 +42,7 @@ export default async function DealsPage({
             LIMITED TIME OFFERS
           </span>
                     <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-4">
-                        🔥 Hot Deals & Discounts
+                        Hot Deals & Discounts
                     </h1>
                     <p className="text-lg md:text-xl mb-6 opacity-90">
                         Save big on our best-selling products. Don&apos;t miss out!
@@ -70,19 +70,15 @@ export default async function DealsPage({
             {/* Deal Categories */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12">
                 <div className="bg-gray-100 rounded-lg p-4 text-center hover:bg-gray-200 transition-colors cursor-pointer">
-                    <div className="text-2xl mb-2">⚡</div>
                     <div className="font-semibold">Flash Sales</div>
                 </div>
                 <div className="bg-gray-100 rounded-lg p-4 text-center hover:bg-gray-200 transition-colors cursor-pointer">
-                    <div className="text-2xl mb-2">🎁</div>
                     <div className="font-semibold">Bundle Offers</div>
                 </div>
                 <div className="bg-gray-100 rounded-lg p-4 text-center hover:bg-gray-200 transition-colors cursor-pointer">
-                    <div className="text-2xl mb-2">💰</div>
                     <div className="font-semibold">Up to 50% Off</div>
                 </div>
                 <div className="bg-gray-100 rounded-lg p-4 text-center hover:bg-gray-200 transition-colors cursor-pointer">
-                    <div className="text-2xl mb-2">🆕</div>
                     <div className="font-semibold">New Deals</div>
                 </div>
             </div>

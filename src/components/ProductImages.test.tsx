@@ -44,6 +44,12 @@ describe("ProductImages", () => {
     for (const tag of arrows) expect(tag).toMatch(/h-(10|11|12)\b/);
   });
 
+  it("has a button to pause and resume the photos moving by themselves", () => {
+    const html = render(5);
+    expect(html).toMatch(/<button[^>]*aria-pressed="false"[^>]*>[^<]*Pause/);
+    expect(render(1)).not.toContain("Pause");
+  });
+
   it("shows no strip or arrows for a single photo", () => {
     const html = render(1);
     expect(html).not.toContain("data-slot");
@@ -90,6 +96,21 @@ describe("ZoomView", () => {
   it("shows the photo fitted to the screen first and larger once tapped", () => {
     expect(view(false)).toContain('data-magnified="false"');
     expect(view(true)).toContain('data-magnified="true"');
+  });
+
+  it("keeps the arrows light on the dark background, with no grey hover, and 44px to tap", () => {
+    const arrows = view().match(/<button[^>]*aria-label="(Previous|Next) photo"[^>]*>/g) ?? [];
+    expect(arrows).toHaveLength(2);
+    for (const tag of arrows) {
+      expect(tag).not.toContain("gray-");
+      expect(tag).toContain("text-white");
+      expect(tag).toContain("h-11");
+    }
+  });
+
+  it("asks for a larger picture while magnified so it stays sharp", () => {
+    expect(view(false)).not.toContain("250vw");
+    expect(view(true)).toContain("250vw");
   });
 
   it("tells the shopper they can tap or pinch, and has arrows only when there is more than one photo", () => {

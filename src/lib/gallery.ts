@@ -10,7 +10,8 @@ export type GalleryAction =
   | { type: "select"; index: number }
   | { type: "openZoom" }
   | { type: "closeZoom" }
-  | { type: "toggleMagnify" };
+  | { type: "toggleMagnify" }
+  | { type: "toggleAuto" };
 
 export const initialGallery = (count: number): GalleryState => ({ count, index: 0, auto: true, zoom: false, magnified: false });
 
@@ -33,6 +34,8 @@ export const galleryReducer = (state: GalleryState, action: GalleryAction): Gall
       return count > 0 ? { ...state, zoom: true, auto: false, magnified: false } : state;
     case "closeZoom":
       return { ...state, zoom: false, magnified: false };
+    case "toggleAuto":
+      return count > 1 ? { ...state, auto: !state.auto } : state;
     case "toggleMagnify":
       return state.zoom ? { ...state, magnified: !state.magnified } : state;
   }

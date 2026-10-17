@@ -1,11 +1,15 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useMemo, useReducer, useRef } from "react";
+import { useEffect, useLayoutEffect, useMemo, useReducer, useRef } from "react";
+import { createPortal } from "react-dom";
 import { AUTOPLAY_MS, galleryReducer, initialGallery, keyAction, visibleSlots } from "@/lib/gallery";
 import { ChevronLeftIcon, ChevronRightIcon, CloseIcon } from "@/components/icons";
 
 type Item = { _id?: string | null; image?: { url?: string | null } | null };
+
+const zoomArrow =
+  "pointer-events-auto flex h-11 w-11 items-center justify-center rounded-full border border-white/30 bg-black/50 text-white transition-colors hover:bg-black/70 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold";
 
 const arrow =
   "flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-gray-300 text-gray-700 transition-colors hover:border-brand-gold hover:text-gray-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold";
@@ -32,7 +36,7 @@ export const ZoomView = ({
   const dialog = useRef<HTMLDivElement>(null);
 
   // A zoomed photo opens centred, so the shopper starts from the middle of the watch.
-  useEffect(() => {
+  useLayoutEffect(() => {
     const el = scroller.current;
     if (!el || !magnified) return;
     el.scrollLeft = (el.scrollWidth - el.clientWidth) / 2;
@@ -85,7 +89,7 @@ export const ZoomView = ({
           onClick={onToggle}
           className={`relative block ${magnified ? "h-[250%] w-[250%] cursor-zoom-out" : "h-full w-full cursor-zoom-in"}`}
         >
-          <Image src={url} alt="" fill sizes="100vw" className="object-contain" />
+          <Image src={url} alt="" fill sizes={magnified ? "250vw" : "100vw"} className="object-contain" />
         </button>
       </div>
 
@@ -95,7 +99,7 @@ export const ZoomView = ({
             type="button"
             aria-label="Previous photo"
             onClick={onPrev}
-            className={`${arrow} pointer-events-auto border-white/30 bg-black/50 text-white`}
+            className={zoomArrow}
           >
             <ChevronLeftIcon className="h-5 w-5" />
           </button>
@@ -103,7 +107,7 @@ export const ZoomView = ({
             type="button"
             aria-label="Next photo"
             onClick={onNext}
-            className={`${arrow} pointer-events-auto border-white/30 bg-black/50 text-white`}
+            className={zoomArrow}
           >
             <ChevronRightIcon className="h-5 w-5" />
           </button>
@@ -179,7 +183,10 @@ const Gallery = ({ photos }: { photos: { id: string; url: string }[] }) => {
         aria-label="Zoom in on the photo"
         onClick={() => dispatch({ type: "openZoom" })}
         onTouchStart={(event) => {
-          swipeStart.current = event.touches[0].clientX;
+          swipeStart.current = event.touches.length === 1 ? event.touches[0].clientX : null;
+        }}
+        onTouchMove={(event) => {
+          if (event.touches.length > 1) swipeStart.current = null; // a pinch is not a swipe
         }}
         onTouchEnd={onTouchEnd}
         className="relative block h-[min(320px,42vh)] w-full cursor-zoom-in overflow-hidden rounded-md bg-gray-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold sm:h-[400px] lg:h-[500px]"
@@ -238,17 +245,32 @@ const Gallery = ({ photos }: { photos: { id: string; url: string }[] }) => {
         </div>
       )}
 
-      {state.zoom && (
-        <ZoomView
-          url={current.url}
-          count={photos.length}
-          magnified={state.magnified}
-          onClose={() => dispatch({ type: "closeZoom" })}
-          onNext={() => dispatch({ type: "next" })}
-          onPrev={() => dispatch({ type: "prev" })}
-          onToggle={() => dispatch({ type: "toggleMagnify" })}
-        />
+      {photos.length > 1 && (
+        <div className="mt-2 flex justify-center">
+          <button
+            type="button"
+            aria-pressed={!state.auto}
+            onClick={() => dispatch({ type: "toggleAuto" })}
+            className="rounded px-2 py-2 text-xs text-gray-500 underline underline-offset-4 hover:text-gray-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold"
+          >
+            {state.auto ? "Pause photos" : "Play photos"}
+          </button>
+        </div>
       )}
+
+      {state.zoom &&
+        createPortal(
+          <ZoomView
+            url={current.url}
+            count={photos.length}
+            magnified={state.magnified}
+            onClose={() => dispatch({ type: "closeZoom" })}
+            onNext={() => dispatch({ type: "next" })}
+            onPrev={() => dispatch({ type: "prev" })}
+            onToggle={() => dispatch({ type: "toggleMagnify" })}
+          />,
+          document.body
+        )}
     </div>
   );
 };

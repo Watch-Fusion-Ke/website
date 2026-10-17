@@ -81,6 +81,14 @@ describe("galleryReducer", () => {
     expect(galleryReducer(open, { type: "next" })).toMatchObject({ index: 1, magnified: false, zoom: true });
   });
 
+  it("lets the shopper pause and resume the photos moving by themselves", () => {
+    const paused = galleryReducer(start, { type: "toggleAuto" });
+    expect(paused.auto).toBe(false);
+    expect(galleryReducer(paused, { type: "tick" })).toBe(paused);
+    expect(galleryReducer(paused, { type: "toggleAuto" }).auto).toBe(true);
+    expect(galleryReducer(initialGallery(1), { type: "toggleAuto" }).auto).toBe(true);
+  });
+
   it("does nothing with one photo or none", () => {
     expect(galleryReducer(initialGallery(1), { type: "next" }).index).toBe(0);
     expect(galleryReducer(initialGallery(1), { type: "tick" }).index).toBe(0);

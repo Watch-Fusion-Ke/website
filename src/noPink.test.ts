@@ -16,7 +16,19 @@ const sourceFiles = (dir: string): string[] =>
         : []
   );
 
-const OFF_BRAND = /\b(?:bg|text|ring|border|from|to|via|hover:text|hover:bg|disabled:bg)-(?:pink|rose|purple|fuchsia|lama)\b|#F35C7A|#d14d66|\blama\b/i;
+const OFF_BRAND = /\b(?:[a-z-]+:)*(?:bg|text|ring|border|from|to|via|fill|stroke|outline|shadow|accent|divide|placeholder|decoration)-(?:pink|rose|purple|fuchsia|lama)\b|\blama\b/i;
+
+// Any hex colour in the pink to purple range (hue 280 to 350 degrees, clearly coloured), however it is written.
+const isPinkHex = (hex: string): boolean => {
+  const n = parseInt(hex.length === 4 ? hex.slice(1).replace(/./g, "$&$&") : hex.slice(1), 16);
+  const [r, g, b] = [(n >> 16) & 255, (n >> 8) & 255, n & 255].map((v) => v / 255);
+  const max = Math.max(r, g, b), min = Math.min(r, g, b), d = max - min;
+  if (d === 0) return false;
+  const l = (max + min) / 2, sat = d / (1 - Math.abs(2 * l - 1));
+  const hue = (max === r ? ((g - b) / d) % 6 : max === g ? (b - r) / d + 2 : (r - g) / d + 4) * 60;
+  const h = (hue + 360) % 360;
+  return sat > 0.2 && h >= 280 && h <= 350;
+};
 
 describe("colours", () => {
   it("use no pink, rose, purple or the old template pink", () => {
@@ -26,10 +38,41 @@ describe("colours", () => {
       readFileSync(file, "utf8")
         .split("\n")
         .forEach((line, i) => {
-          if (OFF_BRAND.test(line)) found.push(`${file}:${i + 1} ${line.trim().slice(0, 90)}`);
+          const pinkHex = (line.match(/#[0-9a-fA-F]{6}\b|#[0-9a-fA-F]{3}\b/g) ?? []).some(isPinkHex);
+          if (OFF_BRAND.test(line) || pinkHex) found.push(`${file}:${i + 1} ${line.trim().slice(0, 90)}`);
         });
     }
     expect(found).toEqual([]);
+  });
+
+  it("give action buttons the brand navy, not the template's black with a grey hover", () => {
+    const found: string[] = [];
+    for (const file of sourceFiles("src")) {
+      if (WAITING_FOR_REDESIGN.has(file)) continue;
+      readFileSync(file, "utf8")
+        .split("\n")
+        .forEach((line, i) => {
+          if (/hover:bg-gray-800/.test(line)) found.push(`${file}:${i + 1}`);
+        });
+    }
+    expect(found).toEqual([]);
+  });
+
+  it("keep disabled buttons readable, with dark text on a light grey and not white on grey", () => {
+    const found: string[] = [];
+    for (const file of sourceFiles("src")) {
+      readFileSync(file, "utf8")
+        .split("\n")
+        .forEach((line, i) => {
+          if (/disabled:bg-gray-[2-4]00/.test(line) && /disabled:text-white|text-white/.test(line) && !/disabled:text-gray-/.test(line))
+            found.push(`${file}:${i + 1}`);
+        });
+    }
+    expect(found).toEqual([]);
+  });
+
+  it("name the shop correctly in the footer logo", () => {
+    expect(readFileSync("src/components/Footer.tsx", "utf8")).not.toContain("TrendLama");
   });
 
   it("do not set gold as text colour on a light page", () => {

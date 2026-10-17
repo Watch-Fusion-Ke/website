@@ -91,9 +91,9 @@ const CustomizeProducts = ({
                                         backgroundColor: selected
                                             ? "#1E2235"
                                             : disabled
-                                                ? "#FBCFE8"
+                                                ? "#E5E7EB"
                                                 : "white",
-                                        color: selected || disabled ? "white" : "#1E2235",
+                                        color: selected ? "white" : disabled ? "#6B7280" : "#1E2235",
                                         boxShadow: disabled ? "none" : "",
 
                                     }}

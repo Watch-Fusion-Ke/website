@@ -71,7 +71,7 @@ const Add = ({
         <button
           onClick={handleAddToCart}
           disabled={isLoading || stockNumber < 1}
-          className="w-36 text-sm rounded-3xl bg-brand-navy text-white py-2 px-4 hover:bg-brand-gold hover:text-brand-navy transition-colors disabled:cursor-not-allowed disabled:bg-gray-300 disabled:text-white"
+          className="w-36 text-sm rounded-3xl bg-brand-navy text-white py-2 px-4 hover:bg-brand-gold hover:text-brand-navy transition-colors disabled:cursor-not-allowed disabled:bg-gray-200 disabled:text-gray-500"
         >
           Add to Cart
         </button>

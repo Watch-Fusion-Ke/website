@@ -19,6 +19,7 @@ const config: Config = {
           gold: "#F9C92B",
           "gold-dark": "#DCA918",
           black: "#0A0A0A",
+          navy: "#1E2235",
         },
       },
     },

@@ -33,6 +33,9 @@ export type ProductCard = {
   imageUrl: string | null;
   hoverImageUrl: string | null;
   priceLabel: string;
+  // Set only when the product is on sale: the old price, and how much cheaper the new one is.
+  compareAtLabel: string | null;
+  discountPercent: number | null;
 };
 
 export type ProductPage = {
@@ -133,6 +136,9 @@ type WixProduct = {
     minValue?: { amount?: string };
     maxValue?: { amount?: string };
   };
+  compareAtPriceRange?: {
+    minValue?: { amount?: string };
+  };
   media?: {
     main?: { image?: { url?: string } };
     itemsInfo?: { items?: { image?: { url?: string } }[] };
@@ -149,6 +155,19 @@ const priceLabel = (product: WixProduct): string => {
   return `${prefix}KES ${formatKes(min)}`;
 };
 
+// A product is on sale when Wix holds a "compare at" price above the price a shopper pays.
+// Smaller than a 1% saving is not shown as a sale.
+const saleInfo = (product: WixProduct): { compareAtLabel: string | null; discountPercent: number | null } => {
+  const price = Number(product.actualPriceRange?.minValue?.amount);
+  const was = Number(product.compareAtPriceRange?.minValue?.amount);
+  if (!Number.isFinite(price) || !Number.isFinite(was) || was <= price) {
+    return { compareAtLabel: null, discountPercent: null };
+  }
+  const percent = Math.round((1 - price / was) * 100);
+  if (percent < 1) return { compareAtLabel: null, discountPercent: null };
+  return { compareAtLabel: `KES ${formatKes(was)}`, discountPercent: percent };
+};
+
 const toCard = (product: WixProduct): ProductCard => ({
   id: product.id,
   slug: product.slug,
@@ -156,6 +175,7 @@ const toCard = (product: WixProduct): ProductCard => ({
   imageUrl: product.media?.main?.image?.url ?? null,
   hoverImageUrl: product.media?.itemsInfo?.items?.[1]?.image?.url ?? null,
   priceLabel: priceLabel(product),
+  ...saleInfo(product),
 });
 
 export const listProducts = async (

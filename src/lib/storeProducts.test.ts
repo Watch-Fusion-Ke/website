@@ -147,7 +147,43 @@ describe("listProducts", () => {
       imageUrl: "https://img/1-a.jpg",
       hoverImageUrl: "https://img/1-b.jpg",
       priceLabel: "KES 3,500",
+      compareAtLabel: null,
+      discountPercent: null,
     });
+  });
+
+  it("marks a product on sale when its compare-at price is above its price", async () => {
+    const product = wixProduct(1, {
+      compareAtPriceRange: { minValue: { amount: "4375.00" }, maxValue: { amount: "4375.00" } },
+    });
+    const card = (await listProducts(fakeFetch([product]).fetchLike, {})).items[0];
+    expect(card.priceLabel).toBe("KES 3,500");
+    expect(card.compareAtLabel).toBe("KES 4,375");
+    expect(card.discountPercent).toBe(20);
+  });
+
+  it("does not mark a sale when the compare-at price equals, is below, or is not a number", async () => {
+    for (const amount of ["3500.00", "3000.00", "abc", "0"]) {
+      const product = wixProduct(1, {
+        compareAtPriceRange: { minValue: { amount }, maxValue: { amount } },
+      });
+      const card = (await listProducts(fakeFetch([product]).fetchLike, {})).items[0];
+      expect(card.compareAtLabel).toBeNull();
+      expect(card.discountPercent).toBeNull();
+    }
+  });
+
+  it("rounds the percent off to a whole number and never shows 0", async () => {
+    const small = wixProduct(1, {
+      compareAtPriceRange: { minValue: { amount: "3501.00" }, maxValue: { amount: "3501.00" } },
+    });
+    const card = (await listProducts(fakeFetch([small]).fetchLike, {})).items[0];
+    expect(card.compareAtLabel).toBeNull();
+    expect(card.discountPercent).toBeNull();
+    const third = wixProduct(2, {
+      compareAtPriceRange: { minValue: { amount: "5250.00" }, maxValue: { amount: "5250.00" } },
+    });
+    expect((await listProducts(fakeFetch([third]).fetchLike, {})).items[0].discountPercent).toBe(33);
   });
 
   it("prefixes 'From' when variants have different prices", async () => {

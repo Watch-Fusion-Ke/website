@@ -97,3 +97,21 @@ export const BagIcon = ({ className }: IconProps) => (
     <path d="M16 10a4 4 0 0 1-8 0" />
   </Icon>
 );
+
+export const ChevronLeftIcon = ({ className }: IconProps) => (
+  <Icon className={className}>
+    <path d="m15 18-6-6 6-6" />
+  </Icon>
+);
+
+export const ChevronRightIcon = ({ className }: IconProps) => (
+  <Icon className={className}>
+    <path d="m9 18 6-6-6-6" />
+  </Icon>
+);
+
+export const CloseIcon = ({ className }: IconProps) => (
+  <Icon className={className}>
+    <path d="M18 6 6 18M6 6l12 12" />
+  </Icon>
+);

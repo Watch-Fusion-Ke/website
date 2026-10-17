@@ -97,7 +97,7 @@ const NavIcons = () => {
                 {counter > 0 && (
                     <div
                         key={counter}
-                        className="absolute -top-4 -right-4 w-6 h-6 bg-yellow-400 rounded-full text-gray-900 text-sm font-bold flex items-center justify-center shadow-md animate-cart-badge"
+                        className="absolute -top-4 -right-4 w-6 h-6 bg-brand-gold rounded-full text-gray-900 text-sm font-bold flex items-center justify-center shadow-md animate-cart-badge"
                     >
                         {counter}
                     </div>

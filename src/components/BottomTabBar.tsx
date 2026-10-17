@@ -44,7 +44,7 @@ export const TabBarView = ({
                 {tab.key === "cart" && counter > 0 && (
                   <span
                     data-cart-count={counter}
-                    className="absolute -top-1.5 -right-2.5 min-w-4 h-4 px-1 rounded-full bg-yellow-400 text-gray-900 text-[10px] font-bold flex items-center justify-center"
+                    className="absolute -top-1.5 -right-2.5 min-w-4 h-4 px-1 rounded-full bg-brand-gold text-gray-900 text-[10px] font-bold flex items-center justify-center"
                   >
                     {counter}
                   </span>

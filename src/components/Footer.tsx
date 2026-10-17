@@ -20,7 +20,7 @@ const Footer = () => {
             href="https://www.instagram.com/watchfusion_kenya"
             target="_blank"
             rel="noopener noreferrer"
-            className="text-gray-400 hover:text-pink-400 transition-colors"
+            className="text-gray-400 hover:text-brand-gold transition-colors"
             aria-label="Instagram"
           >
             <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
@@ -60,7 +60,7 @@ const Footer = () => {
           href="https://www.instagram.com/watchfusion_kenya"
           target="_blank"
           rel="noopener noreferrer"
-          className="hover:text-pink-400 transition-colors"
+          className="hover:text-brand-gold transition-colors"
         >
           Instagram
         </a>

@@ -144,7 +144,7 @@ const Menu = () => {
           >
             <span>Cart</span>
             {counter > 0 && (
-              <span className="bg-yellow-400 text-gray-900 text-xs font-bold w-6 h-6 rounded-full flex items-center justify-center">
+              <span className="bg-brand-gold text-gray-900 text-xs font-bold w-6 h-6 rounded-full flex items-center justify-center">
                 {counter}
               </span>
             )}

@@ -117,10 +117,12 @@ body {
   outline-offset: 2px;
 }
 
-/* In the dark theme the handles are gold with a dark rim. */
+/* In the dark theme the handles are white with a dark rim. */
 .dark .price-range {
   --range-thumb: #ffffff;
   --range-ring: #0a0a0a;
+}
+
 /* Dark theme: the few places where the light classes need a different meaning, not just a flipped grey. */
 .dark .bg-white {
   background-color: var(--surface);

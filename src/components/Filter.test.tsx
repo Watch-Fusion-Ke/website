@@ -163,6 +163,8 @@ describe("slider handle colours", () => {
   it("have their own colours in both themes, whether or not the theme variables exist", () => {
     const css = require("node:fs").readFileSync("src/app/globals.css", "utf8") as string;
     expect(css).toMatch(/--range-thumb,\s*#1e2235/);
-    expect(css).toMatch(/\.dark \.price-range\s*{[^}]*--range-thumb:\s*#f9c92b/);
+    expect(css).toMatch(/\.dark \.price-range\s*{[^}]*--range-thumb:\s*#ffffff/);
+    const slider = css.slice(css.indexOf("Price slider"));
+    expect(slider).not.toMatch(/f9c92b|var\(--gold/i);
   });
 });

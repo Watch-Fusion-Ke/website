@@ -37,7 +37,7 @@
   height: 28px;
   margin-top: 2px;
   border-radius: 9999px;
-  border: 3px solid var(--range-ring, #f9c92b);
+  border: 3px solid var(--range-ring, #ffffff);
   background: var(--range-thumb, #1e2235);
   box-shadow: 0 1px 4px rgb(0 0 0 / 0.35);
   cursor: grab;
@@ -47,22 +47,22 @@
   width: 22px;
   height: 22px;
   border-radius: 9999px;
-  border: 3px solid var(--range-ring, #f9c92b);
+  border: 3px solid var(--range-ring, #ffffff);
   background: var(--range-thumb, #1e2235);
   box-shadow: 0 1px 4px rgb(0 0 0 / 0.35);
   cursor: grab;
 }
 .price-range:focus-visible::-webkit-slider-thumb {
-  outline: 2px solid #f9c92b;
+  outline: 2px solid #1e2235;
   outline-offset: 2px;
 }
 .price-range:focus-visible::-moz-range-thumb {
-  outline: 2px solid #f9c92b;
+  outline: 2px solid #1e2235;
   outline-offset: 2px;
 }
 
 /* In the dark theme the handles are gold with a dark rim. */
 .dark .price-range {
-  --range-thumb: #f9c92b;
+  --range-thumb: #ffffff;
   --range-ring: #0a0a0a;
 }

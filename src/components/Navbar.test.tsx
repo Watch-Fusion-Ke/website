@@ -81,6 +81,7 @@ describe("Navbar on a phone", () => {
   });
 
   it("keeps the menu drawer's content clear of the notch when the phone is turned sideways", () => {
-    expect(phoneHeader()).toContain("pl-[env(safe-area-inset-left)]");
+    const drawer = phoneHeader().match(/role="dialog"[^>]*class="([^"]*)"/)?.[1].split(" ") ?? [];
+    expect(drawer).toContain("pl-[env(safe-area-inset-left)]");
   });
 });

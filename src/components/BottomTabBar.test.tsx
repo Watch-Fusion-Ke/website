@@ -96,7 +96,9 @@ describe("WhatsAppButton", () => {
   it("stays clear of the notch when the phone is turned sideways", () => {
     const classes = html().match(/class="([^"]*)"/)?.[1].split(" ") ?? [];
     expect(classes).toContain("right-[max(1rem,env(safe-area-inset-right))]");
+    expect(classes).toContain("md:right-[max(1.5rem,env(safe-area-inset-right))]");
     expect(classes).not.toContain("right-4");
+    expect(classes).not.toContain("md:right-6");
   });
 
   it("is a tap target of at least 44 px", () => {

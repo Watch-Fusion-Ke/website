@@ -36,12 +36,11 @@ const CategoryList = async () => {
             className="flex-shrink-0 group"
             key={item._id}
           >
-            <h1
-              className="text-lg md:text-xl font-semibold text-gray-800 hover:text-yellow-400 transition-colors duration-200 whitespace-nowrap"
-              style={{ fontFamily: "Futura, sans-serif", lineHeight: "25.5px" }}
+            <span
+              className="block text-lg md:text-xl font-semibold text-gray-800 hover:text-yellow-400 transition-colors duration-200 whitespace-nowrap leading-[25.5px]"
             >
               {item.name}
-            </h1>
+            </span>
           </Link>
         ))}
       </div>

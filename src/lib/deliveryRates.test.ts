@@ -20,11 +20,20 @@ describe("parseRates", () => {
     expect(parseRates([row({ title: "A", road: "R", price: 100 })])).toHaveLength(1);
   });
 
-  it("skips rows with no places or with a price that is missing, zero, negative or not a number", () => {
+  it("keeps a row priced at zero, since an area can be free", () => {
+    expect(parseRates([row({ title: "CBD pickup", road: "R", price: 0 })])[0].price).toBe(0);
+  });
+
+  it("reads a price written with KES or Ksh in front", () => {
+    expect(parseRates([row({ title: "A", road: "R", price: "KES 450" })])[0].price).toBe(450);
+    expect(parseRates([row({ title: "A", road: "R", price: "Ksh 1,250" })])[0].price).toBe(1250);
+  });
+
+  it("skips rows with no places or with a price that is missing, blank, negative or not a number", () => {
     const bad = [
       row({ title: "", road: "R", price: 100 }, "a"),
       row({ title: "A", road: "R" }, "b"),
-      row({ title: "A", road: "R", price: 0 }, "c"),
+      row({ title: "A", road: "R", price: "  " }, "c"),
       row({ title: "A", road: "R", price: -5 }, "d"),
       row({ title: "A", road: "R", price: "abc" }, "e"),
       { _id: "f" },

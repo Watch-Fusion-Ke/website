@@ -15,10 +15,12 @@ export const isDeliveryLine = (item: { productName?: { original?: string | null 
   (item.productName?.original ?? "").startsWith(DELIVERY_PREFIX);
 
 // With delivery fees on, a cart cannot go to checkout until it holds a delivery line.
+// If the shop could not add the fee (`unavailable`), checkout is let through so a fault never stops a sale.
 export const needsDeliveryArea = (
   enabled: boolean,
-  lines: { productName?: { original?: string | null } | null }[]
-): boolean => enabled && !lines.some(isDeliveryLine);
+  lines: { productName?: { original?: string | null } | null }[],
+  unavailable = false
+): boolean => enabled && !unavailable && !lines.some(isDeliveryLine);
 
 export const formatKes = (n: number): string => `KES ${n.toLocaleString("en-US", { maximumFractionDigits: 0 })}`;
 

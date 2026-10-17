@@ -61,15 +61,15 @@ export const DeliveryPickerView = ({
         role="combobox"
         aria-autocomplete="list"
         aria-expanded={typed && matches.length > 0}
-        aria-controls={listId}
+        aria-controls={typed && matches.length > 0 ? listId : undefined}
         aria-activedescendant={activeIndex >= 0 ? `${id}-opt-${activeIndex}` : undefined}
         autoComplete="off"
         value={query}
-        disabled={busy}
+        readOnly={busy}
         onChange={(e) => onQuery(e.target.value)}
         onKeyDown={onKeyDown}
         placeholder="Type your area, for example Kilimani"
-        className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm text-gray-900 focus:border-brand-navy focus:outline-none focus:ring-2 focus:ring-brand-gold disabled:opacity-60"
+        className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm text-gray-900 focus:border-brand-navy focus:outline-none focus:ring-2 focus:ring-brand-gold read-only:opacity-60"
       />
 
       {typed && matches.length > 0 && (
@@ -148,9 +148,9 @@ const DeliveryPicker = ({ areas, selectedLabel, selectedPrice, onChosen }: Props
     } else if (e.key === "ArrowUp") {
       e.preventDefault();
       setActive((a) => Math.max(a - 1, 0));
-    } else if (e.key === "Enter" && active >= 0 && matches[active]) {
+    } else if (e.key === "Enter" && (matches[active] || matches.length === 1)) {
       e.preventDefault();
-      void pick(matches[active]);
+      void pick(matches[active] ?? matches[0]);
     } else if (e.key === "Escape") {
       setQuery("");
       setActive(-1);

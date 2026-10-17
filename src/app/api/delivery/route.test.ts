@@ -32,7 +32,7 @@ const req = (method: string, body?: unknown, headers: Record<string, string> = {
 
 beforeEach(() => {
   state.configured = true;
-  state.cartId = "cart-1";
+  state.cartId = `cart-${Math.random()}`;
   state.adminCalls = [];
 });
 
@@ -83,6 +83,14 @@ describe("POST /api/delivery", () => {
   it("accepts a request from the shop's own address", async () => {
     const res = await POST(req("POST", { areaId: "r1:1" }, { origin: "https://www.watchfusionkenya.com" }));
     expect(res.status).toBe(200);
+  });
+});
+
+describe("rate limit", () => {
+  it("stops one cart from asking for the fee again and again", async () => {
+    let last = 200;
+    for (let i = 0; i < 25; i++) last = (await POST(req("POST", { areaId: "r1:1" }))).status;
+    expect(last).toBe(429);
   });
 });
 

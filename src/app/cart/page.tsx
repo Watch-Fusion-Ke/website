@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useCartStore } from "@/hooks/useCartStore";
 import { useWixClient } from "@/hooks/useWixClient";
 import { media as wixMedia } from "@wix/sdk";
@@ -34,9 +34,17 @@ const CartPage = () => {
   // A delivery fee left behind after the last product is removed would charge for nothing, so it goes too.
   const { clear } = delivery;
   const strandedFee = Boolean(deliveryLine) && products.length === 0;
+  const triedClearing = useRef(false);
   useEffect(() => {
-    if (strandedFee) clear().then(() => getCart(wixClient));
+    if (!strandedFee) {
+      triedClearing.current = false;
+    } else if (!triedClearing.current) {
+      triedClearing.current = true; // once per stranded fee, so a failed removal cannot loop
+      clear().then(() => getCart(wixClient));
+    }
   }, [strandedFee, clear, getCart, wixClient]);
+
+  const holdCheckout = !delivery.loaded || needsDeliveryArea(delivery.enabled, allLines, delivery.unavailable);
 
   const handleRemove = async (itemId: string | undefined) => {
     if (!itemId || isLoading) return;
@@ -222,8 +230,14 @@ const CartPage = () => {
               </div>
             )}
 
-            {needsDeliveryArea(delivery.enabled, allLines) && (
+            {delivery.loaded && needsDeliveryArea(delivery.enabled, allLines, delivery.unavailable) && (
               <p className="mt-3 text-xs text-gray-600">Choose a delivery area to continue.</p>
+            )}
+
+            {delivery.enabled && delivery.unavailable && !deliveryLine && (
+              <p role="status" className="mt-3 rounded-lg bg-gray-100 px-3 py-2 text-xs text-gray-700">
+                We could not add the delivery fee online. You can still check out, and we will confirm the delivery fee with you on WhatsApp.
+              </p>
             )}
 
             {checkoutError && (
@@ -232,7 +246,7 @@ const CartPage = () => {
 
             <button
               onClick={handleCheckout}
-              disabled={isLoading || needsDeliveryArea(delivery.enabled, allLines)}
+              disabled={isLoading || holdCheckout}
               className="w-full mt-5 bg-brand-navy text-white py-3.5 rounded-xl font-semibold text-sm hover:bg-brand-gold hover:text-brand-navy transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
             >
               Proceed to Checkout

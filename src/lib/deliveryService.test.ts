@@ -95,6 +95,22 @@ describe("chooseDeliveryArea", () => {
     expect(remove.body).toEqual({ lineItemIds: ["old-1"] });
   });
 
+  it("removes every other delivery line after the add, so two requests at once cannot leave two fees", async () => {
+    const { deps, calls } = setup({ existing: [{ id: "old-1", name: "Delivery: A, X" }, { id: "old-2", name: "Delivery: B, Y" }] });
+    await chooseDeliveryArea(deps, gigiri.id);
+    const remove = calls.find((c) => c.path.endsWith("/remove-line-items"))!;
+    expect((remove.body as { lineItemIds: string[] }).lineItemIds.sort()).toEqual(["old-1", "old-2"]);
+  });
+
+  it("takes the new line back out when the old one cannot be removed, so the cart never holds two fees", async () => {
+    const { deps, calls } = setup({ existing: [{ id: "old-1", name: "Delivery: A, X" }], wixStatus: { "POST remove-line-items": 500 } });
+    const r = await chooseDeliveryArea(deps, gigiri.id);
+    expect(r.status).toBe(502);
+    const removes = calls.filter((c) => c.path.endsWith("/remove-line-items"));
+    expect(removes.length).toBeGreaterThanOrEqual(2);
+    expect(JSON.stringify(removes.at(-1)!.body)).toContain("new-1");
+  });
+
   it("does not remove anything when there was no earlier delivery line", async () => {
     const { deps, calls } = setup();
     await chooseDeliveryArea(deps, gigiri.id);
@@ -120,6 +136,13 @@ describe("chooseDeliveryArea", () => {
     const r = await chooseDeliveryArea(deps, gigiri.id);
     expect(r.status).toBe(502);
     expect(calls.some((c) => c.path.endsWith("/remove-line-items"))).toBe(false);
+  });
+
+  it("marks a failure to add the fee as one the shop can work around, and a bad request as the shopper's own", async () => {
+    const down = setup({ wixStatus: { "POST add-line-items": 500 } });
+    expect((await chooseDeliveryArea(down.deps, gigiri.id)).body).toMatchObject({ unavailable: true });
+    expect((await chooseDeliveryArea(setup().deps, "nope")).body).not.toHaveProperty("unavailable");
+    expect((await chooseDeliveryArea(setup({ ratesFail: true }).deps, gigiri.id)).body).toMatchObject({ unavailable: true });
   });
 
   it("reports unavailable when the rates cannot be read", async () => {

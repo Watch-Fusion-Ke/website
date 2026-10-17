@@ -57,8 +57,17 @@ describe("DeliveryPickerView", () => {
     expect(html).toContain('role="combobox"');
   });
 
-  it("disables the choices while a choice is being saved", () => {
-    expect(view({ query: "gig", busy: true })).toMatch(/aria-busy="true"/);
+  it("marks itself busy while a choice is being saved, without taking keyboard focus away from the box", () => {
+    const html = view({ query: "gig", busy: true });
+    expect(html).toMatch(/aria-busy="true"/);
+    expect(html).toMatch(/<input[^>]*readOnly=""|<input[^>]*readonly=""/);
+    expect(html).not.toMatch(/<input[^>]*disabled/);
+  });
+
+  it("points aria-controls at the list only while the list is there", () => {
+    expect(view({ query: "" })).not.toContain("aria-controls");
+    expect(view({ query: "gig" })).toContain("aria-controls");
+    expect(view({ query: "zzzz" })).not.toContain("aria-controls");
   });
 
   it("uses no pink and big enough rows to tap", () => {

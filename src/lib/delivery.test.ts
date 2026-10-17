@@ -115,6 +115,11 @@ describe("needsDeliveryArea", () => {
   const product = { productName: { original: "Watch" } };
   const fee = { productName: { original: "Delivery: Gigiri, Limuru Road" } };
 
+  it("lets checkout through when the shop could not add the fee, so a fault never stops a sale", () => {
+    expect(needsDeliveryArea(true, [product], true)).toBe(false);
+    expect(needsDeliveryArea(true, [product], false)).toBe(true);
+  });
+
   it("holds checkout back only when delivery fees are on and no area has been chosen", () => {
     expect(needsDeliveryArea(true, [product])).toBe(true);
     expect(needsDeliveryArea(true, [product, fee])).toBe(false);

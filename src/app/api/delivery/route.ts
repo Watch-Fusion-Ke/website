@@ -6,10 +6,31 @@ import { wixClientServer } from "@/lib/wixClientServer";
 
 export const dynamic = "force-dynamic";
 
+// The table changes rarely, so each server instance keeps it for a minute instead of asking Wix on every request.
+let cachedRates: { at: number; rates: Awaited<ReturnType<typeof loadRates>> } | null = null;
+const RATES_TTL = 60_000;
+
+// Each request makes several calls to Wix as the shop. One cart may ask for its fee a limited number of times a minute.
+const WINDOW = 60_000;
+const MAX_PER_WINDOW = 20;
+const recent = new Map<string, number[]>();
+const tooMany = (cartId: string, now = Date.now()): boolean => {
+  const hits = (recent.get(cartId) ?? []).filter((t) => now - t < WINDOW);
+  hits.push(now);
+  recent.set(cartId, hits);
+  if (recent.size > 5000) recent.forEach((v, k) => v.every((t) => now - t >= WINDOW) && recent.delete(k));
+  return hits.length > MAX_PER_WINDOW;
+};
+
 const deps = async (): Promise<DeliveryDeps> => {
   const client = await wixClientServer();
   return {
-    loadRates: () => loadRates(client as unknown as Parameters<typeof loadRates>[0]),
+    loadRates: async () => {
+      if (cachedRates && Date.now() - cachedRates.at < RATES_TTL) return cachedRates.rates;
+      const rates = await loadRates(client as unknown as Parameters<typeof loadRates>[0]);
+      cachedRates = { at: Date.now(), rates };
+      return rates;
+    },
     getCartId: async () => {
       try {
         const cart = await client.currentCart.getCurrentCart();
@@ -45,7 +66,12 @@ export async function POST(request: Request) {
   } catch {
     return NextResponse.json({ error: "Choose a delivery area." }, { status: 400 });
   }
-  const result = await chooseDeliveryArea(await deps(), areaId);
+  const d = await deps();
+  const cartId = await d.getCartId();
+  if (cartId && tooMany(cartId)) {
+    return NextResponse.json({ error: "Too many tries. Please wait a minute." }, { status: 429 });
+  }
+  const result = await chooseDeliveryArea({ ...d, getCartId: async () => cartId }, areaId);
   return NextResponse.json(result.body, { status: result.status });
 }
 

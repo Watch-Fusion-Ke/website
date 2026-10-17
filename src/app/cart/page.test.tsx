@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const store = vi.hoisted(() => ({
   cart: {} as Record<string, unknown>,
-  delivery: { enabled: false, areas: [] as unknown[], loaded: true } as { enabled: boolean; areas: unknown[]; loaded: boolean },
+  delivery: { enabled: false, areas: [] as unknown[], loaded: true, unavailable: false } as { enabled: boolean; areas: unknown[]; loaded: boolean; unavailable: boolean },
 }));
 
 vi.mock("@/hooks/useCartStore", () => ({
@@ -25,7 +25,7 @@ const render = () => renderToStaticMarkup(<CartPage />);
 
 beforeEach(() => {
   store.cart = { lineItems: [product], subtotal: { amount: "3500", formattedAmount: "KES 3,500" } };
-  store.delivery = { enabled: false, areas: [], loaded: true };
+  store.delivery = { enabled: false, areas: [], loaded: true, unavailable: false };
 });
 
 describe("Cart page when delivery fees are off", () => {
@@ -39,7 +39,7 @@ describe("Cart page when delivery fees are off", () => {
 
 describe("Cart page when delivery fees are on", () => {
   beforeEach(() => {
-    store.delivery = { enabled: true, areas, loaded: true };
+    store.delivery = { enabled: true, areas, loaded: true, unavailable: false };
   });
 
   it("asks where to deliver and holds checkout back until an area is chosen", () => {
@@ -47,6 +47,19 @@ describe("Cart page when delivery fees are on", () => {
     expect(html).toContain('role="combobox"');
     expect(html).toMatch(/<button[^>]*disabled=""[^>]*>Proceed to Checkout/);
     expect(html).toMatch(/Choose a delivery area to continue/i);
+  });
+
+  it("keeps checkout shut until the shop has said whether delivery fees are on, so a quick tap cannot skip the fee", () => {
+    store.delivery = { enabled: false, areas: [], loaded: false, unavailable: false };
+    expect(render()).toMatch(/<button[^>]*disabled=""[^>]*>Proceed to Checkout/);
+  });
+
+  it("lets the shopper check out, with a plain notice, when the fee could not be added", () => {
+    store.delivery = { enabled: true, areas, loaded: true, unavailable: true };
+    const html = render();
+    expect(html).not.toMatch(/<button[^>]*disabled=""[^>]*>Proceed to Checkout/);
+    expect(html).toMatch(/could not add the delivery fee/i);
+    expect(html).toContain("WhatsApp");
   });
 
   it("shows the chosen area, the fee as its own row, and opens checkout", () => {

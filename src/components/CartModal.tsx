@@ -32,7 +32,7 @@ const CartModal = ({ onClose }: CartModalProps) => {
   const handleCheckout = async () => {
   setCheckoutError(null);
   // With delivery fees on, the shopper picks a delivery area on the cart page first.
-  if (needsDeliveryArea(delivery.enabled, allLines)) {
+  if (needsDeliveryArea(delivery.enabled, allLines, delivery.unavailable)) {
     onClose();
     router.push("/cart");
     return;
@@ -197,7 +197,7 @@ const CartModal = ({ onClose }: CartModalProps) => {
                 </button>
                 <button
                   className="flex-1 rounded-lg py-2.5 px-4 text-sm font-medium bg-brand-navy text-white hover:bg-brand-gold hover:text-brand-navy transition-colors disabled:cursor-not-allowed disabled:opacity-60"
-                  disabled={isLoading}
+                  disabled={isLoading || !delivery.loaded}
                   onClick={handleCheckout}
                 >
                   {isLoading ? "Loading..." : "Checkout"}

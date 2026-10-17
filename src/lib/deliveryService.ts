@@ -47,7 +47,7 @@ export const chooseDeliveryArea = async (deps: DeliveryDeps, areaId: unknown): P
   try {
     areas = areasFromRates(await deps.loadRates());
   } catch {
-    return { status: 503, body: { error: "Delivery fees are not available right now." } };
+    return { status: 503, body: { error: "Delivery fees are not available right now.", unavailable: true } };
   }
   const area = areas.find((a) => a.id === areaId);
   if (!area) return { status: 404, body: { error: "We could not find that delivery area." } };
@@ -57,7 +57,7 @@ export const chooseDeliveryArea = async (deps: DeliveryDeps, areaId: unknown): P
 
   try {
     const before = await readCart(deps, cartId);
-    if (before === null) return { status: 502, body: { error: "We could not reach your cart." } };
+    if (before === null) return { status: 502, body: { error: "We could not reach your cart.", unavailable: true } };
     const oldIds = before.filter(isDelivery).map((l) => l.id).filter((id): id is string => Boolean(id));
 
     const add = await deps.adminFetch(`/ecom/v2/carts/${cartId}/add-line-items`, {
@@ -73,17 +73,30 @@ export const chooseDeliveryArea = async (deps: DeliveryDeps, areaId: unknown): P
         ],
       }),
     });
-    if (!add.ok) return { status: 502, body: { error: "We could not add the delivery fee." } };
+    if (!add.ok) return { status: 502, body: { error: "We could not add the delivery fee.", unavailable: true } };
 
-    if (oldIds.length > 0) {
+    // Keep exactly one delivery line: the one just added. Anything else, including a line from a request
+    // that ran at the same moment, goes. If that fails the new line is taken back out too, so the cart never holds two fees.
+    const after = lines((await add.json().catch(() => ({})))?.cart).filter(isDelivery);
+    const newId = after.map((l) => l.id).filter((id): id is string => Boolean(id) && !oldIds.includes(id as string)).pop();
+    const staleIds = newId ? after.map((l) => l.id).filter((id): id is string => Boolean(id) && id !== newId) : oldIds;
+    if (staleIds.length > 0) {
       const remove = await deps.adminFetch(`/ecom/v2/carts/${cartId}/remove-line-items`, {
         method: "POST",
-        body: JSON.stringify({ lineItemIds: oldIds }),
+        body: JSON.stringify({ lineItemIds: staleIds }),
       });
-      if (!remove.ok) return { status: 502, body: { error: "We could not replace the earlier delivery fee." } };
+      if (!remove.ok) {
+        if (newId) {
+          await deps.adminFetch(`/ecom/v2/carts/${cartId}/remove-line-items`, {
+            method: "POST",
+            body: JSON.stringify({ lineItemIds: [newId] }),
+          });
+        }
+        return { status: 502, body: { error: "We could not replace the earlier delivery fee.", unavailable: true } };
+      }
     }
   } catch {
-    return { status: 502, body: { error: "We could not add the delivery fee." } };
+    return { status: 502, body: { error: "We could not add the delivery fee.", unavailable: true } };
   }
 
   return { status: 200, body: { areaId: area.id, label: `${area.place}${area.road ? `, ${area.road}` : ""}`, price: area.price } };

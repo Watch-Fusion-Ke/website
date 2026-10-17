@@ -3,13 +3,13 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const state = vi.hoisted(() => ({
   cart: {} as Record<string, unknown>,
-  delivery: { enabled: false } as { enabled: boolean },
+  delivery: { enabled: false, loaded: true, unavailable: false } as { enabled: boolean; loaded: boolean; unavailable: boolean },
 }));
 vi.mock("@/hooks/useCartStore", () => ({
   useCartStore: () => ({ cart: state.cart, isLoading: false, removeItem: () => {} }),
 }));
 vi.mock("@/hooks/useWixClient", () => ({ useWixClient: () => ({}) }));
-vi.mock("@/hooks/useDelivery", () => ({ default: () => ({ ...state.delivery, areas: [], loaded: true, choose: async () => {}, clear: async () => {} }) }));
+vi.mock("@/hooks/useDelivery", () => ({ default: () => ({ ...state.delivery, areas: [], choose: async () => {}, clear: async () => {} }) }));
 vi.mock("next/navigation", () => ({ useRouter: () => ({ push: () => {} }) }));
 
 import CartModal from "@/components/CartModal";
@@ -19,7 +19,7 @@ const fee = { _id: "d1", productName: { original: "Delivery: Gigiri, Limuru Road
 const render = () => renderToStaticMarkup(<CartModal onClose={() => {}} />);
 
 beforeEach(() => {
-  state.delivery = { enabled: true };
+  state.delivery = { enabled: true, loaded: true, unavailable: false };
   state.cart = { lineItems: [product, fee], subtotal: { amount: "3950", formattedAmount: "KES 3,950" } };
 });
 
@@ -43,7 +43,7 @@ describe("CartModal", () => {
   });
 
   it("keeps the old wording when delivery fees are off", () => {
-    state.delivery = { enabled: false };
+    state.delivery = { enabled: false, loaded: true, unavailable: false };
     state.cart = { lineItems: [product], subtotal: { amount: "3500", formattedAmount: "KES 3,500" } };
     expect(render()).toContain("Shipping and taxes calculated at checkout.");
   });

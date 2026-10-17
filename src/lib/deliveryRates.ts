@@ -15,8 +15,9 @@ export const parseRates = (rows: Row[]): DeliveryRate[] =>
     if (!row._id || !data) return [];
     if (data.isActive === false) return [];
     const places = typeof data.title === "string" ? data.title.trim() : "";
-    const price = Math.round(Number(String(data.price ?? "").replace(/,/g, "")));
-    if (!places.replace(/[/,\s]/g, "") || !Number.isFinite(price) || price <= 0 || price > MAX_PRICE) return [];
+    const text = String(data.price ?? "").replace(/kes|ksh/gi, "").replace(/[,\s]/g, "");
+    const price = text === "" ? NaN : Math.round(Number(text));
+    if (!places.replace(/[/,\s]/g, "") || !Number.isFinite(price) || price < 0 || price > MAX_PRICE) return [];
     return [{ id: row._id, places, road: typeof data.road === "string" ? data.road.trim() : "", price }];
   });
 
@@ -27,5 +28,9 @@ type ItemsClient = {
 // Reads the table. Throws when the collection cannot be read, so the caller can tell "not set up" from "empty".
 export const loadRates = async (client: ItemsClient): Promise<DeliveryRate[]> => {
   const result = await client.items.query(DELIVERY_COLLECTION).limit(500).find();
-  return parseRates(result.items);
+  const rates = parseRates(result.items);
+  if (rates.length < result.items.length) {
+    console.warn(`DeliveryRates: ${result.items.length - rates.length} of ${result.items.length} rows were skipped (switched off, or no places or price)`);
+  }
+  return rates;
 };

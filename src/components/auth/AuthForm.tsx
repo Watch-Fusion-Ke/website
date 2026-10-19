@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Cookies from "js-cookie";
 import { useWixClient } from "@/hooks/useWixClient";
-import { ACCOUNT_CREATED_MESSAGE, describeAuthFailure, interpretAuth, PASSWORD_HELP, signupProblem, type AuthMode } from "@/lib/auth";
+import { ACCOUNT_CREATED_MESSAGE, describeAuthFailure, interpretAuth, PASSWORD_HELP, RESEND_WAIT_SECONDS, signupProblem, type AuthMode } from "@/lib/auth";
 import { beginRedirectLogin, safeReturnPath } from "@/lib/loginRedirect";
 import PasswordField, { fieldClass, labelClass } from "@/components/auth/PasswordField";
 import AuthShowcase, { type ShowcaseWatch } from "@/components/auth/AuthShowcase";
@@ -73,6 +73,7 @@ const AuthForm = ({
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
   const [notice, setNotice] = useState(false); // the message is a heads-up, not a success
+  const [resendIn, setResendIn] = useState(0); // seconds until another emailed code may be asked for
   // Wix can ask for a robot check (a site setting). It is tried silently first; if Wix will not take that, the box is
   // shown and the button waits for it. What worked is remembered for this visit.
   const [captchaMode, setCaptchaMode] = useState<CaptchaKind | null>(initialCaptcha ? "visible" : null);
@@ -117,6 +118,12 @@ const AuthForm = ({
       // storage is blocked: the check is simply asked for again when needed
     }
   }, []);
+
+  useEffect(() => {
+    if (resendIn <= 0) return;
+    const timer = setTimeout(() => setResendIn((n) => n - 1), 1000);
+    return () => clearTimeout(timer);
+  }, [resendIn]);
 
   const rememberCaptcha = (kind: CaptchaKind) => {
     setCaptchaMode(kind);
@@ -173,6 +180,53 @@ const AuthForm = ({
     wixClient.auth.setTokens(tokens);
     setMessage("You are in. Taking you to the shop.");
     router.push(safeReturnPath(new URLSearchParams(window.location.search).get("next")));
+  };
+
+  // A new code is asked for by logging in again with the same email and password, which makes Wix email a fresh one.
+  const resending = useRef(false); // a second tap in the same moment must not send a second login
+  const resendCode = async () => {
+    if (resendIn > 0 || isLoading || resending.current) return;
+    resending.current = true;
+    setError("");
+    setMessage("");
+    setNotice(false);
+    if (!email || !password) {
+      setError("Please go back and log in again to get a new code.");
+      return;
+    }
+    setIsLoading(true);
+    let leaving = false;
+    try {
+      const result = await signInWithCaptcha({
+        mode: "LOGIN",
+        remembered: captchaMode,
+        getInvisibleToken: () => getInvisibleToken(wixClient.auth.captchaInvisibleSiteKey),
+        send: (captchaTokens) => wixClient.auth.login({ email, password, captchaTokens }),
+      });
+      if (result.learned) rememberCaptcha(result.learned);
+      if (result.outcome.kind === "verify") {
+        setCode(""); // the old code no longer works, so it is cleared
+        setMessage(`We sent a new code to ${email}. The old one no longer works.`);
+        setResendIn(RESEND_WAIT_SECONDS);
+      } else if (result.outcome.kind === "success") {
+        const sessionToken = (result.response as { data?: { sessionToken?: string } } | undefined)?.data?.sessionToken;
+        if (!sessionToken) throw new Error("Wix said success without a session");
+        await signedIn(sessionToken);
+        leaving = true;
+      } else if (result.outcome.kind === "captcha") {
+        setError("Please go back and log in again, and complete the robot check, to get a new code.");
+      } else if (result.outcome.kind === "error") {
+        setError(result.outcome.message);
+      } else {
+        setMessage(result.outcome.message);
+      }
+    } catch (err) {
+      console.error(err);
+      setError(describeAuthFailure(err, typeof navigator === "undefined" || navigator.onLine !== false));
+    } finally {
+      resending.current = false;
+      if (!leaving) setIsLoading(false);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -233,6 +287,7 @@ const AuthForm = ({
         leaving = true; // the button stays off while the page changes, so a second tap cannot send it again
       } else if (outcome.kind === "verify") {
         setMode("EMAIL_VERIFICATION");
+        setResendIn(RESEND_WAIT_SECONDS);
         setMessage(outcome.message);
       } else if (outcome.kind === "pending") {
         setMessage(outcome.message);
@@ -377,6 +432,12 @@ const AuthForm = ({
             >
               {isLoading ? "Please wait..." : BUTTONS[mode]}
             </button>
+
+            {mode === "EMAIL_VERIFICATION" && (
+              <button type="button" disabled={resendIn > 0 || isLoading} onClick={resendCode} className={`${link} self-start disabled:cursor-not-allowed disabled:opacity-60`}>
+                {resendIn > 0 ? `Send a new code in ${resendIn}s` : "Send a new code"}
+              </button>
+            )}
 
             <div className="text-sm text-gray-600">
               {mode === "LOGIN" && (

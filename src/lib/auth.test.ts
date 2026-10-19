@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { LoginState } from "@wix/sdk";
-import { ACCOUNT_CREATED_MESSAGE, describeAuthFailure, interpretAuth, passwordStrength, signupProblem } from "@/lib/auth";
+import { ACCOUNT_CREATED_MESSAGE, RESEND_WAIT_SECONDS, describeAuthFailure, interpretAuth, passwordStrength, signupProblem } from "@/lib/auth";
 
 const failure = (errorCode?: string) => ({ loginState: LoginState.FAILURE, errorCode }) as never;
 
@@ -132,6 +132,13 @@ describe("signupProblem", () => {
 
   it("refuses a very common password", () => {
     expect(signupProblem("password1")).toMatch(/common/i);
+  });
+});
+
+describe("RESEND_WAIT_SECONDS", () => {
+  it("makes the shopper wait a little between new codes, so the button cannot be used to flood an inbox", () => {
+    expect(RESEND_WAIT_SECONDS).toBeGreaterThanOrEqual(30);
+    expect(RESEND_WAIT_SECONDS).toBeLessThanOrEqual(120);
   });
 });
 

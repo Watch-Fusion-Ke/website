@@ -72,7 +72,7 @@ const Slider = async () => {
         }
     } catch (err) {
         // If CMS query fails (e.g. collection doesn't exist yet), use fallback slides
-        console.log("Using fallback slides (Promotions collection not found or error):", err);
+        console.info("Banner: using the built-in slides, as no Promotions collection could be read");
     }
 
     return <SliderClient slides={slides} />;

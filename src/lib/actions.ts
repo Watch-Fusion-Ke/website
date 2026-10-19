@@ -12,10 +12,8 @@ export const updateUser = async (formData: FormData) => {
   const email = formData.get("email") as string;
   const phone = formData.get("phone") as string;
 
-  console.log(username)
-
   try {
-    const response = await wixClient.members.updateMember(id, {
+    await wixClient.members.updateMember(id, {
       contact: {
         firstName: firstName || undefined,
         lastName: lastName || undefined,
@@ -25,8 +23,7 @@ export const updateUser = async (formData: FormData) => {
       profile: { nickname: username || undefined },
     });
 
-    console.log(response)
   } catch (err) {
-    console.log(err);
+    console.error("Updating the member profile failed:", err instanceof Error ? err.message : "unknown error");
   }
 };

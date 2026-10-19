@@ -40,7 +40,6 @@ const NavIcons = () => {
     //     "http://localhost:3000"
     //   );
 
-    //   console.log(loginRequestData);
 
     //   localStorage.setItem("oAuthRedirectData", JSON.stringify(loginRequestData));
     //   const { authUrl } = await wixClient.auth.getAuthUrl(loginRequestData);

@@ -35,3 +35,8 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# editor and local tool settings
+/.idea/
+/.claude/settings.json
+/.claude/settings.local.json

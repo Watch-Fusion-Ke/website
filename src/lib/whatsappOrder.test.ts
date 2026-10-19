@@ -23,7 +23,25 @@ describe("orderMessage", () => {
   });
 });
 
+describe("orderMessage options and odd values", () => {
+  it("asks the shop to confirm the choice when the product has options, since the link cannot know the shopper's choice", () => {
+    expect(orderMessage({ ...product, hasOptions: true })).toMatch(/which option|options/i);
+    expect(orderMessage(product)).not.toMatch(/option/i);
+  });
+
+  it("leaves out a price of zero or below, which is never a real price", () => {
+    expect(orderMessage({ ...product, price: 0 })).not.toMatch(/KES/);
+    expect(orderMessage({ ...product, price: -5 })).not.toMatch(/KES/);
+  });
+});
+
 describe("orderUrl", () => {
+  it("still makes a link when a name holds a broken character such as half an emoji", () => {
+    const broken = `Gift set \uD83D`;
+    expect(() => orderUrl({ ...product, name: broken })).not.toThrow();
+    expect(new URL(orderUrl({ ...product, name: broken })).searchParams.get("text")).toContain("Gift set");
+  });
+
   it("opens a chat with the shop's number and the message ready to send", () => {
     const url = orderUrl(product);
     expect(url.startsWith(`https://wa.me/${WHATSAPP_NUMBER}?text=`)).toBe(true);

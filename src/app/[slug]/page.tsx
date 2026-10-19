@@ -140,7 +140,8 @@ const SinglePage = async ({ params }: Props) => {
 
                 <OrderOnWhatsApp
                     name={product.name ?? "this product"}
-                    price={Number(product.price?.discountedPrice ?? product.price?.price)}
+                    price={product.price?.discountedPrice ?? product.price?.price ?? undefined}
+                    hasOptions={Boolean(product.productOptions && product.productOptions.length > 0)}
                     url={`${SITE_URL}/${slug}`}
                 />
 

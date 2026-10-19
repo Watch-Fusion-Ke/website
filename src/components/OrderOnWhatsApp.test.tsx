@@ -13,9 +13,14 @@ describe("OrderOnWhatsApp", () => {
     expect(html).toContain('rel="noopener noreferrer"');
   });
 
-  it("says what it does, and that it opens a new tab, for a screen reader", () => {
+  it("says what it does, and that it opens a new tab, for a screen reader, starting with the words on the button", () => {
     expect(html).toContain("Order on WhatsApp");
-    expect(html).toMatch(/aria-label="Order Naviforce NF9269 on WhatsApp \(opens in a new tab\)"/);
+    expect(html).toMatch(/aria-label="Order on WhatsApp: Naviforce NF9269 \(opens in a new tab\)"/);
+  });
+
+  it("passes on that the product has options", () => {
+    const withOptions = renderToStaticMarkup(<OrderOnWhatsApp name="Notebook" url="https://x/n" hasOptions />);
+    expect(decodeURIComponent(withOptions)).toMatch(/option/i);
   });
 
   it("is tall enough to tap on a phone", () => {

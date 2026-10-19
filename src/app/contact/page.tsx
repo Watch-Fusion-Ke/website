@@ -1,3 +1,4 @@
+import ContactForm from "@/components/ContactForm";
 import { ChatIcon, ClockIcon, MailIcon, MapPinIcon, PhoneIcon } from "@/components/icons";
 import {
     ADDRESS_LINES,
@@ -30,6 +31,14 @@ export default function ContactPage() {
                 >
                     Chat on WhatsApp
                 </a>
+            </section>
+
+            <section className="mx-auto max-w-2xl py-4">
+                <div className={card}>
+                    <h2 className="mb-1 font-display text-2xl font-bold">Send us a message</h2>
+                    <p className="mb-6 text-sm text-gray-600">We reply by email. For a quicker answer, use WhatsApp.</p>
+                    <ContactForm />
+                </div>
             </section>
 
             <section className="grid gap-6 py-8 md:grid-cols-2">

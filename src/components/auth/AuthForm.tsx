@@ -6,6 +6,7 @@ import Cookies from "js-cookie";
 import { LoginState } from "@wix/sdk";
 import { useWixClient } from "@/hooks/useWixClient";
 import { interpretAuth, PASSWORD_HELP, signupProblem, type AuthMode } from "@/lib/auth";
+import { beginRedirectLogin, safeReturnPath } from "@/lib/loginRedirect";
 import PasswordField, { fieldClass, labelClass } from "@/components/auth/PasswordField";
 import AuthShowcase, { type ShowcaseWatch } from "@/components/auth/AuthShowcase";
 
@@ -61,10 +62,25 @@ const AuthForm = ({ initialMode = "LOGIN", watches }: { initialMode?: AuthMode; 
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
+  // Whether Wix will take members back to this address. Until the check answers, the older method is used.
+  const [redirectLogin, setRedirectLogin] = useState(false);
 
   useEffect(() => {
     if (wixClient.auth.loggedIn()) router.push("/");
   }, [wixClient, router]);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/login-check")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((answer) => {
+        if (!cancelled && answer?.redirectLogin === true) setRedirectLogin(true);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   // When the shopper switches forms the link they pressed disappears, so focus moves to the new heading.
   const heading = useRef<HTMLHeadingElement>(null);
@@ -84,12 +100,36 @@ const AuthForm = ({ initialMode = "LOGIN", watches }: { initialMode?: AuthMode; 
     setPassword("");
   };
 
-  const signedIn = async (sessionToken: string) => {
+  // Sign-in is finished by sending the shopper to Wix and back, when Wix accepts this address (see /api/login-check).
+  // Otherwise the older hidden-frame method is used, which works on the shop's own domain.
+  const signedIn = async (sessionToken: string): Promise<void> => {
+    let storage: Storage | null = null;
+    try {
+      storage = window.localStorage;
+    } catch {
+      storage = null;
+    }
+    if (storage && redirectLogin) {
+      const outcome = await beginRedirectLogin({
+        origin: window.location.origin,
+        returnTo: safeReturnPath(new URLSearchParams(window.location.search).get("next")),
+        sessionToken,
+        storage,
+        now: Date.now,
+        generateOAuthData: (redirectUri, originalUri) => wixClient.auth.generateOAuthData(redirectUri, originalUri),
+        getAuthUrl: (data, opts) => wixClient.auth.getAuthUrl(data, opts as never),
+        navigate: (url) => window.location.assign(url),
+      });
+      if (outcome === "redirected") {
+        setMessage("Taking you to finish signing in.");
+        return;
+      }
+    }
     const tokens = await withTimeout(wixClient.auth.getMemberTokensForDirectLogin(sessionToken), 15000);
-    Cookies.set("refreshToken", JSON.stringify(tokens.refreshToken), { expires: 2 });
+    Cookies.set("refreshToken", JSON.stringify(tokens.refreshToken), { expires: 2, sameSite: "lax", secure: window.location.protocol === "https:" });
     wixClient.auth.setTokens(tokens);
     setMessage("You are in. Taking you to the shop.");
-    router.push("/");
+    router.push(safeReturnPath(new URLSearchParams(window.location.search).get("next")));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {

@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import PasswordField from "@/components/auth/PasswordField";
 import AuthShowcase from "@/components/auth/AuthShowcase";
 import AuthForm from "@/components/auth/AuthForm";
+import LoginCallbackView from "@/components/auth/LoginCallbackView";
 
 vi.mock("next/navigation", () => ({ useRouter: () => ({ push: () => {} }) }));
 
@@ -109,5 +110,21 @@ describe("AuthForm", () => {
     const html = form("LOGIN");
     expect(html).toContain("data-slide");
     expect(html).not.toMatch(/pink|rose|fuchsia/);
+  });
+});
+
+describe("LoginCallbackView", () => {
+  it("tells the shopper it is finishing, while it works", () => {
+    const html = renderToStaticMarkup(<LoginCallbackView />);
+    expect(html).toContain('role="status"');
+    expect(html).toContain("Logging you in");
+    expect(html).not.toContain('role="alert"');
+  });
+
+  it("explains a failure and offers the way back to the login", () => {
+    const html = renderToStaticMarkup(<LoginCallbackView message="We could not finish logging you in. Please log in again." />);
+    expect(html).toContain('role="alert"');
+    expect(html).toContain("Please log in again");
+    expect(html).toContain('href="/login"');
   });
 });

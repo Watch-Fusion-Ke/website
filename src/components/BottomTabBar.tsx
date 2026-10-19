@@ -4,13 +4,13 @@ import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { useCartStore } from "@/hooks/useCartStore";
 import { TABS, activeTab, type TabKey } from "@/lib/tabs";
-import { BagIcon, HomeIcon, WatchRoundIcon, WatchSquareIcon } from "@/components/icons";
+import { TabBagIcon, TabGentsIcon, TabHomeIcon, TabLadiesIcon } from "@/components/icons";
 
 const ICONS: Record<TabKey, (props: { className?: string }) => JSX.Element> = {
-  home: HomeIcon,
-  gents: WatchSquareIcon,
-  ladies: WatchRoundIcon,
-  cart: BagIcon,
+  home: TabHomeIcon,
+  gents: TabGentsIcon,
+  ladies: TabLadiesIcon,
+  cart: TabBagIcon,
 };
 
 // Main navigation along the bottom of the screen on phones, like a shopping app.
@@ -34,23 +34,26 @@ export const TabBarView = ({
         {TABS.map((tab) => {
           const Icon = ICONS[tab.key];
           const active = current === tab.key;
-          const className = `flex flex-col items-center justify-center gap-1 min-h-14 border-t-2 text-[11px] font-medium ${
-            active ? "border-brand-gold text-black" : "border-transparent text-gray-500"
+          const className = `relative flex min-h-14 flex-col items-center justify-center gap-0.5 pt-1 ${
+            active ? "text-brand-navy" : "text-gray-500"
           }`;
           const content = (
             <>
-              <span className="relative">
-                <Icon className="w-6 h-6" />
+              {active && (
+                <span aria-hidden="true" className="absolute top-0 h-0.5 w-8 rounded-full bg-brand-gold" />
+              )}
+              <span className={`relative flex h-7 w-12 items-center justify-center rounded-full ${active ? "bg-brand-gold/15" : ""}`}>
+                <Icon className="h-[22px] w-[22px]" />
                 {tab.key === "cart" && counter > 0 && (
                   <span
                     data-cart-count={counter}
-                    className="absolute -top-1.5 -right-2.5 min-w-4 h-4 px-1 rounded-full bg-brand-gold text-gray-900 text-[10px] font-bold flex items-center justify-center"
+                    className="absolute -top-1 right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-brand-gold px-1 text-[10px] font-bold text-gray-900"
                   >
                     {counter}
                   </span>
                 )}
               </span>
-              <span>{tab.label}</span>
+              <span className={`text-[10px] uppercase tracking-[0.08em] ${active ? "font-bold" : "font-medium"}`}>{tab.label}</span>
             </>
           );
 

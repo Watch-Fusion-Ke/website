@@ -1,7 +1,7 @@
 // Simple outline icons, drawn as SVG so they look the same on every phone.
 type IconProps = { className?: string };
 
-const Icon = ({ className, children }: IconProps & { children: React.ReactNode }) => (
+const Icon = ({ className, children, strokeWidth = 1.75 }: IconProps & { children: React.ReactNode; strokeWidth?: number }) => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
     width="24"
@@ -9,7 +9,7 @@ const Icon = ({ className, children }: IconProps & { children: React.ReactNode }
     viewBox="0 0 24 24"
     fill="none"
     stroke="currentColor"
-    strokeWidth="1.75"
+    strokeWidth={strokeWidth}
     strokeLinecap="round"
     strokeLinejoin="round"
     aria-hidden="true"
@@ -127,5 +127,35 @@ export const EyeOffIcon = ({ className }: IconProps) => (
   <Icon className={className}>
     <path d="M9.9 5.2A9.6 9.6 0 0 1 12 5c6.5 0 10 7 10 7a17 17 0 0 1-3.2 4.1M6.6 6.6A17 17 0 0 0 2 12s3.5 7 10 7a9.7 9.7 0 0 0 5.4-1.6" />
     <path d="M9.9 9.9a3 3 0 0 0 4.2 4.2M3 3l18 18" />
+  </Icon>
+);
+
+// Finer icons for the phone tab bar: thin lines, with a crown and a strap on the watches.
+export const TabHomeIcon = ({ className }: IconProps) => (
+  <Icon className={className} strokeWidth={1.5}>
+    <path d="M4 10.5 12 4l8 6.5V19a1 1 0 0 1-1 1h-4.5v-5.5h-5V20H5a1 1 0 0 1-1-1z" />
+  </Icon>
+);
+
+export const TabGentsIcon = ({ className }: IconProps) => (
+  <Icon className={className} strokeWidth={1.5}>
+    <rect x="6.5" y="6.5" width="11" height="11" rx="2.5" />
+    <path d="M9 6.5 9.8 3h4.4L15 6.5M9 17.5l.8 3.5h4.4l.8-3.5" />
+    <path d="M17.5 11.2h1.2v1.6h-1.2M12 9.4V12l2 1.2" />
+  </Icon>
+);
+
+export const TabLadiesIcon = ({ className }: IconProps) => (
+  <Icon className={className} strokeWidth={1.5}>
+    <circle cx="12" cy="12" r="5" />
+    <path d="M9.2 7.3 9.8 3h4.4l.6 4.3M9.2 16.7l.6 4.3h4.4l.6-4.3" />
+    <path d="M12 9.6V12l1.8 1.1M12 6.9v.01" />
+  </Icon>
+);
+
+export const TabBagIcon = ({ className }: IconProps) => (
+  <Icon className={className} strokeWidth={1.5}>
+    <path d="M5.5 8h13l-1 12h-11z" />
+    <path d="M9 8V6.5a3 3 0 0 1 6 0V8" />
   </Icon>
 );

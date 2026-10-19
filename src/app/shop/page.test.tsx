@@ -35,6 +35,26 @@ import ShopPage from "@/app/shop/page";
 const render = async (params: Record<string, string> = {}) =>
   renderToStaticMarkup(await ShopPage({ searchParams: Promise.resolve(params) }));
 
+describe("Shop page search", () => {
+  it("says what was searched for, instead of calling the page 'Shop all products'", async () => {
+    const html = await render({ name: "Naviforce" });
+    expect(html).toContain("Results for");
+    expect(html).toContain("Naviforce");
+    expect(html).not.toContain("Shop all products");
+  });
+
+  it("does not mark any category pill as the page being viewed while a search is shown", async () => {
+    const html = await render({ name: "Naviforce" });
+    expect(html).not.toContain('aria-current="page"');
+  });
+
+  it("keeps the usual title and the All products pill when nothing is searched", async () => {
+    const html = await render({});
+    expect(html).toContain("Shop all products");
+    expect(html.match(/aria-current="page"/g)).toHaveLength(1);
+  });
+});
+
 describe("Shop page", () => {
   it("builds the category chips from the store's real categories, so none is a dead link", async () => {
     const html = await render();

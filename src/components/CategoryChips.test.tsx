@@ -6,7 +6,7 @@ const chips = [
   { name: "Ladies Watches", slug: "ladies-watches" },
   { name: "Gent's Watches", slug: "gents-watches" },
 ];
-const html = (activeSlug: string) => renderToStaticMarkup(<CategoryChips chips={chips} activeSlug={activeSlug} />);
+const html = (activeSlug: string | null) => renderToStaticMarkup(<CategoryChips chips={chips} activeSlug={activeSlug} />);
 
 describe("CategoryChips", () => {
   it("starts with All products, then one pill for each category, as links to the shop", () => {
@@ -22,6 +22,14 @@ describe("CategoryChips", () => {
     expect(html("").match(/aria-current="page"/g)).toHaveLength(1);
     const tag = html("gents-watches").match(/<a [^>]*href="\/shop\?cat=gents-watches"[^>]*>/)?.[0] ?? "";
     expect(tag).toContain('aria-current="page"');
+  });
+
+  it("marks no pill at all when the page shows a search", () => {
+    expect(html(null)).not.toContain("aria-current");
+  });
+
+  it("is positioned, so the sliding maths measures from the strip and not from the page", () => {
+    expect(html("").match(/<nav [^>]*>/)?.[0]).toContain("relative");
   });
 
   it("is a labelled navigation that scrolls sideways on a phone and wraps on large screens", () => {

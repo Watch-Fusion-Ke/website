@@ -21,6 +21,7 @@ export default async function ShopPage({
 }) {
     const resolvedParams = await searchParams;
     const catSlug = typeof resolvedParams.cat === "string" ? resolvedParams.cat : "";
+    const searched = typeof resolvedParams.name === "string" ? resolvedParams.name.trim() : "";
 
     const wixClient = await wixClientServer();
     const bounds = await getPriceBounds((url, init) => wixClient.fetchWithAuth(url, init));
@@ -54,10 +55,10 @@ export default async function ShopPage({
         <div className="px-4 md:px-8 lg:px-16 xl:px-32 2xl:px-64 relative">
             <div className="pt-8 pb-6">
                 <h1 className="font-display text-4xl font-bold md:text-5xl mb-2">
-                    {categoryName || "Shop all products"}
+                    {searched ? `Results for “${searched}”` : categoryName || "Shop all products"}
                 </h1>
                 <p className="text-gray-600">
-                    {categoryName ? `Browse our ${categoryName} collection` : "Browse our complete collection"}
+                    {searched ? "Matching products from the whole shop" : categoryName ? `Browse our ${categoryName} collection` : "Browse our complete collection"}
                 </p>
             </div>
 
@@ -67,7 +68,7 @@ export default async function ShopPage({
                 </p>
             )}
 
-            <CategoryChips chips={chips} activeSlug={categoryId !== "" ? catSlug : ""} />
+            <CategoryChips chips={chips} activeSlug={searched ? null : categoryId !== "" ? catSlug : ""} />
 
             <div className="mt-6 border-y border-gray-200 py-5">
                 <Suspense fallback={<div className="h-16" />}>

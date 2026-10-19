@@ -12,7 +12,7 @@ const chip = (active: boolean) =>
 
 // The category pills of the shop. They stay in place while the shopper switches category, with the current one marked,
 // and on a phone the strip slides so the current pill is in view.
-const CategoryChips = ({ chips, activeSlug }: { chips: Chip[]; activeSlug: string }) => {
+const CategoryChips = ({ chips, activeSlug }: { chips: Chip[]; activeSlug: string | null }) => {
   const nav = useRef<HTMLElement>(null);
 
   useEffect(() => {
@@ -21,14 +21,15 @@ const CategoryChips = ({ chips, activeSlug }: { chips: Chip[]; activeSlug: strin
     if (!strip || !current) return;
     // Only the strip itself moves, never the page behind it.
     const target = current.offsetLeft - (strip.clientWidth - current.offsetWidth) / 2;
-    strip.scrollTo({ left: Math.max(0, target), behavior: "smooth" });
+    const calm = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+    strip.scrollTo({ left: Math.max(0, target), behavior: calm ? "auto" : "smooth" });
   }, [activeSlug]);
 
   return (
     <nav
       ref={nav}
       aria-label="Categories"
-      className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-2 scrollbar-hide md:mx-0 md:flex-wrap md:px-0"
+      className="relative -mx-4 flex gap-2 overflow-x-auto px-4 pb-2 scrollbar-hide md:mx-0 md:flex-wrap md:px-0"
     >
       <Link href="/shop" aria-current={activeSlug === "" ? "page" : undefined} className={chip(activeSlug === "")}>
         All products

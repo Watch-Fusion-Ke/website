@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Suspense } from "react";
-import { Cormorant_Garamond, Montserrat } from "next/font/google";
+import { Cormorant_Garamond, Jost } from "next/font/google";
 import "./globals.css";
 import { SITE_URL } from "@/lib/site";
 import Navbar from "@/components/Navbar";
@@ -10,10 +10,10 @@ import BottomTabBar from "@/components/BottomTabBar";
 import { WixClientContextProvider } from "@/context/wixContext";
 import { THEME_SCRIPT } from "@/lib/theme";
 
-// Montserrat is the brand typeface and carries all text. Cormorant Garamond is the display face for
-// section titles (loaded in bold only), which gives the shop a boutique, watchmaker feel next to the geometric text face.
-const montserrat = Montserrat({
-  variable: "--font-montserrat",
+// Jost carries all text: it is the font the shop had before, and the owner asked for it back. Cormorant Garamond is the
+// display face for section titles (loaded in bold only), which gives the shop a boutique, watchmaker feel next to the text face.
+const jost = Jost({
+  variable: "--font-jost",
   subsets: ["latin"],
   display: "swap",
 });
@@ -102,7 +102,7 @@ export default function RootLayout({
       <head>
         <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
       </head>
-      <body className={`${montserrat.variable} ${cormorant.variable} font-sans antialiased pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)] pb-[calc(5.5rem_+_env(safe-area-inset-bottom))] md:pb-0`}>
+      <body className={`${jost.variable} ${cormorant.variable} font-sans antialiased pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)] pb-[calc(5.5rem_+_env(safe-area-inset-bottom))] md:pb-0`}>
         <WixClientContextProvider>
           <Navbar />
           {children}

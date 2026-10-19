@@ -189,3 +189,13 @@ body {
 .dark .hover\:bg-brand-gold.hover\:text-black:hover {
   color: var(--on-gold);
 }
+
+/* The sticky header covers the top of the screen. Keyboard focus and in-page jumps stop below it. */
+html {
+  scroll-padding-top: 8rem;
+}
+@media (min-width: 768px) {
+  html {
+    scroll-padding-top: 6.5rem;
+  }
+}

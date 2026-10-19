@@ -97,7 +97,7 @@ const SinglePage = async ({ params }: Props) => {
                 }}
             />
             {/* IMG */}
-            <div className="w-full lg:w-1/2 lg:sticky top-20 h-max min-w-0">
+            <div className="w-full lg:w-1/2 lg:sticky lg:top-24 h-max min-w-0">
                 <ProductImages key={product._id} items={product.media?.items} />
             </div>
 

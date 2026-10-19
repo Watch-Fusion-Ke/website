@@ -1,4 +1,5 @@
 import { renderToStaticMarkup } from "react-dom/server";
+import { readFileSync } from "node:fs";
 import { describe, expect, it, vi } from "vitest";
 
 vi.mock("next/navigation", () => ({
@@ -124,5 +125,68 @@ describe("Navbar on a phone", () => {
     const desktop = html.slice(html.indexOf('data-testid="desktop-header"')).match(/<img[^>]*alt="Watch Fusion Kenya"[^>]*>/)?.[0] ?? "";
     expect(desktop).toMatch(/dark:drop-shadow-\[/);
     expect(desktop).toContain("object-cover");
+  });
+});
+
+describe("Navbar stays at the top while the page scrolls", () => {
+  const html = renderToStaticMarkup(<Navbar />);
+  const divs = html.match(/<div [^>]*class="[^"]*"[^>]*>/g) ?? [];
+  const classes = (tag: string) => tag.match(/class="([^"]*)"/)?.[1].split(" ") ?? [];
+  const outer = classes(divs[0] ?? "");
+  const panel = classes(divs[1] ?? "");
+
+  it("sticks to the top of the screen on phones and large screens", () => {
+    expect(outer).toContain("sticky");
+    expect(outer).toContain("top-0");
+  });
+
+  it("makes room for itself when a keyboard user tabs to a link or box near the top of the screen", () => {
+    const css = readFileSync("src/app/globals.css", "utf8");
+    expect(css).toMatch(/html\s*\{[^}]*scroll-padding-top:\s*[\d.]+rem/);
+  });
+
+  it("sits above the bottom tab bar and the chat icon, so the open menu covers them, and under the zoomed photo", () => {
+    // The header makes its own layer, so the menu drawer inside it counts at the header's level, not its own.
+    const z = (file: string, pattern: RegExp) => Number(readFileSync(file, "utf8").match(pattern)?.[1]);
+    const dock = z("src/components/BottomTabBar.tsx", /\bz-(\d+)\b/);
+    const chat = z("src/components/WhatsAppButton.tsx", /z-\[(\d+)\]/);
+    const zoom = z("src/components/ProductImages.tsx", /z-\[(\d+)\]/);
+    const header = Number(outer.find((c) => /^z-\[\d+\]$/.test(c))?.match(/\d+/)?.[0]);
+    expect(header).toBeGreaterThan(dock);
+    expect(header).toBeGreaterThan(chat);
+    expect(header).toBeLessThan(zoom);
+  });
+
+  it("keeps its place in the page when the search row folds, so the content below never jumps", () => {
+    // the sticky frame keeps its full height; only the visible panel inside it grows and shrinks
+    expect(outer.some((c) => c.startsWith("h-[var(--reserve"))).toBe(true);
+    expect(outer).toContain("md:h-20");
+    expect(outer).toContain("pointer-events-none");
+    expect(panel).toContain("pointer-events-auto");
+  });
+
+  it("has a solid panel in the page colour in both themes, so nothing shows through it", () => {
+    expect(panel).toContain("bg-[var(--page)]");
+    expect(html).not.toMatch(/backdrop-blur/);
+  });
+
+  it("stays clear of a phone's status bar when the site is added to the home screen", () => {
+    expect(panel.some((c) => c.includes("env(safe-area-inset-top)"))).toBe(true);
+  });
+
+  it("keeps the menu, logo, theme and cart row in view, and lets only the search row fold away", () => {
+    const phone = phoneHeader();
+    expect(phone).toContain("data-header-search");
+    const rowAt = phone.indexOf("grid-cols-[1fr_auto_1fr]");
+    const searchAt = phone.indexOf("data-header-search");
+    expect(searchAt).toBeGreaterThan(rowAt);
+    expect(phone.slice(rowAt, searchAt)).not.toContain("data-header-search");
+  });
+
+  it("folds the search row with a short slide, which is switched off for people who ask for less motion", () => {
+    const search = html.match(/<div[^>]*data-header-search[^>]*>/)?.[0] ?? "";
+    expect(search).toContain("transition-");
+    expect(search).toContain("motion-reduce:transition-none");
+    expect(search).toContain("grid-rows-[1fr]");
   });
 });

@@ -29,6 +29,9 @@ const CaptchaBox = ({
         box.current.innerHTML = "";
         recaptcha.render(box.current, {
           sitekey: siteKey,
+          // the normal box is 304 px wide, which does not fit the narrowest phones
+          size: window.innerWidth < 360 ? "compact" : "normal",
+          theme: document.documentElement.classList.contains("dark") ? "dark" : "light",
           callback: (token) => handlers.current.onToken(token),
           "expired-callback": () => handlers.current.onExpired(),
           "error-callback": () => handlers.current.onFailed(),

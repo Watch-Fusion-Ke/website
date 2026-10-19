@@ -3,13 +3,14 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Cookies from "js-cookie";
-import { LoginState } from "@wix/sdk";
 import { useWixClient } from "@/hooks/useWixClient";
 import { interpretAuth, PASSWORD_HELP, signupProblem, type AuthMode } from "@/lib/auth";
 import { beginRedirectLogin, safeReturnPath } from "@/lib/loginRedirect";
 import PasswordField, { fieldClass, labelClass } from "@/components/auth/PasswordField";
 import AuthShowcase, { type ShowcaseWatch } from "@/components/auth/AuthShowcase";
 import CaptchaBox from "@/components/auth/CaptchaBox";
+import { signInWithCaptcha, type CaptchaKind } from "@/lib/captchaFlow";
+import { getInvisibleToken } from "@/lib/recaptcha";
 
 const TITLES: Record<AuthMode, string> = {
   LOGIN: "Log in",
@@ -71,8 +72,9 @@ const AuthForm = ({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
-  // Wix can ask for a robot check (a site setting). Once it has, the box is shown and the button waits for it.
-  const [captchaNeeded, setCaptchaNeeded] = useState(initialCaptcha);
+  // Wix can ask for a robot check (a site setting). It is tried silently first; if Wix will not take that, the box is
+  // shown and the button waits for it. What worked is remembered for this visit.
+  const [captchaMode, setCaptchaMode] = useState<CaptchaKind | null>(initialCaptcha ? "visible" : null);
   const [captchaToken, setCaptchaToken] = useState("");
   const [captchaDraw, setCaptchaDraw] = useState(0);
   // Whether Wix will take members back to this address. Until the check answers, the older method is used.
@@ -106,6 +108,26 @@ const AuthForm = ({
     heading.current?.focus();
   }, [mode]);
 
+  useEffect(() => {
+    try {
+      const kept = window.sessionStorage.getItem("wf-captcha-kind");
+      if (kept === "invisible" || kept === "visible") setCaptchaMode((now) => now ?? kept);
+    } catch {
+      // storage is blocked: the check is simply asked for again when needed
+    }
+  }, []);
+
+  const rememberCaptcha = (kind: CaptchaKind) => {
+    setCaptchaMode(kind);
+    try {
+      window.sessionStorage.setItem("wf-captcha-kind", kind);
+    } catch {
+      // storage is blocked
+    }
+  };
+
+  const showBox = captchaMode === "visible" && (mode === "LOGIN" || mode === "REGISTER");
+
   // Each robot-check answer works once, so a new box is drawn after every attempt.
   const freshCaptcha = () => {
     setCaptchaToken("");
@@ -114,7 +136,6 @@ const AuthForm = ({
 
   const switchTo = (next: AuthMode) => {
     setMode(next);
-    setCaptchaNeeded(false);
     setCaptchaToken("");
     setError("");
     setMessage("");
@@ -174,24 +195,37 @@ const AuthForm = ({
         return;
       }
 
-      const captchaTokens = captchaToken ? { recaptchaToken: captchaToken } : undefined;
-      const response =
-        mode === "LOGIN"
-          ? await wixClient.auth.login({ email, password, captchaTokens })
-          : mode === "REGISTER"
-          ? await wixClient.auth.register({
-              email,
-              password,
-              captchaTokens,
-              profile: name.trim() ? { nickname: name.trim() } : undefined,
-            })
-          : await wixClient.auth.processVerification({ verificationCode: code.trim() });
-      if (captchaNeeded) freshCaptcha();
+      let response;
+      let outcome;
+      if (mode === "LOGIN" || mode === "REGISTER") {
+        const result = await signInWithCaptcha({
+          mode,
+          remembered: captchaMode,
+          visibleToken: captchaToken || undefined,
+          getInvisibleToken: () => getInvisibleToken(wixClient.auth.captchaInvisibleSiteKey),
+          send: (captchaTokens) =>
+            mode === "LOGIN"
+              ? wixClient.auth.login({ email, password, captchaTokens })
+              : wixClient.auth.register({
+                  email,
+                  password,
+                  captchaTokens,
+                  profile: name.trim() ? { nickname: name.trim() } : undefined,
+                }),
+        });
+        response = result.response;
+        outcome = result.outcome;
+        if (result.learned) rememberCaptcha(result.learned);
+        if (showBox || result.learned === "visible") freshCaptcha();
+      } else {
+        response = await wixClient.auth.processVerification({ verificationCode: code.trim() });
+        outcome = interpretAuth(response, mode);
+      }
 
-      const outcome = interpretAuth(response, mode);
       if (outcome.kind === "success") {
-        if (response?.loginState !== LoginState.SUCCESS) throw new Error("Wix said success without a session");
-        await signedIn(response.data.sessionToken!);
+        const sessionToken = (response as { data?: { sessionToken?: string } } | undefined)?.data?.sessionToken;
+        if (!sessionToken) throw new Error("Wix said success without a session");
+        await signedIn(sessionToken);
         leaving = true; // the button stays off while the page changes, so a second tap cannot send it again
       } else if (outcome.kind === "verify") {
         setMode("EMAIL_VERIFICATION");
@@ -199,8 +233,6 @@ const AuthForm = ({
       } else if (outcome.kind === "pending") {
         setMessage(outcome.message);
       } else if (outcome.kind === "captcha") {
-        setCaptchaNeeded(true);
-        freshCaptcha();
         setError(outcome.message);
       } else {
         setError(outcome.message);
@@ -320,7 +352,7 @@ const AuthForm = ({
               </p>
             )}
 
-            {captchaNeeded && (mode === "LOGIN" || mode === "REGISTER") && (
+            {showBox && (
               <CaptchaBox
                 siteKey={wixClient.auth.captchaVisibleSiteKey}
                 resetKey={captchaDraw}
@@ -332,7 +364,7 @@ const AuthForm = ({
 
             <button
               type="submit"
-              disabled={isLoading || (captchaNeeded && (mode === "LOGIN" || mode === "REGISTER") && !captchaToken)}
+              disabled={isLoading || (showBox && !captchaToken)}
               className="rounded-lg bg-brand-navy px-4 py-3 text-base font-semibold text-white transition-colors hover:bg-brand-gold hover:text-brand-navy focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold disabled:cursor-not-allowed disabled:bg-gray-200 disabled:text-gray-500"
             >
               {isLoading ? "Please wait..." : BUTTONS[mode]}

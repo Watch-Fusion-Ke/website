@@ -5,6 +5,8 @@ import Skeleton from "@/components/Skeleton";
 import Slider from "@/components/Slider";
 import { Suspense } from "react";
 
+export const metadata = { alternates: { canonical: "/" } };
+
 const HomePage = async () => {
 
 

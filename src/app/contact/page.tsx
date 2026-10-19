@@ -11,6 +11,12 @@ import {
     WHATSAPP_URL,
 } from "@/lib/contact";
 
+export const metadata = {
+    title: "Contact",
+    description: "Find Watch Fusion Kenya in Nairobi, see the opening hours, and chat with us on WhatsApp, by phone or by email.",
+    alternates: { canonical: "/contact" },
+};
+
 const card = "rounded-xl bg-brand-cream p-6";
 const link = "font-medium text-brand-navy underline underline-offset-4 decoration-brand-gold decoration-2 hover:decoration-brand-navy";
 const outside = { target: "_blank", rel: "noopener noreferrer" } as const;

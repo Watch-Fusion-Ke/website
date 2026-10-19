@@ -90,7 +90,7 @@ describe("BottomTabBar look", () => {
     expect(label).toContain("text-[10px]");
   });
 
-  it("floats as a rounded navy dock lifted off the edges of the screen, not as a bar across the bottom", () => {
+  it("floats as a rounded dock lifted off the edges of the screen, not as a bar across the bottom", () => {
     const html = tabs();
     const wrapper = html.match(/^<div [^>]*>/)?.[0] ?? "";
     expect(wrapper).toContain("fixed");
@@ -99,47 +99,67 @@ describe("BottomTabBar look", () => {
     expect(wrapper).toContain("env(safe-area-inset-bottom)");
     const nav = html.match(/<nav [^>]*>/)?.[0] ?? "";
     expect(nav).toContain("rounded-[1.75rem]");
-    expect(nav).toContain("bg-[#1E2235]");
     expect(nav).toContain("pointer-events-auto");
     expect(nav).toMatch(/shadow-/);
     expect(nav).toMatch(/ring-1/);
     expect(nav).not.toContain("border-t");
   });
 
+  it("is a warm white dock in the light theme and a lifted navy dock with a gold edge in the dark theme", () => {
+    const nav = tabs().match(/<nav [^>]*>/)?.[0] ?? "";
+    expect(nav).toContain("bg-[#FFFDF8]");
+    expect(nav).toContain("dark:bg-[#1B1F33]");
+    expect(nav).toContain("dark:ring-brand-gold/40");
+  });
+
+  it("is never the brand navy of the Add to cart buttons, so the two do not compete", () => {
+    const nav = tabs().match(/<nav [^>]*>/)?.[0] ?? "";
+    expect(nav).not.toMatch(/bg-\[#1E2235\]/i);
+    expect(nav).not.toContain("bg-brand-navy");
+  });
+
   it("has no blur, which would slow older phones", () => {
     expect(tabs()).not.toMatch(/backdrop-blur/);
   });
 
-  it("marks the current tab with the shop's gold icon, label and a soft gold pill behind the icon", () => {
+  it("marks the current tab in navy (gold in the dark theme) with a soft gold pill behind the icon", () => {
     const current = tabs("/", null).match(/<a [^>]*aria-current="page"[^>]*>[\s\S]*?<\/a>/)?.[0] ?? "";
-    expect(current).toMatch(/text-brand-gold/);
-    expect(current).toMatch(/bg-brand-gold\/15/);
-    expect(current).not.toMatch(/text-white\/60/);
+    expect(current).toContain("text-[#1E2235]");
+    expect(current).toContain("dark:text-brand-gold");
+    expect(current).toContain("bg-brand-gold/25");
+    expect(current).toContain("dark:bg-brand-gold/15");
+    expect(current).not.toMatch(/text-gray-600/);
     const other = tabs("/", null).match(/<a [^>]*href="\/cart"[^>]*>[\s\S]*?<\/a>/)?.[0] ?? "";
     expect(other).not.toMatch(/bg-brand-gold/);
-    expect(other).toMatch(/text-white\/60/);
+    expect(other).toContain("text-gray-600");
   });
 
-  it("keeps the other tabs readable on the navy, at a contrast of at least 4.5 to 1", () => {
-    // white at 60 percent over the shop's navy (30, 34, 53)
-    const mix = (c: number, back: number) => 0.6 * c + 0.4 * back;
+  it("keeps the other tabs readable on both docks, at a contrast of at least 4.5 to 1", () => {
     const channel = (v: number) => {
       const x = v / 255;
       return x <= 0.03928 ? x / 12.92 : Math.pow((x + 0.055) / 1.055, 2.4);
     };
-    const luminance = (r: number, g: number, b: number) => 0.2126 * channel(r) + 0.7152 * channel(g) + 0.0722 * channel(b);
-    const text = luminance(mix(255, 30), mix(255, 34), mix(255, 53));
-    const back = luminance(30, 34, 53);
-    expect((text + 0.05) / (back + 0.05)).toBeGreaterThanOrEqual(4.5);
+    const lum = ([r, g, b]: number[]) => 0.2126 * channel(r) + 0.7152 * channel(g) + 0.0722 * channel(b);
+    const ratio = (a: number[], b: number[]) => {
+      const [hi, lo] = lum(a) > lum(b) ? [lum(a), lum(b)] : [lum(b), lum(a)];
+      return (hi + 0.05) / (lo + 0.05);
+    };
+    // the grey the site calls gray-600, in each theme, on the dock behind it
+    expect(ratio([75, 85, 99], [255, 253, 248])).toBeGreaterThanOrEqual(4.5);
+    expect(ratio([188, 192, 208], [27, 31, 51])).toBeGreaterThanOrEqual(4.5);
+    // the navy of the current tab on the warm white, and the gold of the dark theme on its dock
+    expect(ratio([30, 34, 53], [255, 253, 248])).toBeGreaterThanOrEqual(4.5);
+    expect(ratio([212, 174, 83], [27, 31, 51])).toBeGreaterThanOrEqual(4.5);
   });
 
-  it("keeps every tab at least 56 px tall and keeps the cart count readable on the dock", () => {
+  it("keeps every tab at least 56 px tall and keeps the cart count readable against the dock", () => {
     expect(tabs()).toMatch(/min-h-14/);
     const full = tabs("/", null, 3);
     expect(full).toContain('data-cart-count="3"');
     const badge = full.match(/<span data-cart-count[^>]*>/)?.[0] ?? "";
     expect(badge).toContain("bg-brand-gold");
-    expect(badge).toMatch(/ring-2/);
+    expect(badge).toContain("ring-[#FFFDF8]");
+    expect(badge).toContain("dark:ring-[#1B1F33]");
   });
 });
 

@@ -11,6 +11,10 @@ describe("root layout", () => {
     expect(source).toContain('viewportFit: "cover"');
   });
 
+  it("leaves room at the bottom of every page for the floating phone dock", () => {
+    expect(bodyTag).toContain("pb-[calc(5.5rem_+_env(safe-area-inset-bottom))]");
+  });
+
   it("pads the body, not some other element, left and right", () => {
     expect(bodyTag).toContain("pl-[env(safe-area-inset-left)]");
     expect(bodyTag).toContain("pr-[env(safe-area-inset-right)]");

@@ -97,6 +97,25 @@ describe("signInWithCaptcha", () => {
     expect(result.outcome.kind).toBe("error");
   });
 
+  it("shows the box when Wix takes the silent check but wants a real answer, which it reports as a failure with no reason", async () => {
+    const unclear = { loginState: LoginState.FAILURE } as never;
+    const first = setup([missing, unclear]);
+    const result = await signInWithCaptcha({ ...first.deps });
+    expect(result.outcome.kind).toBe("captcha");
+    expect(result.learned).toBe("visible");
+
+    const remembered = setup([unclear]);
+    const again = await signInWithCaptcha({ ...remembered.deps, remembered: "invisible" });
+    expect(again.outcome.kind).toBe("captcha");
+    expect(again.learned).toBe("visible");
+  });
+
+  it("does not take a plain failure with no reason for a robot check when no silent check was sent", async () => {
+    const { deps } = setup([{ loginState: LoginState.FAILURE } as never]);
+    const result = await signInWithCaptcha({ ...deps });
+    expect(result.outcome.kind).toBe("error");
+  });
+
   it("does not try the silent check after a wrong password that follows it", async () => {
     const { deps, sent } = setup([missing, wrongPassword]);
     const result = await signInWithCaptcha({ ...deps });

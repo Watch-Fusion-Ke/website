@@ -112,6 +112,60 @@ describe("getInvisibleToken", () => {
     await expect(getInvisibleToken("wix-invisible-key", env)).rejects.toThrow(/robot check/i);
   });
 
+  it("takes its holder off the page and resets its own widget when it is done", async () => {
+    const removed: string[] = [];
+    const resets: unknown[] = [];
+    const p = pretend();
+    const doc = p.env as unknown as { document: { createElement: () => unknown; body?: unknown } };
+    doc.document.createElement = () => ({ style: {}, remove: () => void removed.push("holder") });
+    doc.document.body = { appendChild: () => {} };
+    p.win.grecaptcha = {
+      enterprise: {
+        render: (_el: unknown, o: { callback: (t: string) => void }) => {
+          p.win.__cb = o.callback;
+          return 7;
+        },
+        reset: (id?: number) => void resets.push(id),
+        execute: () => (p.win.__cb as (t: string) => void)("tok"),
+        ready: (fn: () => void) => fn(),
+      },
+    };
+    await getInvisibleToken("k", p.env);
+    expect(removed).toEqual(["holder"]);
+    expect(resets).toEqual([7]);
+  });
+
+  it("does not reset anything when the widget could not even be drawn, since that would clear the box the shopper ticked", async () => {
+    const resets: unknown[] = [];
+    const p = pretend();
+    const doc = p.env as unknown as { document: { createElement: () => unknown; body?: unknown } };
+    doc.document.createElement = () => ({ style: {}, remove: () => {} });
+    doc.document.body = { appendChild: () => {} };
+    p.win.grecaptcha = {
+      enterprise: {
+        render: () => {
+          throw new Error("cannot draw");
+        },
+        reset: (id?: number) => void resets.push(id),
+        execute: () => {},
+        ready: (fn: () => void) => fn(),
+      },
+    };
+    await expect(getInvisibleToken("k", p.env)).rejects.toThrow();
+    expect(resets).toEqual([]);
+  });
+
+  it("fails at once when Google's script cannot run a silent check, instead of waiting", async () => {
+    const p = pretend();
+    const doc = p.env as unknown as { document: { createElement: () => unknown; body?: unknown } };
+    doc.document.createElement = () => ({ style: {}, remove: () => {} });
+    doc.document.body = { appendChild: () => {} };
+    p.win.grecaptcha = { enterprise: { render: () => 3, reset: () => {}, ready: (fn: () => void) => fn() } };
+    const started = Date.now();
+    await expect(getInvisibleToken("k", p.env, 5000)).rejects.toThrow(/robot check/i);
+    expect(Date.now() - started).toBeLessThan(1000);
+  });
+
   it("fails rather than waiting for ever", async () => {
     const env = withWidget(() => {});
     await expect(getInvisibleToken("wix-invisible-key", env, 20)).rejects.toThrow(/robot check/i);

@@ -74,8 +74,10 @@ export const loadRecaptcha = (env?: Env, timeoutMs = 15000): Promise<RecaptchaAp
 };
 
 // The silent robot check: no box is shown. Wix's invisible key gives a token if Google trusts the visitor.
-export const getInvisibleToken = async (siteKey: string, env?: Env, timeoutMs = 20000): Promise<string> => {
-  const api = await loadRecaptcha(env);
+// The wait is kept short: a shopper on a blocked or slow network should reach the box quickly.
+export const getInvisibleToken = async (siteKey: string, env?: Env, timeoutMs = 8000): Promise<string> => {
+  const api = await loadRecaptcha(env, timeoutMs);
+  if (typeof api.execute !== "function") throw new Error("The robot check cannot run silently here");
   const doc = env?.document ?? document;
   const holder = doc.createElement("div");
   doc.body.appendChild(holder);
@@ -83,10 +85,13 @@ export const getInvisibleToken = async (siteKey: string, env?: Env, timeoutMs = 
     let id: number | undefined;
     const finish = (run: () => void) => {
       clearTimeout(timer);
-      try {
-        api.reset(id);
-      } catch {
-        // the widget is already gone
+      // Only this check's own widget is reset. With no id, Google would reset the first one on the page, the ticked box.
+      if (id !== undefined) {
+        try {
+          api.reset(id);
+        } catch {
+          // the widget is already gone
+        }
       }
       holder.remove();
       run();

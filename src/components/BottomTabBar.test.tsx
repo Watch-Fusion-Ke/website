@@ -30,8 +30,8 @@ describe("BottomTabBar", () => {
 
   it("keeps the first and last tab clear of the notch when the phone is turned sideways", () => {
     const html = render();
-    expect(html).toContain("pl-[env(safe-area-inset-left)]");
-    expect(html).toContain("pr-[env(safe-area-inset-right)]");
+    expect(html).toContain("env(safe-area-inset-left)");
+    expect(html).toContain("env(safe-area-inset-right)");
   });
 
   it("is only for phones, and is the page's main navigation landmark", () => {
@@ -71,7 +71,7 @@ describe("BottomTabBar", () => {
   });
 });
 
-describe("BottomTabBar premium look", () => {
+describe("BottomTabBar look", () => {
   const tabs = (path = "/", cat: string | null = null, counter = 0) =>
     renderToStaticMarkup(<TabBarView pathname={path} cat={cat} counter={counter} />);
 
@@ -90,27 +90,56 @@ describe("BottomTabBar premium look", () => {
     expect(label).toContain("text-[10px]");
   });
 
-  it("marks the current tab with a short gold bar on top, a soft gold halo behind its icon and brand colour text", () => {
-    const html = tabs("/", null);
-    const current = html.match(/<a [^>]*aria-current="page"[^>]*>[\s\S]*?<\/a>/)?.[0] ?? "";
-    const bar = current.match(/<span aria-hidden="true" class="([^"]*)"/)?.[1] ?? "";
-    expect(bar).toContain("bg-brand-gold");
-    expect(bar).toContain("h-0.5");
+  it("floats as a rounded navy dock lifted off the edges of the screen, not as a bar across the bottom", () => {
+    const html = tabs();
+    const wrapper = html.match(/^<div [^>]*>/)?.[0] ?? "";
+    expect(wrapper).toContain("fixed");
+    expect(wrapper).toContain("bottom-0");
+    expect(wrapper).toContain("pointer-events-none");
+    expect(wrapper).toContain("env(safe-area-inset-bottom)");
+    const nav = html.match(/<nav [^>]*>/)?.[0] ?? "";
+    expect(nav).toContain("rounded-[1.75rem]");
+    expect(nav).toContain("bg-[#1E2235]");
+    expect(nav).toContain("pointer-events-auto");
+    expect(nav).toMatch(/shadow-/);
+    expect(nav).toMatch(/ring-1/);
+    expect(nav).not.toContain("border-t");
+  });
+
+  it("has no blur, which would slow older phones", () => {
+    expect(tabs()).not.toMatch(/backdrop-blur/);
+  });
+
+  it("marks the current tab with the shop's gold icon, label and a soft gold pill behind the icon", () => {
+    const current = tabs("/", null).match(/<a [^>]*aria-current="page"[^>]*>[\s\S]*?<\/a>/)?.[0] ?? "";
+    expect(current).toMatch(/text-brand-gold/);
     expect(current).toMatch(/bg-brand-gold\/15/);
-    expect(current).toMatch(/text-brand-navy/);
-    const other = html.match(/<a [^>]*href="\/cart"[^>]*>[\s\S]*?<\/a>/)?.[0] ?? "";
+    expect(current).not.toMatch(/text-white\/60/);
+    const other = tabs("/", null).match(/<a [^>]*href="\/cart"[^>]*>[\s\S]*?<\/a>/)?.[0] ?? "";
     expect(other).not.toMatch(/bg-brand-gold/);
+    expect(other).toMatch(/text-white\/60/);
   });
 
-  it("is a clean plain bar: no blur, no shadow stack, a hairline on top", () => {
-    const nav = tabs().match(/<nav [^>]*>/)?.[0] ?? "";
-    expect(nav).toContain("border-t");
-    expect(nav).not.toMatch(/backdrop-blur|shadow/);
+  it("keeps the other tabs readable on the navy, at a contrast of at least 4.5 to 1", () => {
+    // white at 60 percent over the shop's navy (30, 34, 53)
+    const mix = (c: number, back: number) => 0.6 * c + 0.4 * back;
+    const channel = (v: number) => {
+      const x = v / 255;
+      return x <= 0.03928 ? x / 12.92 : Math.pow((x + 0.055) / 1.055, 2.4);
+    };
+    const luminance = (r: number, g: number, b: number) => 0.2126 * channel(r) + 0.7152 * channel(g) + 0.0722 * channel(b);
+    const text = luminance(mix(255, 30), mix(255, 34), mix(255, 53));
+    const back = luminance(30, 34, 53);
+    expect((text + 0.05) / (back + 0.05)).toBeGreaterThanOrEqual(4.5);
   });
 
-  it("keeps every tab at least 56 px tall and keeps the cart count readable", () => {
+  it("keeps every tab at least 56 px tall and keeps the cart count readable on the dock", () => {
     expect(tabs()).toMatch(/min-h-14/);
-    expect(tabs("/", null, 3)).toContain('data-cart-count="3"');
+    const full = tabs("/", null, 3);
+    expect(full).toContain('data-cart-count="3"');
+    const badge = full.match(/<span data-cart-count[^>]*>/)?.[0] ?? "";
+    expect(badge).toContain("bg-brand-gold");
+    expect(badge).toMatch(/ring-2/);
   });
 });
 
@@ -132,7 +161,7 @@ describe("WhatsAppButton", () => {
   it("floats above the phone tab bar and the iPhone home strip, then drops to the corner on large screens", () => {
     const classes = html().match(/class="([^"]*)"/)?.[1].split(" ") ?? [];
     expect(classes).toContain("fixed");
-    expect(classes).toContain("bottom-[calc(5rem_+_env(safe-area-inset-bottom))]");
+    expect(classes).toContain("bottom-[calc(6.5rem_+_env(safe-area-inset-bottom))]");
     expect(classes).toContain("md:bottom-6");
   });
 

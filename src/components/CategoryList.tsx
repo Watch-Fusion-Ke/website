@@ -12,7 +12,7 @@ const CategoryList = async () => {
         <div className="flex gap-3 px-4 pr-10 overflow-x-auto scrollbar-hide">
           {cats.items.map((item) => (
             <Link
-              href={`/list?cat=${item.slug}`}
+              href={`/shop?cat=${item.slug}`}
               key={item._id}
               className="flex-shrink-0 px-4 py-2 rounded-full border border-gray-200 bg-white text-sm font-semibold text-gray-700 hover:bg-black hover:text-white hover:border-black transition-colors duration-200 whitespace-nowrap"
             >
@@ -32,7 +32,7 @@ const CategoryList = async () => {
       <div className="hidden md:flex justify-center items-center gap-8 md:gap-12 lg:gap-16 px-4 overflow-x-auto scrollbar-hide">
         {cats.items.map((item) => (
           <Link
-            href={`/list?cat=${item.slug}`}
+            href={`/shop?cat=${item.slug}`}
             className="flex-shrink-0 group"
             key={item._id}
           >

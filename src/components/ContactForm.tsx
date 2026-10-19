@@ -1,7 +1,8 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { validateContact, type ContactErrors } from "@/lib/contactForm";
+import { EMAIL, PHONE_DISPLAY, PHONE_TEL, WHATSAPP_URL } from "@/lib/contact";
 
 const field =
   "w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-base text-gray-900 placeholder:text-gray-400 focus:border-brand-navy focus:outline-none focus:ring-2 focus:ring-brand-gold";
@@ -11,11 +12,25 @@ const problem = "mt-1.5 text-sm text-red-600";
 type Status = "idle" | "sending" | "sent";
 
 // The message goes to /api/contact, which puts it in the shop's Wix inbox.
-const ContactForm = () => {
+const ContactForm = ({ initialAvailable = null }: { initialAvailable?: boolean | null }) => {
+  // The form is shown only once the shop has said it can take messages, so nobody writes one that cannot be sent.
+  const [available, setAvailable] = useState<boolean | null>(initialAvailable);
   const [status, setStatus] = useState<Status>("idle");
   const [errors, setErrors] = useState<ContactErrors>({});
   const [failure, setFailure] = useState("");
   const form = useRef<HTMLFormElement>(null);
+
+  useEffect(() => {
+    if (initialAvailable !== null) return;
+    let cancelled = false;
+    fetch("/api/contact")
+      .then((response) => (response.ok ? response.json() : { available: false }))
+      .then((answer) => !cancelled && setAvailable(answer?.available === true))
+      .catch(() => !cancelled && setAvailable(false));
+    return () => {
+      cancelled = true;
+    };
+  }, [initialAvailable]);
 
   const send = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -41,7 +56,7 @@ const ContactForm = () => {
           name: data.get("name"),
           email: data.get("email"),
           message: data.get("message"),
-          website: data.get("website"),
+          c_ref_check: data.get("c_ref_check"),
         }),
       });
       const answer = await response.json().catch(() => ({}));
@@ -63,6 +78,29 @@ const ContactForm = () => {
       setFailure("We could not reach the shop. Check your internet connection and try again.");
     }
   };
+
+  if (available === null) {
+    return <p className="min-h-[12rem] text-sm text-gray-600">Loading the message form...</p>;
+  }
+
+  if (!available) {
+    return (
+      <div className="text-gray-700">
+        <p className="mb-4">The message form is not available right now. You can reach us here instead:</p>
+        <p className="flex flex-wrap gap-x-6 gap-y-2 font-medium">
+          <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer" className="underline underline-offset-4 decoration-brand-gold decoration-2">
+            WhatsApp
+          </a>
+          <a href={PHONE_TEL} className="underline underline-offset-4 decoration-brand-gold decoration-2">
+            {PHONE_DISPLAY}
+          </a>
+          <a href={`mailto:${EMAIL}`} className="underline underline-offset-4 decoration-brand-gold decoration-2">
+            {EMAIL}
+          </a>
+        </p>
+      </div>
+    );
+  }
 
   return (
     <form ref={form} onSubmit={send} noValidate className="flex flex-col gap-5">
@@ -139,8 +177,8 @@ const ContactForm = () => {
 
       {/* A box people never see. Only a bot fills it in, and its message is thrown away. */}
       <div aria-hidden="true" className="absolute -left-[9999px] h-0 w-0 overflow-hidden">
-        <label htmlFor="contact-website">Leave this empty</label>
-        <input id="contact-website" name="website" type="text" tabIndex={-1} autoComplete="off" defaultValue="" />
+        <label htmlFor="contact-ref">Leave this empty</label>
+        <input id="contact-ref" name="c_ref_check" type="text" tabIndex={-1} autoComplete="off" defaultValue="" />
       </div>
 
       <button

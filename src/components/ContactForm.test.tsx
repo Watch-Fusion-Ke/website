@@ -2,7 +2,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import ContactForm from "@/components/ContactForm";
 
-const html = renderToStaticMarkup(<ContactForm />);
+const html = renderToStaticMarkup(<ContactForm initialAvailable />);
 
 describe("ContactForm", () => {
   it("labels every box and gives phones the right autofill and keyboard", () => {
@@ -22,7 +22,7 @@ describe("ContactForm", () => {
   });
 
   it("holds a hidden trap box that people never see or tab to", () => {
-    expect(html).toMatch(/aria-hidden="true"[^>]*>[\s\S]*name="website"/);
+    expect(html).toMatch(/aria-hidden="true"[^>]*>[\s\S]*name="c_ref_check"/);
     expect(html).toContain('tabindex="-1"');
     expect(html).toContain('autoComplete="off"');
   });
@@ -35,6 +35,25 @@ describe("ContactForm", () => {
   it("starts quiet, with no message and no error showing", () => {
     expect(html).not.toContain('role="alert"');
     expect(html).not.toContain('role="status"');
+  });
+
+  it("shows no form until the shop has said the form works, so nobody writes a message that cannot be sent", () => {
+    const waiting = renderToStaticMarkup(<ContactForm />);
+    expect(waiting).not.toContain("<form");
+    expect(waiting).not.toContain("<textarea");
+  });
+
+  it("offers WhatsApp, a call and email instead when the form is not available", () => {
+    const off = renderToStaticMarkup(<ContactForm initialAvailable={false} />);
+    expect(off).not.toContain("<form");
+    expect(off).toContain("https://wa.me/254796044969");
+    expect(off).toContain("tel:+254796044969");
+    expect(off).toContain("mailto:");
+  });
+
+  it("names the trap box something no password manager or browser fills in", () => {
+    expect(html).not.toContain('name="website"');
+    expect(html).toContain('name="c_ref_check"');
   });
 
   it("uses no pink", () => {

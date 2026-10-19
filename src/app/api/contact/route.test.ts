@@ -35,9 +35,9 @@ vi.mock("@/lib/wixAdmin", () => ({
   },
 }));
 
-import { POST } from "@/app/api/contact/route";
+import { GET, POST } from "@/app/api/contact/route";
 
-const body = { name: "Jane Wanjiru", email: "jane@example.com", message: "Is the green dial watch in stock?", website: "" };
+const body = { name: "Jane Wanjiru", email: "jane@example.com", message: "Is the green dial watch in stock?", c_ref_check: "" };
 let ip = 0;
 const req = (data: unknown, headers: Record<string, string> = {}, raw?: string) =>
   new Request("https://www.watchfusionkenya.com/api/contact", {
@@ -45,6 +45,20 @@ const req = (data: unknown, headers: Record<string, string> = {}, raw?: string) 
     headers: { "content-type": "application/json", "x-forwarded-for": `10.0.0.${++ip}`, ...headers },
     body: raw ?? JSON.stringify(data),
   });
+
+describe("GET /api/contact", () => {
+  it("says whether the form can be used, so the page shows it only when it can", async () => {
+    const res = await GET();
+    expect(await res.json()).toEqual({ available: true });
+  });
+
+  it("says it cannot when the shop's Wix access is not set up", async () => {
+    state.configured = false;
+    const res = await GET();
+    expect(await res.json()).toEqual({ available: false });
+    state.configured = true;
+  });
+});
 
 describe("POST /api/contact", () => {
   beforeEach(() => {
@@ -78,6 +92,12 @@ describe("POST /api/contact", () => {
     state.configured = false;
     const res = await POST(req(body));
     expect(res.status).toBe(503);
+    expect(state.posts).toHaveLength(0);
+  });
+
+  it("refuses a body that is far bigger than any real message", async () => {
+    const res = await POST(req(body, { "content-length": "50000" }));
+    expect(res.status).toBe(413);
     expect(state.posts).toHaveLength(0);
   });
 

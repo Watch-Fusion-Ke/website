@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { adminConfigured, adminFetch } from "@/lib/wixAdmin";
-import { submitContact } from "@/lib/contactForm";
+import { contactFormAvailable, submitContact } from "@/lib/contactForm";
 import { withoutDetail } from "@/lib/deliveryService";
 
 export const dynamic = "force-dynamic";
@@ -25,6 +25,14 @@ const fromAnotherSite = (request: Request): boolean => {
 
 const visitor = (request: Request): string => (request.headers.get("x-forwarded-for") ?? "unknown").split(",")[0].trim();
 
+// Whether the page should show the form: true only when the Wix form exists and fits.
+export async function GET() {
+  if (!adminConfigured()) return NextResponse.json({ available: false });
+  return NextResponse.json({ available: await contactFormAvailable({ adminFetch }) }, { headers: { "cache-control": "no-store" } });
+}
+
+const MAX_BODY = 20_000; // far more than any real message
+
 export async function POST(request: Request) {
   if (fromAnotherSite(request)) return NextResponse.json({ error: "Not allowed." }, { status: 403 });
   if (!adminConfigured()) {
@@ -37,9 +45,15 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Too many messages. Please wait a minute and try again." }, { status: 429 });
   }
 
+  if (Number(request.headers.get("content-length") ?? 0) > MAX_BODY) {
+    return NextResponse.json({ error: "That message is too long." }, { status: 413 });
+  }
+
   let input: unknown;
   try {
-    input = await request.json();
+    const text = await request.text();
+    if (text.length > MAX_BODY) return NextResponse.json({ error: "That message is too long." }, { status: 413 });
+    input = JSON.parse(text);
   } catch {
     return NextResponse.json({ error: "Please check the highlighted boxes." }, { status: 400 });
   }

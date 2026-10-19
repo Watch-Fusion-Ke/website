@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { CONTACT_FORM_NAME, submitContact, targetsFromForm, validateContact, type ContactDeps } from "@/lib/contactForm";
+import { CONTACT_FORM_NAME, contactFormAvailable, submitContact, targetsFromForm, validateContact, type ContactDeps } from "@/lib/contactForm";
 
 const form = {
   id: "form-1",
@@ -12,7 +12,7 @@ const form = {
   ],
 };
 
-const good = { name: "Jane Wanjiru", email: "jane@example.com", message: "Do you have the Naviforce green dial in stock?", website: "" };
+const good = { name: "Jane Wanjiru", email: "jane@example.com", message: "Do you have the Naviforce green dial in stock?", c_ref_check: "" };
 
 describe("validateContact", () => {
   it("accepts a normal message and trims it", () => {
@@ -21,7 +21,7 @@ describe("validateContact", () => {
   });
 
   it("asks for each missing or poor part in plain words", () => {
-    const result = validateContact({ name: "", email: "nope", message: "hi", website: "" });
+    const result = validateContact({ name: "", email: "nope", message: "hi", c_ref_check: "" });
     expect(result.ok).toBe(false);
     if (!result.ok) {
       expect(result.errors.name).toMatch(/name/i);
@@ -37,8 +37,17 @@ describe("validateContact", () => {
     expect(validateContact({ ...good, email: `${"a".repeat(250)}@example.com` }).ok).toBe(false);
   });
 
+  it("removes tabs, line breaks and other control characters from the name, and keeps line breaks in the message", () => {
+    const result = validateContact({ ...good, name: "Jane\nWanjiru\u0007\t", message: "Line one is here\n\nLine two is here" });
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.values.name).toBe("Jane Wanjiru");
+      expect(result.values.message).toBe("Line one is here\n\nLine two is here");
+    }
+  });
+
   it("does not take anything other than text", () => {
-    expect(validateContact({ name: 5, email: {}, message: null, website: "" } as never).ok).toBe(false);
+    expect(validateContact({ name: 5, email: {}, message: null, c_ref_check: "" } as never).ok).toBe(false);
     expect(validateContact(undefined as never).ok).toBe(false);
   });
 });
@@ -46,6 +55,13 @@ describe("validateContact", () => {
 describe("targetsFromForm", () => {
   it("finds the name, email and message boxes by their kind, whatever Wix called them", () => {
     expect(targetsFromForm(form)).toEqual({ name: "name_4b1e", email: "email_7c2d", message: "message_9a3f" });
+  });
+
+  it("gives nothing when the form has another required box that this page does not fill in, since Wix would refuse every message", () => {
+    const extra = { id: "e", identifier: "CONTACTS_PHONE", fieldType: "INPUT", inputOptions: { target: "phone_1", required: true } };
+    expect(targetsFromForm({ ...form, formFields: [...form.formFields, extra] })).toBeNull();
+    const optional = { ...extra, inputOptions: { target: "phone_1", required: false } };
+    expect(targetsFromForm({ ...form, formFields: [...form.formFields, optional] })).not.toBeNull();
   });
 
   it("gives nothing when a box is missing, so a half-built form is never filled in wrongly", () => {
@@ -85,7 +101,7 @@ describe("submitContact", () => {
 
   it("says thanks without sending anything when the hidden trap box is filled, which only a bot does", async () => {
     const { deps, calls } = setup();
-    const result = await submitContact(deps, { ...good, website: "http://spam.example" }, { fresh: true });
+    const result = await submitContact(deps, { ...good, c_ref_check: "http://spam.example" }, { fresh: true });
     expect(result.status).toBe(200);
     expect(calls).toEqual([]);
   });
@@ -126,5 +142,25 @@ describe("submitContact", () => {
     const before = calls.length;
     await submitContact(deps, good);
     expect(calls.length - before).toBe(1);
+  });
+});
+
+describe("contactFormAvailable", () => {
+  it("is true when the shop's Contact form exists with its three boxes", async () => {
+    const { deps } = setup();
+    expect(await contactFormAvailable(deps, { fresh: true })).toBe(true);
+  });
+
+  it("is false, without throwing, when the form is missing or Wix cannot be reached", async () => {
+    expect(await contactFormAvailable(setup({ forms: [] }).deps, { fresh: true })).toBe(false);
+    expect(await contactFormAvailable(setup({ throws: true }).deps, { fresh: true })).toBe(false);
+  });
+
+  it("does not ask Wix again straight after finding the form missing", async () => {
+    const { deps, calls } = setup({ forms: [] });
+    await contactFormAvailable(deps, { fresh: true });
+    const before = calls.length;
+    await contactFormAvailable(deps);
+    expect(calls.length).toBe(before);
   });
 });

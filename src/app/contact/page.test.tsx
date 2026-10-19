@@ -30,8 +30,9 @@ describe("Contact page", () => {
   });
 
   it("has a message form that is really connected, and says nothing about a message being sent before one is", () => {
-    expect(html.match(/<form/g)).toHaveLength(1);
+    // the form itself appears in the browser, once the shop says it can take messages
     expect(html).toContain("Send us a message");
+    expect(html).toContain("Loading the message form");
     expect(html).not.toMatch(/sent successfully|message has been sent/i);
   });
 

@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Suspense } from "react";
 import { Cormorant_Garamond, Montserrat } from "next/font/google";
 import "./globals.css";
+import { SITE_URL } from "@/lib/site";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import WhatsAppButton from "@/components/WhatsAppButton";
@@ -30,7 +31,7 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://watchfusionkenya.com"),
+  metadataBase: new URL(SITE_URL),
   title: {
     default: "Watch Fusion Kenya | Premium Watches in Nairobi",
     template: "%s | Watch Fusion Kenya",
@@ -54,7 +55,7 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     locale: "en_KE",
-    url: "https://watchfusionkenya.com",
+    url: SITE_URL,
     siteName: "WatchFusion Kenya",
     title: "WatchFusion Kenya | Premium Watches in Nairobi",
     description:
@@ -85,9 +86,6 @@ export const metadata: Metadata = {
       "max-image-preview": "large",
       "max-snippet": -1,
     },
-  },
-  alternates: {
-    canonical: "https://watchfusionkenya.com",
   },
   verification: {
     google: "YOUR_GOOGLE_VERIFICATION_CODE",

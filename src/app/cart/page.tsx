@@ -10,6 +10,7 @@ import { currentCart } from "@wix/ecom";
 import DeliveryPicker from "@/components/DeliveryPicker";
 import useDelivery from "@/hooks/useDelivery";
 import { DELIVERY_PREFIX, formatKes, isDeliveryLine, needsDeliveryArea } from "@/lib/delivery";
+import { SITE_URL } from "@/lib/site";
 
 const CartPage = () => {
   const wixClient = useWixClient();
@@ -65,8 +66,8 @@ const CartPage = () => {
       await wixClient.redirects.createRedirectSession({
         ecomCheckout: { checkoutId: checkout.checkoutId },
         callbacks: {
-          postFlowUrl: "https://www.watchfusionkenya.com",
-          thankYouPageUrl: "https://www.watchfusionkenya.com/success",
+          postFlowUrl: SITE_URL,
+          thankYouPageUrl: `${SITE_URL}/success`,
         },
       });
 

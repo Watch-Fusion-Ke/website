@@ -9,6 +9,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import useDelivery from "@/hooks/useDelivery";
 import { formatKes, isDeliveryLine, needsDeliveryArea } from "@/lib/delivery";
+import { SITE_URL } from "@/lib/site";
 
 interface CartModalProps {
   onClose: () => void;
@@ -47,8 +48,8 @@ const CartModal = ({ onClose }: CartModalProps) => {
       await wixClient.redirects.createRedirectSession({
         ecomCheckout: { checkoutId: checkout.checkoutId },
         callbacks: {
-          postFlowUrl: "https://www.watchfusionkenya.com",
-          thankYouPageUrl: "https://www.watchfusionkenya.com/success",
+          postFlowUrl: SITE_URL,
+          thankYouPageUrl: `${SITE_URL}/success`,
         },
       });
 

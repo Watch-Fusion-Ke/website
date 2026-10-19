@@ -47,12 +47,27 @@ describe("Navbar on a phone", () => {
   it("shows the logo without its small slogan, cropped from the picture so the name can be bigger", () => {
     const html = phoneHeader();
     const wrapper = html.match(/<span class="([^"]*)"[^>]*><img[^>]*alt="Watch Fusion Kenya"/)?.[1].split(" ") ?? [];
-    expect(wrapper).toContain("h-8");
+    expect(wrapper).toContain("h-9");
     expect(wrapper).toContain("overflow-hidden");
-    expect(wrapper.some((c) => c.startsWith("aspect-["))).toBe(true);
+    expect(wrapper).toContain("aspect-[2209/823]");
     const img = html.match(/<img[^>]*alt="Watch Fusion Kenya"[^>]*>/)?.[0] ?? "";
     expect(img).toContain("object-cover");
-    expect(img).toMatch(/object-\[50%_44%\]/);
+    expect(img).toContain("object-top");
+  });
+
+  it("starts the crop at the very top of the picture so the ring on the W is not cut off, and ends it above the slogan", () => {
+    // the picture is 2209 x 937: the ring starts at row 0, the name ends at row 806, the slogan starts at row 840
+    const html = renderToStaticMarkup(<Navbar />);
+    const crops = html.match(/aspect-\[(\d+)\/(\d+)\]/g) ?? [];
+    expect(crops.length).toBeGreaterThanOrEqual(2);
+    for (const crop of crops) {
+      const [, w, h] = crop.match(/\[(\d+)\/(\d+)\]/) ?? [];
+      const rowsShown = (Number(h) / Number(w)) * 2209;
+      expect(Number(w)).toBe(2209);
+      expect(rowsShown).toBeGreaterThan(806);
+      expect(rowsShown).toBeLessThan(840);
+    }
+    expect(html).not.toMatch(/object-\[50%_44%\]/);
   });
 
   it("gives the logo link a tap area at least 44 px tall", () => {

@@ -14,7 +14,7 @@ const SearchBar = () => {
     const name = formData.get("name") as string;
 
     if (name) {
-      router.push(`/list?name=${encodeURIComponent(name)}`)
+      router.push(`/shop?name=${encodeURIComponent(name)}`)
     }
   };
 

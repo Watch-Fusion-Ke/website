@@ -2,7 +2,7 @@ import ProductList from "@/components/ProductList";
 import Filter from "@/components/Filter";
 import { wixClientServer } from "@/lib/wixClientServer";
 import { getPriceBounds } from "@/lib/storeProducts";
-import Link from "next/link";
+import CategoryChips from "@/components/CategoryChips";
 import { Suspense } from "react";
 
 export const metadata = {
@@ -50,13 +50,6 @@ export default async function ShopPage({
         console.error("ShopPage: category list failed", e);
     }
 
-    const chip = (active: boolean) =>
-        `flex-shrink-0 whitespace-nowrap rounded-full px-5 py-2 text-sm font-medium transition-colors ${
-            active
-                ? "bg-brand-navy text-white"
-                : "bg-gray-100 text-gray-700 hover:bg-brand-gold hover:text-brand-navy"
-        }`;
-
     return (
         <div className="px-4 md:px-8 lg:px-16 xl:px-32 2xl:px-64 relative">
             <div className="pt-8 pb-6">
@@ -74,25 +67,7 @@ export default async function ShopPage({
                 </p>
             )}
 
-            <nav aria-label="Categories" className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-2 scrollbar-hide md:mx-0 md:flex-wrap md:px-0">
-                <Link
-                    href="/shop"
-                    aria-current={categoryId === "" ? "page" : undefined}
-                    className={chip(categoryId === "")}
-                >
-                    All products
-                </Link>
-                {chips.map((c) => (
-                    <Link
-                        key={c.slug}
-                        href={`/shop?cat=${c.slug}`}
-                        aria-current={catSlug === c.slug && categoryId !== "" ? "page" : undefined}
-                        className={chip(catSlug === c.slug && categoryId !== "")}
-                    >
-                        {c.name}
-                    </Link>
-                ))}
-            </nav>
+            <CategoryChips chips={chips} activeSlug={categoryId !== "" ? catSlug : ""} />
 
             <div className="mt-6 border-y border-gray-200 py-5">
                 <Suspense fallback={<div className="h-16" />}>

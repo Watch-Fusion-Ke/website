@@ -124,7 +124,7 @@ const Menu = () => {
               {cats.map((cat) => (
                 <Link
                   key={cat._id}
-                  href={`/list?cat=${cat.slug}`}
+                  href={`/shop?cat=${cat.slug}`}
                   onClick={close}
                   className="block text-base font-medium text-gray-800 hover:text-black hover:bg-gray-50 px-3 py-3 rounded-lg transition-colors"
                 >

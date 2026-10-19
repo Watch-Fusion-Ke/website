@@ -9,6 +9,12 @@ const nextConfig = {
     ],
   },
 
+  // The shop has one page for every category, /shop. The old /list address goes there for good, and the category or
+  // search in the address goes with it.
+  async redirects() {
+    return [{ source: "/list", destination: "/shop", permanent: true }];
+  },
+
   // async redirects() {
   //   return [
   //     {

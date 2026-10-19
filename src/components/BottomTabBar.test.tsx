@@ -23,8 +23,8 @@ describe("BottomTabBar", () => {
     const order = ["Home", "Gents", "Ladies", "Cart"].map((l) => html.indexOf(`>${l}<`));
     expect(order.every((i) => i > -1)).toBe(true);
     expect([...order].sort((a, b) => a - b)).toEqual(order);
-    expect(html).toContain('href="/list?cat=gents-watches"');
-    expect(html).toContain('href="/list?cat=ladies-watches"');
+    expect(html).toContain('href="/shop?cat=gents-watches"');
+    expect(html).toContain('href="/shop?cat=ladies-watches"');
     expect(html).toContain('href="/cart"');
   });
 
@@ -41,11 +41,11 @@ describe("BottomTabBar", () => {
   });
 
   it("marks the current page for screen readers", () => {
-    nav.pathname = "/list";
+    nav.pathname = "/shop";
     nav.cat = "ladies-watches";
     const html = render();
     expect(html.match(/aria-current="page"/g)).toHaveLength(1);
-    const ladiesTag = html.match(/<a [^>]*href="\/list\?cat=ladies-watches"[^>]*>/)?.[0] ?? "";
+    const ladiesTag = html.match(/<a [^>]*href="\/shop\?cat=ladies-watches"[^>]*>/)?.[0] ?? "";
     expect(ladiesTag).toContain('aria-current="page"');
   });
 

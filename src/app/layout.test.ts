@@ -25,17 +25,17 @@ describe("fonts", () => {
   const source = readFileSync("src/app/layout.tsx", "utf8");
   const bodyTag = source.match(/<body\s+className=\{`([^`]*)`\}/)?.[1] ?? "";
 
-  it("uses Montserrat for the text and a serif display face for headings, both loaded with next/font", () => {
-    expect(source).toMatch(/Montserrat\(/);
+  it("uses Jost for the text, the font the shop had before and the owner asked to keep, and a serif display face for headings, both loaded with next/font", () => {
+    expect(source).toMatch(/\bJost\(/);
     expect(source).toMatch(/Cormorant_Garamond\(/);
-    expect(source).not.toMatch(/\bJost\(/);
+    expect(source).not.toMatch(/Montserrat\(/);
   });
 
   it("names the CSS variables the Tailwind theme reads, so a rename on one side cannot silently drop the fonts", () => {
-    expect(source).toContain('variable: "--font-montserrat"');
+    expect(source).toContain('variable: "--font-jost"');
     expect(source).toContain('variable: "--font-display"');
     const fonts = (config.theme?.extend as { fontFamily?: Record<string, string[]> })?.fontFamily ?? {};
-    expect(fonts.sans?.[0]).toBe("var(--font-montserrat)");
+    expect(fonts.sans?.[0]).toBe("var(--font-jost)");
     expect(fonts.display?.[0]).toBe("var(--font-display)");
   });
 
@@ -44,7 +44,7 @@ describe("fonts", () => {
   });
 
   it("puts both font variables on the body and sets the text font", () => {
-    expect(bodyTag).toContain("montserrat.variable");
+    expect(bodyTag).toContain("jost.variable");
     expect(bodyTag).toContain("cormorant.variable");
     expect(bodyTag).toContain("font-sans");
   });

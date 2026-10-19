@@ -26,7 +26,7 @@ const loadWatches = unstable_cache(async (): Promise<ShowcaseWatch[]> => {
       { limit: 5 }
     );
     const watches = page.items.flatMap((p) =>
-      p.imageUrl ? [{ id: p.id, name: p.name, imageUrl: p.imageUrl, priceLabel: p.priceLabel }] : []
+      p.imageUrl ? [{ id: p.id, name: p.name, imageUrl: p.imageUrl, priceLabel: p.priceLabel, slug: p.slug }] : []
     );
     if (watches.length === 0) throw new Error("no products with a picture");
     return watches;

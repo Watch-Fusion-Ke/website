@@ -8,7 +8,7 @@ import LoginCallbackView from "@/components/auth/LoginCallbackView";
 vi.mock("next/navigation", () => ({ useRouter: () => ({ push: () => {} }) }));
 
 const noop = () => {};
-const watches = [1, 2, 3, 4].map((n) => ({ id: `w${n}`, name: `Watch ${n}`, imageUrl: `https://img/${n}.jpg`, priceLabel: `KES ${n}00` }));
+const watches = [1, 2, 3, 4].map((n) => ({ id: `w${n}`, name: `Watch ${n}`, imageUrl: `https://img/${n}.jpg`, priceLabel: `KES ${n}00`, slug: `watch-${n}` }));
 
 describe("PasswordField", () => {
   const field = (value = "", extra: Record<string, unknown> = {}) =>
@@ -58,6 +58,41 @@ describe("AuthShowcase", () => {
 
   it("lets the shopper pause the moving watches", () => {
     expect(html).toMatch(/<button[^>]*aria-pressed="false"[^>]*>[^<]*Pause/);
+  });
+
+  it("links each watch to its product page", () => {
+    for (const n of [1, 2, 3, 4]) expect(html).toContain(`href="/watch-${n}"`);
+    expect((html.match(/<a [^>]*href="\/watch-\d"/g) ?? []).length).toBe(4);
+  });
+
+  it("makes the picture, the name and the price one link, with a name for screen readers", () => {
+    const first = html.match(/<a [^>]*href="\/watch-1"[^>]*>[\s\S]*?<\/a>/)?.[0] ?? "";
+    expect(first).toContain("<img");
+    expect(first).toContain("Watch 1");
+    expect(first).toContain("KES 100");
+    expect(html.match(/<a [^>]*href="\/watch-1"[^>]*>/)?.[0]).toContain('aria-label="View Watch 1, KES 100"');
+  });
+
+  it("keeps the links of the hidden watches out of the tab order", () => {
+    expect(html.match(/<a [^>]*href="\/watch-1"[^>]*>/)?.[0]).not.toContain('tabindex="-1"');
+    for (const n of [2, 3, 4]) expect(html.match(new RegExp(`<a [^>]*href="/watch-${n}"[^>]*>`))?.[0]).toContain('tabindex="-1"');
+  });
+
+  it("lets taps through the faded-out watches stacked on top, so the visible watch can be pressed", () => {
+    const figures = html.match(/<figure[^>]*>/g) ?? [];
+    expect(figures).toHaveLength(4);
+    expect(figures[0]).not.toContain("pointer-events-none");
+    for (const f of figures.slice(1)) expect(f).toContain("pointer-events-none");
+  });
+
+  it("does not make the Pause button part of a link", () => {
+    expect(html).not.toMatch(/<a [^>]*>(?:(?!<\/a>)[\s\S])*Pause/);
+  });
+
+  it("shows a watch without a product address as before, with no link", () => {
+    const plain = renderToStaticMarkup(<AuthShowcase watches={[{ id: "x", name: "No link", imageUrl: "/x.jpg", priceLabel: "" }]} />);
+    expect(plain).toContain("No link");
+    expect(plain).not.toContain("<a ");
   });
 
   it("shows nothing moving for one watch or none", () => {

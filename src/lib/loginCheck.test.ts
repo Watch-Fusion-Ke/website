@@ -50,6 +50,26 @@ describe("redirectLoginAvailable", () => {
     expect(steps[steps.length - 1].init?.redirect).toBe("manual");
   });
 
+  it("will not follow a sign-in address that is not a secure web address, or points at a bare IP or localhost", async () => {
+    for (const fullUrl of ["http://store.example/a", "https://127.0.0.1/a", "https://localhost/a", "https://10.0.0.5/a", "javascript:alert(1)", "not a url"]) {
+      const steps: string[] = [];
+      const fetchImpl = async (url: string) => {
+        steps.push(url);
+        if (url.endsWith("/oauth2/token")) return new Response(JSON.stringify({ access_token: "t" }), { status: 200 });
+        if (url.endsWith("/redirect-session")) return new Response(JSON.stringify({ redirectSession: { fullUrl } }), { status: 200 });
+        return new Response(null, { status: 302 });
+      };
+      expect(await check(fetchImpl)).toBe(false);
+      expect(steps).toHaveLength(2);
+    }
+  });
+
+  it("gives every call to Wix a time limit, so a hanging Wix cannot hang the page", async () => {
+    const { fetchImpl, steps } = wix(302);
+    await check(fetchImpl);
+    for (const step of steps) expect(step.init?.signal).toBeInstanceOf(AbortSignal);
+  });
+
   it("is false when any step fails or Wix cannot be reached", async () => {
     expect(await check(wix(302, { tokenStatus: 500 }).fetchImpl)).toBe(false);
     expect(await check(wix(302, { sessionStatus: 403 }).fetchImpl)).toBe(false);

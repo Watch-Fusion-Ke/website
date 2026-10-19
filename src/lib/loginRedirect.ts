@@ -19,9 +19,21 @@ type Tokens = { accessToken: unknown; refreshToken: unknown };
 
 export const callbackUrl = (origin: string): string => `${origin}${CALLBACK_PATH}`;
 
-// Only a path on this site is trusted as the place to return to.
-export const safeReturnPath = (path: string | undefined | null): string =>
-  typeof path === "string" && path.startsWith("/") && !path.startsWith("//") && !path.includes("\\") ? path : "/";
+// Only a path on this site is trusted as the place to return to. Browsers delete tabs and new lines inside an address,
+// so "/<tab>/evil.example" would otherwise become "evil.example". Control characters are refused, and what is left is
+// read the way a browser reads it, to be sure it stays on this site.
+export const safeReturnPath = (path: string | undefined | null): string => {
+  if (typeof path !== "string" || !path.startsWith("/") || path.startsWith("//") || path.includes("\\")) return "/";
+  if (/[\u0000-\u001f\u007f]/.test(path)) return "/";
+  try {
+    const base = "https://shop.invalid";
+    const url = new URL(path, base);
+    if (url.origin !== base || url.pathname.startsWith("//")) return "/";
+    return url.pathname + url.search;
+  } catch {
+    return "/";
+  }
+};
 
 export const readCallback = (href: string): { code?: string; state?: string; error?: string; errorDescription?: string } => {
   const params = new URL(href).searchParams;

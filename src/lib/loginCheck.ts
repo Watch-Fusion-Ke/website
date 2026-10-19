@@ -4,6 +4,18 @@
 import { callbackUrl } from "@/lib/loginRedirect";
 
 const API = "https://www.wixapis.com";
+const LIMIT = 4000; // each call to Wix may take this long, in milliseconds
+
+// The sign-in address comes from Wix, but it is only followed if it is a secure address on a named host.
+const isSafeHost = (value: string): boolean => {
+  try {
+    const url = new URL(value);
+    const host = url.hostname;
+    return url.protocol === "https:" && host.includes(".") && !/^[\d.]+$/.test(host) && !host.includes(":") && host !== "localhost";
+  } catch {
+    return false;
+  }
+};
 
 export const redirectLoginAvailable = async (deps: {
   origin: string;
@@ -11,7 +23,8 @@ export const redirectLoginAvailable = async (deps: {
   refreshToken?: string;
   fetchImpl?: (url: string, init?: RequestInit) => Promise<Response>;
 }): Promise<boolean> => {
-  const call = deps.fetchImpl ?? fetch;
+  const base = deps.fetchImpl ?? fetch;
+  const call = (url: string, init: RequestInit = {}) => base(url, { ...init, signal: AbortSignal.timeout(LIMIT) });
   try {
     const tokenResponse = await call(`${API}/oauth2/token`, {
       method: "POST",
@@ -47,7 +60,7 @@ export const redirectLoginAvailable = async (deps: {
     });
     if (!session.ok) return false;
     const fullUrl = (await session.json())?.redirectSession?.fullUrl;
-    if (!fullUrl) return false;
+    if (typeof fullUrl !== "string" || !isSafeHost(fullUrl)) return false;
 
     const arrival = await call(fullUrl, { redirect: "manual" });
     return arrival.status >= 300 && arrival.status < 400;

@@ -36,6 +36,20 @@ describe("safeReturnPath", () => {
       expect(safeReturnPath(bad)).toBe("/");
     }
   });
+
+  it("refuses a tab, new line or other control character, which browsers delete and so turn /<tab>/evil.example into evil.example", () => {
+    for (const bad of ["/\t/evil.example", "/\n/evil.example", "/\r/evil.example", "/\u0000/evil.example", "/\u007f/x", "/ok\n"]) {
+      expect(safeReturnPath(bad)).toBe("/");
+    }
+  });
+
+  it("never gives back a path that leaves the site once a browser has read it", () => {
+    const tricky = ["/%09/evil.example", "/%2F/evil.example", "/.//evil.example", "/..//evil.example", "/%5Cevil.example", "////evil.example", "/;@evil.example"];
+    for (const input of tricky) {
+      const path = safeReturnPath(input);
+      expect(new URL(path, "https://shop.example").origin).toBe("https://shop.example");
+    }
+  });
 });
 
 describe("readCallback", () => {

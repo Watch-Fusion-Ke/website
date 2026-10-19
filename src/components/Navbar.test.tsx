@@ -126,3 +126,53 @@ describe("Navbar on a phone", () => {
     expect(desktop).toContain("object-cover");
   });
 });
+
+describe("Navbar stays at the top while the page scrolls", () => {
+  const html = renderToStaticMarkup(<Navbar />);
+  const divs = html.match(/<div [^>]*class="[^"]*"[^>]*>/g) ?? [];
+  const classes = (tag: string) => tag.match(/class="([^"]*)"/)?.[1].split(" ") ?? [];
+  const outer = classes(divs[0] ?? "");
+  const panel = classes(divs[1] ?? "");
+
+  it("sticks to the top of the screen on phones and large screens", () => {
+    expect(outer).toContain("sticky");
+    expect(outer).toContain("top-0");
+  });
+
+  it("sits above the page and the bottom dock, but under the menu drawer, the cart popup and the zoomed photo", () => {
+    expect(outer).toContain("z-30");
+  });
+
+  it("keeps its place in the page when the search row folds, so the content below never jumps", () => {
+    // the sticky frame keeps its full height; only the visible panel inside it grows and shrinks
+    expect(outer.some((c) => c.startsWith("h-[var(--reserve"))).toBe(true);
+    expect(outer).toContain("md:h-20");
+    expect(outer).toContain("pointer-events-none");
+    expect(panel).toContain("pointer-events-auto");
+  });
+
+  it("has a solid panel in the page colour in both themes, so nothing shows through it", () => {
+    expect(panel).toContain("bg-[var(--page)]");
+    expect(html).not.toMatch(/backdrop-blur/);
+  });
+
+  it("stays clear of a phone's status bar when the site is added to the home screen", () => {
+    expect(panel.some((c) => c.includes("env(safe-area-inset-top)"))).toBe(true);
+  });
+
+  it("keeps the menu, logo, theme and cart row in view, and lets only the search row fold away", () => {
+    const phone = phoneHeader();
+    expect(phone).toContain("data-header-search");
+    const rowAt = phone.indexOf("grid-cols-[1fr_auto_1fr]");
+    const searchAt = phone.indexOf("data-header-search");
+    expect(searchAt).toBeGreaterThan(rowAt);
+    expect(phone.slice(rowAt, searchAt)).not.toContain("data-header-search");
+  });
+
+  it("folds the search row with a short slide, which is switched off for people who ask for less motion", () => {
+    const search = html.match(/<div[^>]*data-header-search[^>]*>/)?.[0] ?? "";
+    expect(search).toContain("transition-");
+    expect(search).toContain("motion-reduce:transition-none");
+    expect(search).toContain("grid-rows-[1fr]");
+  });
+});

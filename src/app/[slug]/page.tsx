@@ -1,6 +1,7 @@
 import Add from "@/components/Add";
 import CustomizeProducts from "@/components/CustomizeProducts";
 import ProductImages from "@/components/ProductImages";
+import OrderOnWhatsApp from "@/components/OrderOnWhatsApp";
 import { wixClientServer } from "@/lib/wixClientServer";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
@@ -136,6 +137,13 @@ const SinglePage = async ({ params }: Props) => {
                         }
                     />
                 )}
+
+                <OrderOnWhatsApp
+                    name={product.name ?? "this product"}
+                    price={product.price?.discountedPrice ?? product.price?.price ?? undefined}
+                    hasOptions={Boolean(product.productOptions && product.productOptions.length > 0)}
+                    url={`${SITE_URL}/${slug}`}
+                />
 
                 <div className="h-[2px] bg-gray-100" />
 

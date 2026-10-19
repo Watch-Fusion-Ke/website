@@ -47,7 +47,7 @@ describe("Navbar on a phone", () => {
   it("shows the logo without its small slogan, cropped from the picture so the name can be bigger", () => {
     const html = phoneHeader();
     const wrapper = html.match(/<span class="([^"]*)"[^>]*><img[^>]*alt="Watch Fusion Kenya"/)?.[1].split(" ") ?? [];
-    expect(wrapper).toContain("h-7");
+    expect(wrapper).toContain("h-8");
     expect(wrapper).toContain("overflow-hidden");
     expect(wrapper.some((c) => c.startsWith("aspect-["))).toBe(true);
     const img = html.match(/<img[^>]*alt="Watch Fusion Kenya"[^>]*>/)?.[0] ?? "";
@@ -56,7 +56,7 @@ describe("Navbar on a phone", () => {
   });
 
   it("gives the logo link a tap area at least 44 px tall", () => {
-    const link = phoneHeader().match(/<a[^>]*href="\/"[^>]*>(?=<span[^>]*><span[^>]*><img[^>]*alt="Watch Fusion Kenya")/)?.[0] ?? "";
+    const link = phoneHeader().match(/<a[^>]*href="\/"[^>]*>(?=<span[^>]*><img[^>]*alt="Watch Fusion Kenya")/)?.[0] ?? "";
     expect(link).not.toBe("");
     expect(link.match(/class="([^"]*)"/)?.[1].split(" ")).toContain("h-11");
   });
@@ -119,12 +119,47 @@ describe("Navbar on a phone", () => {
   });
 
   it("gives the logo a soft gold glow in the dark theme, where it sits straight on the black page", () => {
-    const phone = phoneHeader().match(/<img[^>]*alt="Watch Fusion Kenya"[^>]*>/)?.[0] ?? "";
-    expect(phone).toMatch(/dark:drop-shadow-\[/);
+    const dark = (markup: string) => markup.match(/<img[^>]*%2Flogo\.png[^>]*>/)?.[0] ?? "";
+    expect(dark(phoneHeader())).toMatch(/dark:drop-shadow-\[/);
     const html = renderToStaticMarkup(<Navbar />);
-    const desktop = html.slice(html.indexOf('data-testid="desktop-header"')).match(/<img[^>]*alt="Watch Fusion Kenya"[^>]*>/)?.[0] ?? "";
+    const desktop = dark(html.slice(html.indexOf('data-testid="desktop-header"')));
     expect(desktop).toMatch(/dark:drop-shadow-\[/);
     expect(desktop).toContain("object-cover");
+  });
+
+  it("shows the logo straight on the page, with no black box behind it, in both themes", () => {
+    expect(renderToStaticMarkup(<Navbar />)).not.toContain("bg-brand-black");
+  });
+
+  it("has a version of the logo with black lettering for the light theme and the white-lettered one for the dark theme, on the phone and the computer", () => {
+    const html = renderToStaticMarkup(<Navbar />);
+    const desktopAt = html.indexOf('data-testid="desktop-header"');
+    for (const part of [html.slice(0, desktopAt), html.slice(desktopAt)]) {
+      const light = part.match(/<img[^>]*%2Flogo-on-light\.png[^>]*>/)?.[0] ?? "";
+      const dark = part.match(/<img[^>]*%2Flogo\.png[^>]*>/)?.[0] ?? "";
+      expect(light).toContain("dark:hidden");
+      expect(light).toContain('alt="Watch Fusion Kenya"');
+      expect(dark).toMatch(/\bhidden\b/);
+      expect(dark).toContain("dark:block");
+      expect(dark).toContain('alt=""');
+    }
+  });
+
+  it("names the home link on the link itself, so screen readers hear it in the dark theme where the lettered image is hidden", () => {
+    const html = renderToStaticMarkup(<Navbar />);
+    const desktopAt = html.indexOf('data-testid="desktop-header"');
+    for (const part of [html.slice(0, desktopAt), html.slice(desktopAt)]) {
+      const link = part.match(/<a [^>]*href="\/"[^>]*>(?=<span[^>]*><img)/)?.[0] ?? "";
+      expect(link).toContain('aria-label="Watch Fusion Kenya, home"');
+    }
+  });
+
+  it("loads whichever logo is shown straight away, without preloading the hidden one", () => {
+    const html = renderToStaticMarkup(<Navbar />);
+    const logos = html.match(/<img[^>]*%2Flogo(?:-on-light)?\.png[^>]*>/g) ?? [];
+    expect(logos).toHaveLength(4);
+    for (const logo of logos) expect(logo).toContain('loading="eager"');
+    expect(html).not.toMatch(/<link[^>]*rel="preload"[^>]*logo/);
   });
 });
 

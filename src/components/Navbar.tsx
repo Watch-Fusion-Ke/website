@@ -55,18 +55,25 @@ const Navbar = () => {
           <div className='flex justify-start'>
             <Menu />
           </div>
-          <Link href="/" className='flex items-center h-11'>
-            <span className='flex items-center bg-brand-black rounded-md px-2.5 py-1'>
-              <span className='relative block h-7 aspect-[2000/665] overflow-hidden'>
-                <Image
-                  src="/logo.png"
-                  alt="Watch Fusion Kenya"
-                  fill
-                  sizes="96px"
-                  priority
-                  className='object-cover object-[50%_44%] dark:drop-shadow-[0_0_8px_rgba(249,201,43,0.5)]'
-                />
-              </span>
+          <Link href="/" aria-label="Watch Fusion Kenya, home" className='flex items-center h-11'>
+            <span className='relative block h-8 aspect-[2000/665] overflow-hidden'>
+              {/* Black lettering on the light page, white lettering on the black page */}
+              <Image
+                src="/logo-on-light.png"
+                alt="Watch Fusion Kenya"
+                fill
+                sizes="110px"
+                loading="eager"
+                className='object-cover object-[50%_44%] dark:hidden'
+              />
+              <Image
+                src="/logo.png"
+                alt=""
+                fill
+                loading="eager"
+                sizes="110px"
+                className='hidden object-cover object-[50%_44%] dark:block dark:drop-shadow-[0_0_8px_rgba(249,201,43,0.5)]'
+              />
             </span>
           </Link>
           <div className='flex items-center justify-end gap-1'>
@@ -95,15 +102,23 @@ const Navbar = () => {
       <div data-testid="desktop-header" className='hidden md:flex items-center justify-between gap-8 h-full'>
         {/* Left Section */}
         <div className='w-1/3 xl:w-1/2 flex items-center gap-12'>
-          <Link href="/" className="flex items-center flex-shrink-0 bg-brand-black rounded-lg px-3 py-1.5">
-            <span className='relative block h-10 dark:h-12 aspect-[2000/665] overflow-hidden'>
+          <Link href="/" aria-label="Watch Fusion Kenya, home" className="flex items-center flex-shrink-0">
+            <span className='relative block h-12 aspect-[2000/665] overflow-hidden'>
               <Image
-                src="/logo.png"
+                src="/logo-on-light.png"
                 alt="Watch Fusion Kenya"
                 fill
-                sizes="150px"
-                priority
-                className='object-cover object-[50%_44%] dark:drop-shadow-[0_0_8px_rgba(249,201,43,0.5)]'
+                sizes="160px"
+                loading="eager"
+                className='object-cover object-[50%_44%] dark:hidden'
+              />
+              <Image
+                src="/logo.png"
+                alt=""
+                fill
+                loading="eager"
+                sizes="160px"
+                className='hidden object-cover object-[50%_44%] dark:block dark:drop-shadow-[0_0_8px_rgba(249,201,43,0.5)]'
               />
             </span>
           </Link>

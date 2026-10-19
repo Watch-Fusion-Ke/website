@@ -28,9 +28,14 @@ describe("theme script", () => {
     expect(run({ stored: "light", prefersDark: true }).dark).toBe(false);
   });
 
-  it("follows the phone's own setting until the shopper chooses", () => {
-    expect(run({ stored: null, prefersDark: true }).dark).toBe(true);
+  it("starts light for everyone who has not chosen, whatever the phone's own setting is", () => {
+    expect(run({ stored: null, prefersDark: true }).dark).toBe(false);
     expect(run({ stored: null, prefersDark: false }).dark).toBe(false);
+    expect(run({ stored: null, prefersDark: true }).scheme).toBe("light");
+  });
+
+  it("goes dark only when the shopper chose dark and it was saved", () => {
+    expect(run({ stored: "dark", prefersDark: false }).dark).toBe(true);
   });
 
   it("tells the browser which scheme the page uses, so scrollbars and form controls match", () => {
@@ -40,6 +45,7 @@ describe("theme script", () => {
 
   it("does not break the page when storage is blocked", () => {
     expect(() => run({ storageThrows: true, prefersDark: true })).not.toThrow();
+    expect(run({ storageThrows: true, prefersDark: true }).dark).toBe(false);
   });
 
   it("ignores a saved value it does not know", () => {

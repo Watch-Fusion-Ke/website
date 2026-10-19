@@ -29,9 +29,15 @@ describe("Contact page", () => {
     expect(html).toContain('href="https://www.tiktok.com/@watchfusion_kenya"');
   });
 
-  it("has no message form that pretends to send, until a real one is connected", () => {
-    expect(html).not.toContain("<form");
+  it("has a message form that is really connected, and says nothing about a message being sent before one is", () => {
+    // the form itself appears in the browser, once the shop says it can take messages
+    expect(html).toContain("Send us a message");
+    expect(html).toContain("Loading the message form");
     expect(html).not.toMatch(/sent successfully|message has been sent/i);
+  });
+
+  it("puts the message form in front of the contact details", () => {
+    expect(html.indexOf("Send us a message")).toBeLessThan(html.indexOf("Call or WhatsApp"));
   });
 
   it("makes no delivery, returns or free shipping promise that the shop has not confirmed", () => {

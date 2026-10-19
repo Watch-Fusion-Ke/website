@@ -21,8 +21,8 @@ describe("the Wix admin login", () => {
     expect(readers).toEqual([]);
   });
 
-  it("is imported by the delivery route and nothing else, so no other file can pass it on to the browser", () => {
+  it("is imported by the two server routes that need it and nothing else, so no other file can pass it on to the browser", () => {
     const importers = files("src").filter((f) => /from ["']@\/lib\/wixAdmin["']/.test(readFileSync(f, "utf8")));
-    expect(importers).toEqual(["src/app/api/delivery/route.ts"]);
+    expect(importers.sort()).toEqual(["src/app/api/contact/route.ts", "src/app/api/delivery/route.ts"]);
   });
 });

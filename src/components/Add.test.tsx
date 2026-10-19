@@ -41,14 +41,24 @@ describe("Add (quantity row)", () => {
 
   it("says when the product is sold out, and disables the button", () => {
     const html = render(0);
-    expect(text(html)).toContain("out of stock");
+    expect(text(html)).toContain("Out of stock");
     expect(html).toMatch(/<button[^>]*disabled=""[^>]*>Add to Cart</);
   });
 
-  it("puts the stock note under the row, left aligned, as one short line", () => {
+  it("puts the stock note on the heading line, to the right of Choose a Quantity, so the buttons below never move", () => {
     const html = render(3);
-    expect(html.indexOf("Choose a Quantity")).toBeLessThan(html.indexOf("Only "));
-    expect(html.indexOf("Only ")).toBeGreaterThan(html.indexOf("Add to Cart"));
+    const heading = html.match(/<div class="[^"]*justify-between[^"]*"><h4[^>]*>Choose a Quantity<\/h4>([\s\S]*?)<\/div>/)?.[1] ?? "";
+    expect(text(heading)).toContain("Only 3 left");
+    expect(html.indexOf("Only ")).toBeLessThan(html.indexOf("Add to Cart"));
     expect(html).not.toContain("<br");
+  });
+
+  it("is the same height whatever the stock says, with the note on one line", () => {
+    for (const n of [0, 3, 150, 9999]) {
+      const html = render(n);
+      const heading = html.match(/<div class="([^"]*justify-between[^"]*)"><h4/)?.[1] ?? "";
+      expect(heading).toContain("items-baseline");
+      expect(html.match(/<p class="([^"]*)"/)?.[1]).toContain("whitespace-nowrap");
+    }
   });
 });

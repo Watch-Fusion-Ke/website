@@ -9,6 +9,7 @@ import { interpretAuth, PASSWORD_HELP, signupProblem, type AuthMode } from "@/li
 import { beginRedirectLogin, safeReturnPath } from "@/lib/loginRedirect";
 import PasswordField, { fieldClass, labelClass } from "@/components/auth/PasswordField";
 import AuthShowcase, { type ShowcaseWatch } from "@/components/auth/AuthShowcase";
+import CaptchaBox from "@/components/auth/CaptchaBox";
 
 const TITLES: Record<AuthMode, string> = {
   LOGIN: "Log in",
@@ -50,7 +51,15 @@ const withTimeout = <T,>(work: Promise<T>, ms: number): Promise<T> =>
     );
   });
 
-const AuthForm = ({ initialMode = "LOGIN", watches }: { initialMode?: AuthMode; watches: ShowcaseWatch[] }) => {
+const AuthForm = ({
+  initialMode = "LOGIN",
+  watches,
+  initialCaptcha = false,
+}: {
+  initialMode?: AuthMode;
+  watches: ShowcaseWatch[];
+  initialCaptcha?: boolean;
+}) => {
   const wixClient = useWixClient();
   const router = useRouter();
 
@@ -62,6 +71,10 @@ const AuthForm = ({ initialMode = "LOGIN", watches }: { initialMode?: AuthMode; 
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
+  // Wix can ask for a robot check (a site setting). Once it has, the box is shown and the button waits for it.
+  const [captchaNeeded, setCaptchaNeeded] = useState(initialCaptcha);
+  const [captchaToken, setCaptchaToken] = useState("");
+  const [captchaDraw, setCaptchaDraw] = useState(0);
   // Whether Wix will take members back to this address. Until the check answers, the older method is used.
   const [redirectLogin, setRedirectLogin] = useState(false);
 
@@ -93,8 +106,16 @@ const AuthForm = ({ initialMode = "LOGIN", watches }: { initialMode?: AuthMode; 
     heading.current?.focus();
   }, [mode]);
 
+  // Each robot-check answer works once, so a new box is drawn after every attempt.
+  const freshCaptcha = () => {
+    setCaptchaToken("");
+    setCaptchaDraw((n) => n + 1);
+  };
+
   const switchTo = (next: AuthMode) => {
     setMode(next);
+    setCaptchaNeeded(false);
+    setCaptchaToken("");
     setError("");
     setMessage("");
     setPassword("");
@@ -153,12 +174,19 @@ const AuthForm = ({ initialMode = "LOGIN", watches }: { initialMode?: AuthMode; 
         return;
       }
 
+      const captchaTokens = captchaToken ? { recaptchaToken: captchaToken } : undefined;
       const response =
         mode === "LOGIN"
-          ? await wixClient.auth.login({ email, password })
+          ? await wixClient.auth.login({ email, password, captchaTokens })
           : mode === "REGISTER"
-          ? await wixClient.auth.register({ email, password, profile: name.trim() ? { nickname: name.trim() } : undefined })
+          ? await wixClient.auth.register({
+              email,
+              password,
+              captchaTokens,
+              profile: name.trim() ? { nickname: name.trim() } : undefined,
+            })
           : await wixClient.auth.processVerification({ verificationCode: code.trim() });
+      if (captchaNeeded) freshCaptcha();
 
       const outcome = interpretAuth(response, mode);
       if (outcome.kind === "success") {
@@ -170,6 +198,10 @@ const AuthForm = ({ initialMode = "LOGIN", watches }: { initialMode?: AuthMode; 
         setMessage(outcome.message);
       } else if (outcome.kind === "pending") {
         setMessage(outcome.message);
+      } else if (outcome.kind === "captcha") {
+        setCaptchaNeeded(true);
+        freshCaptcha();
+        setError(outcome.message);
       } else {
         setError(outcome.message);
         if (outcome.suggest) setMode(outcome.suggest);
@@ -277,14 +309,6 @@ const AuthForm = ({ initialMode = "LOGIN", watches }: { initialMode?: AuthMode; 
               </div>
             )}
 
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="rounded-lg bg-brand-navy px-4 py-3 text-base font-semibold text-white transition-colors hover:bg-brand-gold hover:text-brand-navy focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold disabled:cursor-not-allowed disabled:bg-gray-200 disabled:text-gray-500"
-            >
-              {isLoading ? "Please wait..." : BUTTONS[mode]}
-            </button>
-
             {error && (
               <p role="alert" className="text-sm text-red-600">
                 {error}
@@ -295,6 +319,24 @@ const AuthForm = ({ initialMode = "LOGIN", watches }: { initialMode?: AuthMode; 
                 {message}
               </p>
             )}
+
+            {captchaNeeded && (mode === "LOGIN" || mode === "REGISTER") && (
+              <CaptchaBox
+                siteKey={wixClient.auth.captchaVisibleSiteKey}
+                resetKey={captchaDraw}
+                onToken={setCaptchaToken}
+                onExpired={() => setCaptchaToken("")}
+                onFailed={() => setError("The robot check could not load. Check your connection and try again.")}
+              />
+            )}
+
+            <button
+              type="submit"
+              disabled={isLoading || (captchaNeeded && (mode === "LOGIN" || mode === "REGISTER") && !captchaToken)}
+              className="rounded-lg bg-brand-navy px-4 py-3 text-base font-semibold text-white transition-colors hover:bg-brand-gold hover:text-brand-navy focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold disabled:cursor-not-allowed disabled:bg-gray-200 disabled:text-gray-500"
+            >
+              {isLoading ? "Please wait..." : BUTTONS[mode]}
+            </button>
 
             <div className="text-sm text-gray-600">
               {mode === "LOGIN" && (

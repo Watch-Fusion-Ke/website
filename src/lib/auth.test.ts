@@ -57,6 +57,27 @@ describe("interpretAuth", () => {
   });
 });
 
+describe("interpretAuth when Wix wants a robot check", () => {
+  it("asks for the check when it is missing, in both forms", () => {
+    for (const mode of ["LOGIN", "REGISTER"] as const) {
+      const result = interpretAuth(failure("missingCaptchaToken"), mode) as { kind: string; message: string };
+      expect(result.kind).toBe("captcha");
+      expect(result.message).toMatch(/not a robot|robot/i);
+    }
+  });
+
+  it("asks for the check again when Wix says it did not pass", () => {
+    const result = interpretAuth(failure("invalidCaptchaToken"), "LOGIN") as { kind: string; message: string };
+    expect(result.kind).toBe("captcha");
+    expect(result.message).toMatch(/again/i);
+  });
+
+  it("is never shown as a wrong email or password", () => {
+    const result = interpretAuth(failure("missingCaptchaToken"), "LOGIN") as { message: string };
+    expect(result.message).not.toMatch(/email or password/i);
+  });
+});
+
 describe("interpretAuth when verifying the email code", () => {
   it("says the code is wrong, not that something went wrong", () => {
     const result = interpretAuth(failure("invalidCode"), "EMAIL_VERIFICATION") as { kind: string; message: string };

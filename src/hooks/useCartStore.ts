@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { currentCart } from "@wix/ecom";
 import { WixClient } from "@/context/wixContext";
 import { isDeliveryLine } from "@/lib/delivery";
+import { STORES_APP_ID } from "@/lib/wixApps";
 
 // The number shown on the cart badge: products only, not the delivery fee line.
 const productCount = (cart?: { lineItems?: { productName?: { original?: string | null } | null }[] } | null) =>
@@ -47,7 +48,7 @@ export const useCartStore = create<CartState>((set) => ({
         lineItems: [
           {
             catalogReference: {
-              appId: process.env.NEXT_PUBLIC_WIX_APP_ID!,
+              appId: STORES_APP_ID,
               catalogItemId: productId,
               ...(variantId &&
                 variantId !== "00000000-0000-0000-0000-000000000000" && {

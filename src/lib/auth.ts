@@ -20,7 +20,8 @@ export const ACCOUNT_CREATED_MESSAGE =
 // A message for a failure the page did not expect, in words a shopper can act on. The technical text is only in the console.
 export const describeAuthFailure = (err: unknown, online: boolean): string => {
   if (err instanceof Error && err.message === "timeout") return "Logging in is taking too long. Check your connection and try again.";
-  if (!online || err instanceof TypeError) return "We could not reach the login. Check your internet connection and try again.";
+  const droppedCall = err instanceof TypeError && /failed to fetch|network|load failed/i.test(err.message);
+  if (!online || droppedCall) return "We could not reach the login. Check your internet connection and try again.";
   return "Something went wrong on our side. Please try again in a moment.";
 };
 

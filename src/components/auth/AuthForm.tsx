@@ -72,6 +72,7 @@ const AuthForm = ({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
+  const [notice, setNotice] = useState(false); // the message is a heads-up, not a success
   // Wix can ask for a robot check (a site setting). It is tried silently first; if Wix will not take that, the box is
   // shown and the button waits for it. What worked is remembered for this visit.
   const [captchaMode, setCaptchaMode] = useState<CaptchaKind | null>(initialCaptcha ? "visible" : null);
@@ -178,6 +179,7 @@ const AuthForm = ({
     e.preventDefault();
     setError("");
     setMessage("");
+    setNotice(false);
     if (mode === "REGISTER") {
       const problem = signupProblem(password);
       if (problem) {
@@ -224,7 +226,7 @@ const AuthForm = ({
       }
 
       if (outcome.kind === "success") {
-        created = mode === "REGISTER";
+        created = mode === "REGISTER" || mode === "EMAIL_VERIFICATION";
         const sessionToken = (response as { data?: { sessionToken?: string } } | undefined)?.data?.sessionToken;
         if (!sessionToken) throw new Error("Wix said success without a session");
         await signedIn(sessionToken);
@@ -247,6 +249,7 @@ const AuthForm = ({
         setMode("LOGIN");
         setPassword("");
         setMessage(ACCOUNT_CREATED_MESSAGE);
+        setNotice(true);
       } else {
         setError(describeAuthFailure(err, typeof navigator === "undefined" || navigator.onLine !== false));
       }
@@ -352,7 +355,7 @@ const AuthForm = ({
               </p>
             )}
             {message && (
-              <p role="status" className="text-sm text-green-700">
+              <p role={notice ? "alert" : "status"} className={`text-sm ${notice ? "text-amber-700" : "text-green-700"}`}>
                 {message}
               </p>
             )}

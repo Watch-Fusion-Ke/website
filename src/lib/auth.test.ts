@@ -70,6 +70,13 @@ describe("describeAuthFailure", () => {
     expect(describeAuthFailure(new TypeError("Failed to fetch"), true)).toMatch(/internet connection/i);
   });
 
+  it("does not call a programming error a connection problem", () => {
+    const message = describeAuthFailure(new TypeError("Cannot read properties of undefined (reading 'x')"), true);
+    expect(message).not.toMatch(/internet connection/i);
+    expect(describeAuthFailure(new TypeError("Load failed"), true)).toMatch(/internet connection/i);
+    expect(describeAuthFailure(new TypeError("NetworkError when attempting to fetch resource."), true)).toMatch(/internet connection/i);
+  });
+
   it("gives a plain message for anything else, without the technical text", () => {
     const message = describeAuthFailure(new Error("TypeError: x is undefined at page.js:1:2"), true);
     expect(message).toMatch(/try again in a moment/i);

@@ -9,6 +9,7 @@ export type AuthOutcome =
   | { kind: "success" }
   | { kind: "verify"; message: string }
   | { kind: "pending"; message: string }
+  | { kind: "captcha"; message: string }
   | { kind: "error"; message: string; suggest?: AuthMode };
 
 type WixAnswer = { loginState?: unknown; errorCode?: string } | undefined;
@@ -28,6 +29,10 @@ export const interpretAuth = (response: WixAnswer, mode: AuthMode): AuthOutcome 
         return { kind: "error", message: "That code is not right. Check the email and try again." };
       }
       switch (response.errorCode) {
+        case "missingCaptchaToken":
+          return { kind: "captcha", message: "Please tick the box to show you are not a robot, then press the button again." };
+        case "invalidCaptchaToken":
+          return { kind: "captcha", message: "The robot check did not pass. Please try it again." };
         case "invalidEmail":
           return {
             kind: "error",

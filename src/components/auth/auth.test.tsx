@@ -106,6 +106,16 @@ describe("AuthForm", () => {
     expect(html).not.toContain('for="auth-email"');
   });
 
+  it("shows no robot check unless Wix asks for one", () => {
+    expect(form("LOGIN")).not.toContain("data-captcha-box");
+  });
+
+  it("shows the robot check when Wix asked for it, and keeps the button off until it is done", () => {
+    const html = renderToStaticMarkup(<AuthForm initialMode="LOGIN" watches={watches} initialCaptcha />);
+    expect(html).toContain("data-captcha-box");
+    expect(html).toMatch(/<button[^>]*type="submit"[^>]*disabled/);
+  });
+
   it("puts the moving watches beside the form, and uses no pink", () => {
     const html = form("LOGIN");
     expect(html).toContain("data-slide");

@@ -136,21 +136,22 @@ describe("Footer", () => {
     expect(html).toMatch(/<dl class="[^"]*mx-auto[^"]*md:mx-0/);
   });
 
-  it("shows a large full logo, with its slogan, on computers only", async () => {
+  it("shows the full logo, with its slogan, on every screen size", async () => {
     const html = await render();
-    const link = html.match(/<a [^>]*class="[^"]*hidden md:block[^"]*"[^>]*><img[^>]*>/)?.[0] ?? "";
+    const link = html.match(/<a [^>]*class="[^"]*\bmx-auto\b[^"]*"[^>]*><img[^>]*>/)?.[0] ?? "";
     expect(link).not.toBe("");
     expect(link).toContain("Wear the Moment, Own the Legacy");
     expect(link).toMatch(/\bw-full\b/);
     expect(link).toMatch(/max-w-\[12\.5rem\]/);
-    expect(link).toMatch(/\bmd:mx-auto\b/);
+    expect(link).not.toMatch(/\bhidden\b/);
     expect(link).not.toContain("object-cover");
   });
 
-  it("keeps the small logo, name and written tagline for phones, and hides them on computers", async () => {
+  it("has only the logo and the social buttons in the brand column, with no second small logo or written tagline", async () => {
     const html = await render();
-    expect(html).toMatch(/<div class="[^"]*md:hidden[^"]*"><a [^>]*><img[^>]*alt="Watch Fusion Kenya"[^>]*>/);
-    expect(html).toMatch(/<p class="[^"]*md:hidden[^"]*">Watches and gifts in Nairobi\./);
+    expect((html.match(/<img[^>]*src="[^"]*logo\.png[^"]*"/g) ?? []).length).toBe(1);
+    expect(html).not.toContain("Watches and gifts in Nairobi");
+    expect(html).not.toMatch(/>Watch Fusion Kenya<\/span>/);
   });
 
   it("gives the brand column more room than the others on computers, so the logo can be big", async () => {
@@ -160,7 +161,7 @@ describe("Footer", () => {
 
   it("centres the brand column on computers too: the logo sits in the middle of its column with the social buttons under it, while the other columns stay left aligned", async () => {
     const html = await render();
-    const brand = html.match(/<div class="([^"]*col-span-2[^"]*)"[^>]*><a [^>]*hidden md:block/)?.[1] ?? "";
+    const brand = html.match(/<div class="([^"]*col-span-2[^"]*)"[^>]*><a [^>]*mx-auto/)?.[1] ?? "";
     expect(brand).toMatch(/\bmd:text-center\b/);
     expect(brand).not.toMatch(/md:text-left/);
     expect(html).toMatch(/<nav aria-label="Shop" class="[^"]*md:text-left/);

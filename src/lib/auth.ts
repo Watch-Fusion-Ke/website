@@ -25,6 +25,9 @@ export const describeAuthFailure = (err: unknown, online: boolean): string => {
   return "Something went wrong on our side. Please try again in a moment.";
 };
 
+// How long a shopper waits before asking for another emailed code.
+export const RESEND_WAIT_SECONDS = 45;
+
 export const PASSWORD_HELP = "Use at least 8 characters, with a letter and a number.";
 
 export const interpretAuth = (response: WixAnswer, mode: AuthMode): AuthOutcome => {

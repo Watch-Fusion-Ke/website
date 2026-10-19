@@ -151,6 +151,13 @@ describe("AuthForm", () => {
     expect(html).toMatch(/<button[^>]*type="submit"[^>]*disabled/);
   });
 
+  it("offers a new code on the verification screen, as a real button", () => {
+    const html = form("EMAIL_VERIFICATION");
+    expect(html).toMatch(/<button[^>]*type="button"[^>]*>[^<]*Send a new code/);
+    expect(form("LOGIN")).not.toContain("Send a new code");
+    expect(form("REGISTER")).not.toContain("Send a new code");
+  });
+
   it("puts the moving watches beside the form, and uses no pink", () => {
     const html = form("LOGIN");
     expect(html).toContain("data-slide");

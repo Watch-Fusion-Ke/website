@@ -56,7 +56,7 @@ const Navbar = () => {
             <Menu />
           </div>
           <Link href="/" aria-label="Watch Fusion Kenya, home" className='flex items-center h-11'>
-            <span className='relative block h-8 aspect-[2000/665] overflow-hidden'>
+            <span className='relative block h-9 aspect-[2209/823] overflow-hidden'>
               {/* Black lettering on the light page, white lettering on the black page */}
               <Image
                 src="/logo-on-light.png"
@@ -64,7 +64,7 @@ const Navbar = () => {
                 fill
                 sizes="110px"
                 loading="eager"
-                className='object-cover object-[50%_44%] dark:hidden'
+                className='object-cover object-top dark:hidden'
               />
               <Image
                 src="/logo.png"
@@ -72,7 +72,7 @@ const Navbar = () => {
                 fill
                 loading="eager"
                 sizes="110px"
-                className='hidden object-cover object-[50%_44%] dark:block dark:drop-shadow-[0_0_8px_rgba(249,201,43,0.5)]'
+                className='hidden object-cover object-top dark:block dark:drop-shadow-[0_0_8px_rgba(249,201,43,0.5)]'
               />
             </span>
           </Link>
@@ -103,14 +103,14 @@ const Navbar = () => {
         {/* Left Section */}
         <div className='w-1/3 xl:w-1/2 flex items-center gap-12'>
           <Link href="/" aria-label="Watch Fusion Kenya, home" className="flex items-center flex-shrink-0">
-            <span className='relative block h-12 aspect-[2000/665] overflow-hidden'>
+            <span className='relative block h-14 aspect-[2209/823] overflow-hidden'>
               <Image
                 src="/logo-on-light.png"
                 alt="Watch Fusion Kenya"
                 fill
                 sizes="160px"
                 loading="eager"
-                className='object-cover object-[50%_44%] dark:hidden'
+                className='object-cover object-top dark:hidden'
               />
               <Image
                 src="/logo.png"
@@ -118,7 +118,7 @@ const Navbar = () => {
                 fill
                 loading="eager"
                 sizes="160px"
-                className='hidden object-cover object-[50%_44%] dark:block dark:drop-shadow-[0_0_8px_rgba(249,201,43,0.5)]'
+                className='hidden object-cover object-top dark:block dark:drop-shadow-[0_0_8px_rgba(249,201,43,0.5)]'
               />
             </span>
           </Link>

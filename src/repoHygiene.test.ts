@@ -19,7 +19,8 @@ describe("the public repository", () => {
   it("keeps those folders out in future", () => {
     const ignore = readFileSync(".gitignore", "utf8");
     expect(ignore).toMatch(/^\/?\.idea\/?$/m);
-    expect(ignore).toMatch(/^\/?\.claude\/?$/m);
+    expect(ignore).toMatch(/^\/?\.claude\/settings\.json$/m);
+    expect(ignore).toMatch(/^\/?\.claude\/settings\.local\.json$/m);
   });
 
   it("does not log what a member typed or what Wix answered, which can include personal details", () => {

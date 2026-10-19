@@ -39,18 +39,21 @@ const Add = ({
   // A quantity of 9999 only means "in stock, quantity not tracked", so it is never shown as a count.
   const stockNote =
     stockNumber < 1 ? (
-      <p className="text-sm text-red-500">Product is out of stock</p>
+      <p className="whitespace-nowrap text-sm text-red-500">Out of stock</p>
     ) : stockNumber < 100 ? (
-      <p className="text-sm text-gray-600">
+      <p className="whitespace-nowrap text-sm text-gray-600">
         Only <span className="font-semibold text-orange-500">{stockNumber}</span> left
       </p>
     ) : (
-      <p className="text-sm text-gray-600">In stock</p>
+      <p className="whitespace-nowrap text-sm text-gray-600">In stock</p>
     );
 
   return (
     <div className="flex flex-col gap-3">
-      <h4 className="font-medium">Choose a Quantity</h4>
+      <div className="flex items-baseline justify-between gap-3">
+        <h4 className="font-medium">Choose a Quantity</h4>
+        {stockNote}
+      </div>
       <div className="flex items-center gap-4">
         <div className="bg-gray-100 rounded-3xl flex items-center justify-between w-32 h-11 px-1 flex-shrink-0">
           <button
@@ -79,7 +82,6 @@ const Add = ({
           Add to Cart
         </button>
       </div>
-      {stockNote}
     </div>
   );
 };

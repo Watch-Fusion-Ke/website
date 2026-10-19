@@ -121,29 +121,31 @@ const SinglePage = async ({ params }: Props) => {
 
                 <div className="h-[2px] bg-gray-100" />
 
-                {/* Add to Cart / Customize */}
-                {product.variants && product.productOptions && product.productOptions.length > 0 ? (
-                    <CustomizeProducts
-                        productId={product._id!}
-                        variants={product.variants}
-                        productOptions={product.productOptions}
-                    />
-                ) : (
-                    <Add
-                        productId={product._id!}
-                        variantId="00000000-0000-0000-0000-000000000000"
-                        stockNumber={
-                          product.stock?.quantity ?? (product.stock?.inStock ? 9999 : 0)
-                        }
-                    />
-                )}
+                {/* Add to Cart / Customize, with Order on WhatsApp right under it */}
+                <div className="flex flex-col gap-3">
+                    {product.variants && product.productOptions && product.productOptions.length > 0 ? (
+                        <CustomizeProducts
+                            productId={product._id!}
+                            variants={product.variants}
+                            productOptions={product.productOptions}
+                        />
+                    ) : (
+                        <Add
+                            productId={product._id!}
+                            variantId="00000000-0000-0000-0000-000000000000"
+                            stockNumber={
+                              product.stock?.quantity ?? (product.stock?.inStock ? 9999 : 0)
+                            }
+                        />
+                    )}
 
-                <OrderOnWhatsApp
-                    name={product.name ?? "this product"}
-                    price={product.price?.discountedPrice ?? product.price?.price ?? undefined}
-                    hasOptions={Boolean(product.productOptions && product.productOptions.length > 0)}
-                    url={`${SITE_URL}/${slug}`}
-                />
+                    <OrderOnWhatsApp
+                        name={product.name ?? "this product"}
+                        price={product.price?.discountedPrice ?? product.price?.price ?? undefined}
+                        hasOptions={Boolean(product.productOptions && product.productOptions.length > 0)}
+                        url={`${SITE_URL}/${slug}`}
+                    />
+                </div>
 
                 <div className="h-[2px] bg-gray-100" />
 

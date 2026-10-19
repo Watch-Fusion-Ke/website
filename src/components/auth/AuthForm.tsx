@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Cookies from "js-cookie";
 import { useWixClient } from "@/hooks/useWixClient";
-import { interpretAuth, PASSWORD_HELP, signupProblem, type AuthMode } from "@/lib/auth";
+import { ACCOUNT_CREATED_MESSAGE, describeAuthFailure, interpretAuth, PASSWORD_HELP, signupProblem, type AuthMode } from "@/lib/auth";
 import { beginRedirectLogin, safeReturnPath } from "@/lib/loginRedirect";
 import PasswordField, { fieldClass, labelClass } from "@/components/auth/PasswordField";
 import AuthShowcase, { type ShowcaseWatch } from "@/components/auth/AuthShowcase";
@@ -187,6 +187,7 @@ const AuthForm = ({
     }
     setIsLoading(true);
     let leaving = false;
+    let created = false; // the new account exists at Wix, whatever happens next
 
     try {
       if (mode === "RESET_PASSWORD") {
@@ -223,6 +224,7 @@ const AuthForm = ({
       }
 
       if (outcome.kind === "success") {
+        created = mode === "REGISTER";
         const sessionToken = (response as { data?: { sessionToken?: string } } | undefined)?.data?.sessionToken;
         if (!sessionToken) throw new Error("Wix said success without a session");
         await signedIn(sessionToken);
@@ -240,11 +242,14 @@ const AuthForm = ({
       }
     } catch (err) {
       console.error(err);
-      setError(
-        err instanceof Error && err.message === "timeout"
-          ? "Logging in took too long. Check your connection and try again."
-          : "Something went wrong. Please try again."
-      );
+      if (created) {
+        // The account is there, so registering again would only say "already exists". Send the shopper to the login.
+        setMode("LOGIN");
+        setPassword("");
+        setMessage(ACCOUNT_CREATED_MESSAGE);
+      } else {
+        setError(describeAuthFailure(err, typeof navigator === "undefined" || navigator.onLine !== false));
+      }
     } finally {
       if (!leaving) setIsLoading(false);
     }
@@ -354,11 +359,11 @@ const AuthForm = ({
 
             {showBox && (
               <CaptchaBox
+                key={captchaDraw}
                 siteKey={wixClient.auth.captchaVisibleSiteKey}
-                resetKey={captchaDraw}
                 onToken={setCaptchaToken}
                 onExpired={() => setCaptchaToken("")}
-                onFailed={() => setError("The robot check could not load. Check your connection and try again.")}
+                onFailed={() => setError("The robot check could not load. If you use an ad blocker, turn it off for this page, then try again.")}
               />
             )}
 

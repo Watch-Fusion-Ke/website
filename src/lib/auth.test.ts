@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { LoginState } from "@wix/sdk";
-import { interpretAuth, passwordStrength, signupProblem } from "@/lib/auth";
+import { ACCOUNT_CREATED_MESSAGE, describeAuthFailure, interpretAuth, passwordStrength, signupProblem } from "@/lib/auth";
 
 const failure = (errorCode?: string) => ({ loginState: LoginState.FAILURE, errorCode }) as never;
 
@@ -43,8 +43,11 @@ describe("interpretAuth", () => {
     expect(result.message).not.toMatch(/email or password/i);
   });
 
-  it("points a shopper whose email already has an account to the login", () => {
-    expect(interpretAuth(failure("emailAlreadyExists"), "REGISTER")).toMatchObject({ kind: "error", suggest: "LOGIN" });
+  it("points a shopper whose email already has an account to the login, and to the reset if they forgot the password", () => {
+    const result = interpretAuth(failure("emailAlreadyExists"), "REGISTER") as { message: string };
+    expect(result).toMatchObject({ kind: "error", suggest: "LOGIN" });
+    expect(result.message).toMatch(/already has an account/i);
+    expect(result.message).toMatch(/forgot password/i);
   });
 
   it("sends a shopper who must reset their password to the reset form", () => {
@@ -54,6 +57,36 @@ describe("interpretAuth", () => {
   it("gives a plain message for anything else, including no response", () => {
     expect(interpretAuth(failure("unheardOf"), "LOGIN")).toMatchObject({ kind: "error" });
     expect(interpretAuth(undefined, "LOGIN")).toMatchObject({ kind: "error" });
+  });
+});
+
+describe("describeAuthFailure", () => {
+  it("says logging in is slow when the finishing step timed out", () => {
+    expect(describeAuthFailure(new Error("timeout"), true)).toMatch(/taking too long/i);
+  });
+
+  it("blames the connection when the browser is offline or the call could not be made", () => {
+    expect(describeAuthFailure(new Error("anything"), false)).toMatch(/internet connection/i);
+    expect(describeAuthFailure(new TypeError("Failed to fetch"), true)).toMatch(/internet connection/i);
+  });
+
+  it("does not call a programming error a connection problem", () => {
+    const message = describeAuthFailure(new TypeError("Cannot read properties of undefined (reading 'x')"), true);
+    expect(message).not.toMatch(/internet connection/i);
+    expect(describeAuthFailure(new TypeError("Load failed"), true)).toMatch(/internet connection/i);
+    expect(describeAuthFailure(new TypeError("NetworkError when attempting to fetch resource."), true)).toMatch(/internet connection/i);
+  });
+
+  it("gives a plain message for anything else, without the technical text", () => {
+    const message = describeAuthFailure(new Error("TypeError: x is undefined at page.js:1:2"), true);
+    expect(message).toMatch(/try again in a moment/i);
+    expect(message).not.toMatch(/undefined|TypeError|page\.js/);
+  });
+
+  it("tells a new member their account exists when only the final log-in step failed", () => {
+    expect(ACCOUNT_CREATED_MESSAGE).toMatch(/account was created/i);
+    expect(ACCOUNT_CREATED_MESSAGE).toMatch(/log in/i);
+    expect(ACCOUNT_CREATED_MESSAGE).toMatch(/same email and password/i);
   });
 });
 

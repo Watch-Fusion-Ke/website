@@ -14,6 +14,17 @@ export type AuthOutcome =
 
 type WixAnswer = { loginState?: unknown; errorCode?: string } | undefined;
 
+export const ACCOUNT_CREATED_MESSAGE =
+  "Your account was created, but we could not log you in automatically. Please log in with the same email and password.";
+
+// A message for a failure the page did not expect, in words a shopper can act on. The technical text is only in the console.
+export const describeAuthFailure = (err: unknown, online: boolean): string => {
+  if (err instanceof Error && err.message === "timeout") return "Logging in is taking too long. Check your connection and try again.";
+  const droppedCall = err instanceof TypeError && /failed to fetch|network|load failed/i.test(err.message);
+  if (!online || droppedCall) return "We could not reach the login. Check your internet connection and try again.";
+  return "Something went wrong on our side. Please try again in a moment.";
+};
+
 export const PASSWORD_HELP = "Use at least 8 characters, with a letter and a number.";
 
 export const interpretAuth = (response: WixAnswer, mode: AuthMode): AuthOutcome => {
@@ -44,14 +55,18 @@ export const interpretAuth = (response: WixAnswer, mode: AuthMode): AuthOutcome 
             message: mode === "REGISTER" ? `That password was not accepted. ${PASSWORD_HELP}` : "That email or password is not right.",
           };
         case "emailAlreadyExists":
-          return { kind: "error", message: "An account with this email already exists. Log in instead.", suggest: "LOGIN" };
+          return {
+            kind: "error",
+            message: "That email already has an account. Log in below, or use Forgot password if you do not remember it.",
+            suggest: "LOGIN",
+          };
         case "resetPassword":
           return { kind: "error", message: "You need to reset your password first.", suggest: "RESET_PASSWORD" };
         default:
-          return { kind: "error", message: "Something went wrong. Please try again." };
+          return { kind: "error", message: "Something went wrong on our side. Please try again in a moment." };
       }
     default:
-      return { kind: "error", message: "Something went wrong. Please try again." };
+      return { kind: "error", message: "Something went wrong on our side. Please try again in a moment." };
   }
 };
 

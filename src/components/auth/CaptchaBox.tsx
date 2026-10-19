@@ -3,16 +3,15 @@
 import { useEffect, useRef } from "react";
 import { loadRecaptcha } from "@/lib/recaptcha";
 
-// The "I am not a robot" box. `resetKey` draws a fresh one, since each answer can be used only once.
+// The "I am not a robot" box. Each answer can be used only once, so a fresh box is made by mounting this again
+// with a new `key`. Google refuses to draw twice into the same element, so the box is never redrawn in place.
 const CaptchaBox = ({
   siteKey,
-  resetKey,
   onToken,
   onExpired,
   onFailed,
 }: {
   siteKey: string;
-  resetKey: number;
   onToken: (token: string) => void;
   onExpired: () => void;
   onFailed: () => void;
@@ -43,7 +42,7 @@ const CaptchaBox = ({
     return () => {
       cancelled = true;
     };
-  }, [siteKey, resetKey]);
+  }, [siteKey]);
 
   return <div ref={box} data-captcha-box role="group" aria-label="Robot check" className="min-h-[78px]" />;
 };

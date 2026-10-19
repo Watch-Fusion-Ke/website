@@ -26,7 +26,7 @@ describe("page titles", () => {
       const source = read(file);
       expect(source).toMatch(/export const metadata/);
       expect(source).toMatch(/title:\s*["'][^"']+["']/);
-      expect(source).toMatch(/description:\s*["'][^"']{40,}["']/);
+      expect(source).toMatch(/description:\s*"[^"]{40,}"/);
     }
   });
 });

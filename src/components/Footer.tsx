@@ -31,8 +31,8 @@ const Footer = () => {
       <div className="px-4 py-12 md:px-8 lg:px-16 xl:px-32 2xl:px-64">
         <div className="grid grid-cols-2 gap-x-6 gap-y-10 md:grid-cols-[1.6fr_1fr_1fr_1.3fr]">
           <div className="col-span-2 text-center md:col-span-1 md:text-center">
-            {/* Computers: the full logo with its slogan, large enough to read. */}
-            <Link href="/" className="hidden md:block md:mx-auto md:w-fit">
+            {/* The full logo with its slogan, large enough to read, centred above the social buttons. */}
+            <Link href="/" className="mx-auto block w-fit">
               <Image
                 src="/logo.png"
                 alt="Watch Fusion Kenya, Wear the Moment, Own the Legacy"
@@ -42,14 +42,6 @@ const Footer = () => {
                 className="h-auto w-full max-w-[12.5rem]"
               />
             </Link>
-            {/* Phones: the small logo and name, and a written tagline. */}
-            <div className="md:hidden">
-              <Link href="/" className="inline-flex items-center gap-3">
-                <Image src="/logo.png" alt="Watch Fusion Kenya" width={44} height={44} />
-                <span className="text-base font-semibold tracking-wide text-white">Watch Fusion Kenya</span>
-              </Link>
-            </div>
-            <p className="mx-auto mt-4 max-w-xs text-sm md:hidden">Watches and gifts in Nairobi.</p>
             <div className="mt-5 flex justify-center gap-3">
               <a href={INSTAGRAM_URL} {...outside} aria-label="Instagram" className={social}>
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">

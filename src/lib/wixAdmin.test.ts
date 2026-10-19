@@ -54,6 +54,39 @@ describe("createAdminFetch", () => {
     expect(calls.filter((c) => c.url.endsWith("/oauth2/token"))).toHaveLength(1);
   });
 
+  it("ignores spaces and a stray new line around the id and secret, which a paste can add", async () => {
+    const calls: Call[] = [];
+    const admin = createAdminFetch({
+      clientId: " client-id ",
+      clientSecret: "  the-secret\n",
+      fetchImpl: async (url, init) => {
+        calls.push({ url, init });
+        return new Response(JSON.stringify({ access_token: "t", expires_in: 14400 }), { status: 200 });
+      },
+    });
+    await admin("/a", {});
+    expect(JSON.parse(String(calls[0].init?.body))).toMatchObject({ client_id: "client-id", client_secret: "the-secret" });
+  });
+
+  it("treats a secret that is only spaces as missing", async () => {
+    const { admin, calls } = setup({ secret: "   \n" });
+    await expect(admin("/a", {})).rejects.toThrow(/not set up/i);
+    expect(calls).toHaveLength(0);
+  });
+
+  it("reports why Wix refused the token, without the secret", async () => {
+    const admin = createAdminFetch({
+      clientId: "client-id",
+      clientSecret: "the-secret",
+      fetchImpl: async () =>
+        new Response(JSON.stringify({ error: "invalid_client", error_description: "Invalid client credentials" }), { status: 400 }),
+    });
+    const error = await admin("/a", {}).catch((e: Error) => e);
+    expect((error as Error).message).toMatch(/400/);
+    expect((error as Error).message).toMatch(/invalid_client/);
+    expect((error as Error).message).not.toContain("the-secret");
+  });
+
   it("says it is not set up when the secret is missing, without calling Wix", async () => {
     const { admin, calls } = setup({ secret: undefined });
     await expect(admin("/a", {})).rejects.toThrow(/not set up/i);

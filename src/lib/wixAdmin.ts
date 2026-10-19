@@ -15,7 +15,15 @@ type Options = {
 
 export type AdminFetch = (path: string, init?: RequestInit) => Promise<Response>;
 
-export const createAdminFetch = ({ clientId, clientSecret, fetchImpl = fetch, now = Date.now }: Options): AdminFetch => {
+// A secret pasted into a host's settings can pick up spaces or a new line, which Wix then refuses as "invalid_client".
+const clean = (value: string | undefined): string | undefined => {
+  const trimmed = value?.trim();
+  return trimmed ? trimmed : undefined;
+};
+
+export const createAdminFetch = ({ clientId: rawId, clientSecret: rawSecret, fetchImpl = fetch, now = Date.now }: Options): AdminFetch => {
+  const clientId = clean(rawId);
+  const clientSecret = clean(rawSecret);
   let token: { value: string; expiresAt: number } | null = null;
   let pending: Promise<string> | null = null;
 
@@ -29,8 +37,12 @@ export const createAdminFetch = ({ clientId, clientSecret, fetchImpl = fetch, no
           headers: { "content-type": "application/json" },
           body: JSON.stringify({ grant_type: "client_credentials", client_id: clientId, client_secret: clientSecret }),
         });
-        if (!response.ok) throw new Error(`Wix admin token request failed (${response.status})`);
-        const json = await response.json();
+        const json = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          // Wix names the reason ("invalid_client" means the id or secret is wrong). It never echoes the secret back.
+          const reason = typeof json?.error === "string" ? ` ${json.error}`.slice(0, 60) : "";
+          throw new Error(`Wix admin token request failed (${response.status}${reason})`);
+        }
         if (!json?.access_token) throw new Error("Wix admin token request returned no token");
         token = { value: json.access_token, expiresAt: now() + Number(json.expires_in ?? 14400) * 1000 };
         return token.value;
@@ -56,4 +68,4 @@ export const adminFetch: AdminFetch = createAdminFetch({
   clientSecret: process.env.WIX_CLIENT_SECRET,
 });
 
-export const adminConfigured = (): boolean => Boolean(process.env.NEXT_PUBLIC_WIX_CLIENT_ID && process.env.WIX_CLIENT_SECRET);
+export const adminConfigured = (): boolean => Boolean(clean(process.env.NEXT_PUBLIC_WIX_CLIENT_ID) && clean(process.env.WIX_CLIENT_SECRET));

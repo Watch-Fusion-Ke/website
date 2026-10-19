@@ -152,8 +152,35 @@ describe("chooseDeliveryArea", () => {
     expect((await chooseDeliveryArea(setup({ ratesFail: true }).deps, gigiri.id)).body).toMatchObject({ unavailable: true });
   });
 
+  it("says why when Wix refuses the shop's admin access, so the cause can be found", async () => {
+    const { deps } = setup();
+    deps.adminFetch = async () => {
+      throw new Error("Wix admin token request failed (400 invalid_client)");
+    };
+    const r = await chooseDeliveryArea(deps, gigiri.id);
+    expect(r.status).toBe(502);
+    expect(r.body).toMatchObject({ unavailable: true });
+    expect((r.body as { detail?: string }).detail).toMatch(/400 invalid_client/);
+  });
+
+  it("gives no detail for a failure that is only the shopper's own", async () => {
+    expect((await chooseDeliveryArea(setup().deps, "nope")).body).not.toHaveProperty("detail");
+  });
+
   it("reports unavailable when the rates cannot be read", async () => {
     expect((await chooseDeliveryArea(setup({ ratesFail: true }).deps, gigiri.id)).status).toBe(503);
+  });
+});
+
+describe("clearDelivery when Wix refuses admin access", () => {
+  it("says why", async () => {
+    const { deps } = setup();
+    deps.adminFetch = async () => {
+      throw new Error("Wix admin token request failed (400 invalid_client)");
+    };
+    const r = await clearDelivery(deps);
+    expect(r.status).toBe(502);
+    expect((r.body as { detail?: string }).detail).toMatch(/invalid_client/);
   });
 });
 

@@ -12,6 +12,9 @@ export type DeliveryDeps = {
 
 export type Result<T = Record<string, unknown>> = { status: number; body: T };
 
+// The reason a call failed, for the response and the server log. It is our own message (a status and a Wix error name), never a secret.
+const detailOf = (err: unknown): string => (err instanceof Error ? err.message : String(err)).slice(0, 160);
+
 type CartLine = { id?: string; name?: { original?: string } };
 const lines = (cart: { lineItems?: CartLine[] } | undefined): CartLine[] => cart?.lineItems ?? [];
 const isDelivery = (line: CartLine) => (line.name?.original ?? "").startsWith(DELIVERY_PREFIX);
@@ -100,8 +103,10 @@ export const chooseDeliveryArea = async (deps: DeliveryDeps, areaId: unknown): P
         return { status: 502, body: { error, unavailable: true } };
       }
     }
-  } catch {
-    return { status: 502, body: { error: "We could not add the delivery fee.", unavailable: true } };
+  } catch (err) {
+    const detail = detailOf(err);
+    console.error("Delivery fee: could not add the fee:", detail);
+    return { status: 502, body: { error: "We could not add the delivery fee.", unavailable: true, detail } };
   }
 
   return { status: 200, body: { areaId: area.id, label: `${area.place}${area.road ? `, ${area.road}` : ""}`, price: area.price } };
@@ -120,8 +125,10 @@ export const clearDelivery = async (deps: DeliveryDeps): Promise<Result> => {
       body: JSON.stringify({ lineItemIds: ids }),
     });
     if (!remove.ok) return { status: 502, body: { error: "We could not remove the delivery fee." } };
-  } catch {
-    return { status: 502, body: { error: "We could not remove the delivery fee." } };
+  } catch (err) {
+    const detail = detailOf(err);
+    console.error("Delivery fee: could not remove the fee:", detail);
+    return { status: 502, body: { error: "We could not remove the delivery fee.", detail } };
   }
   return { status: 200, body: {} };
 };

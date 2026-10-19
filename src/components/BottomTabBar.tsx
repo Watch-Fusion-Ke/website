@@ -32,7 +32,7 @@ export const TabBarView = ({
     <div className="pointer-events-none fixed inset-x-0 bottom-0 z-30 pb-[max(0.75rem,env(safe-area-inset-bottom))] pl-[max(0.75rem,env(safe-area-inset-left))] pr-[max(0.75rem,env(safe-area-inset-right))] md:hidden">
       <nav
         aria-label="Main"
-        className="pointer-events-auto mx-auto max-w-md rounded-[1.75rem] bg-[#FFFDF8] px-1.5 shadow-[0_12px_32px_-10px_rgba(30,34,53,0.4)] ring-1 ring-black/10 dark:bg-[#1B1F33] dark:shadow-[0_12px_32px_-10px_rgba(0,0,0,0.9)] dark:ring-brand-gold/40"
+        className="pointer-events-auto mx-auto max-w-md rounded-[1.75rem] bg-[#FFFDF8] px-1.5 shadow-[0_12px_32px_-10px_rgba(30,34,53,0.4)] ring-1 ring-black/15 dark:bg-[#1B1F33] dark:shadow-[0_12px_32px_-10px_rgba(0,0,0,0.9)] dark:ring-brand-gold/40"
       >
         <ul className="grid grid-cols-4">
           {TABS.map((tab) => {

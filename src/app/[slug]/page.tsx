@@ -6,6 +6,7 @@ import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import DOMPurify from "isomorphic-dompurify";
 import { Metadata } from "next";
+import { SITE_URL } from "@/lib/site";
 
 type Props = {
     params: { slug: string };
@@ -32,7 +33,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
         openGraph: {
             title: `${product.name} | WatchFusion Kenya`,
             description: plainDescription,
-            url: `https://watchfusionkenya.com/${slug}`,
+            url: `${SITE_URL}/${slug}`,
             images: product.media?.mainMedia?.image?.url
                 ? [{ url: product.media.mainMedia.image.url, alt: product.name || "Watch" }]
                 : [],
@@ -47,7 +48,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
                 : [],
         },
         alternates: {
-            canonical: `https://watchfusionkenya.com/${slug}`,
+            canonical: `${SITE_URL}/${slug}`,
         },
     };
 }
@@ -89,7 +90,7 @@ const SinglePage = async ({ params }: Props) => {
                             availability: product.stock?.inStock
                                 ? "https://schema.org/InStock"
                                 : "https://schema.org/OutOfStock",
-                            url: `https://watchfusionkenya.com/${slug}`,
+                            url: `${SITE_URL}/${slug}`,
                         },
                     }),
                 }}

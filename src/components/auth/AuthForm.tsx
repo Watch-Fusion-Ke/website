@@ -183,8 +183,10 @@ const AuthForm = ({
   };
 
   // A new code is asked for by logging in again with the same email and password, which makes Wix email a fresh one.
+  const resending = useRef(false); // a second tap in the same moment must not send a second login
   const resendCode = async () => {
-    if (resendIn > 0 || isLoading) return;
+    if (resendIn > 0 || isLoading || resending.current) return;
+    resending.current = true;
     setError("");
     setMessage("");
     setNotice(false);
@@ -203,6 +205,7 @@ const AuthForm = ({
       });
       if (result.learned) rememberCaptcha(result.learned);
       if (result.outcome.kind === "verify") {
+        setCode(""); // the old code no longer works, so it is cleared
         setMessage(`We sent a new code to ${email}. The old one no longer works.`);
         setResendIn(RESEND_WAIT_SECONDS);
       } else if (result.outcome.kind === "success") {
@@ -221,6 +224,7 @@ const AuthForm = ({
       console.error(err);
       setError(describeAuthFailure(err, typeof navigator === "undefined" || navigator.onLine !== false));
     } finally {
+      resending.current = false;
       if (!leaving) setIsLoading(false);
     }
   };

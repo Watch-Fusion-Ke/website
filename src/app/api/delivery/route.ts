@@ -1,10 +1,13 @@
 import { NextResponse } from "next/server";
 import { adminConfigured, adminFetch } from "@/lib/wixAdmin";
 import { loadRates } from "@/lib/deliveryRates";
-import { chooseDeliveryArea, clearDelivery, listDelivery, type DeliveryDeps } from "@/lib/deliveryService";
+import { chooseDeliveryArea, clearDelivery, listDelivery, withoutDetail, type DeliveryDeps } from "@/lib/deliveryService";
 import { wixClientServer } from "@/lib/wixClientServer";
 
 export const dynamic = "force-dynamic";
+
+// On the live site a failure's cause stays in the server log. Elsewhere it is in the answer, so a test can see it.
+const isProduction = () => process.env.VERCEL_ENV === "production";
 
 // The table changes rarely, so each server instance keeps it for a minute instead of asking Wix on every request.
 let cachedRates: { at: number; rates: Awaited<ReturnType<typeof loadRates>> } | null = null;
@@ -72,7 +75,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Too many tries. Please wait a minute." }, { status: 429 });
   }
   const result = await chooseDeliveryArea({ ...d, getCartId: async () => cartId }, areaId);
-  return NextResponse.json(result.body, { status: result.status });
+  return NextResponse.json(withoutDetail(result.body, isProduction()), { status: result.status });
 }
 
 // Takes the delivery fee out of the shopper's cart.
@@ -80,5 +83,5 @@ export async function DELETE(request: Request) {
   if (fromAnotherSite(request)) return NextResponse.json({ error: "Not allowed." }, { status: 403 });
   if (!adminConfigured()) return NextResponse.json({}, { status: 200 });
   const result = await clearDelivery(await deps());
-  return NextResponse.json(result.body, { status: result.status });
+  return NextResponse.json(withoutDetail(result.body, isProduction()), { status: result.status });
 }

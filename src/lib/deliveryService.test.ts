@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { chooseDeliveryArea, clearDelivery, listDelivery, type DeliveryDeps } from "@/lib/deliveryService";
+import { chooseDeliveryArea, clearDelivery, listDelivery, withoutDetail, type DeliveryDeps } from "@/lib/deliveryService";
 import { areasFromRates, type DeliveryRate } from "@/lib/delivery";
 
 const rates: DeliveryRate[] = [
@@ -152,8 +152,49 @@ describe("chooseDeliveryArea", () => {
     expect((await chooseDeliveryArea(setup({ ratesFail: true }).deps, gigiri.id)).body).toMatchObject({ unavailable: true });
   });
 
+  it("says why when Wix refuses the shop's admin access, so the cause can be found", async () => {
+    const { deps } = setup();
+    deps.adminFetch = async () => {
+      throw new Error("Wix admin token request failed (400 invalid_client)");
+    };
+    const r = await chooseDeliveryArea(deps, gigiri.id);
+    expect(r.status).toBe(502);
+    expect(r.body).toMatchObject({ unavailable: true });
+    expect((r.body as { detail?: string }).detail).toMatch(/400 invalid_client/);
+  });
+
+  it("names the Wix status and error when Wix answers with a refusal instead of failing outright", async () => {
+    const deps = setup().deps;
+    deps.adminFetch = async () =>
+      new Response(JSON.stringify({ message: "secret body text", details: { applicationError: { code: "OWNED_CART_NOT_FOUND" } } }), { status: 404 });
+    const read = await chooseDeliveryArea(deps, gigiri.id);
+    expect(read.body).toMatchObject({ unavailable: true });
+    expect((read.body as { detail?: string }).detail).toBe("read cart 404 OWNED_CART_NOT_FOUND");
+
+    const refused = setup({ wixStatus: { "POST add-line-items": 403 } });
+    const add = await chooseDeliveryArea(refused.deps, gigiri.id);
+    expect((add.body as { detail?: string }).detail).toBe("add fee 403");
+    expect(JSON.stringify(add.body)).not.toContain("nope");
+  });
+
+  it("gives no detail for a failure that is only the shopper's own", async () => {
+    expect((await chooseDeliveryArea(setup().deps, "nope")).body).not.toHaveProperty("detail");
+  });
+
   it("reports unavailable when the rates cannot be read", async () => {
     expect((await chooseDeliveryArea(setup({ ratesFail: true }).deps, gigiri.id)).status).toBe(503);
+  });
+});
+
+describe("clearDelivery when Wix refuses admin access", () => {
+  it("says why", async () => {
+    const { deps } = setup();
+    deps.adminFetch = async () => {
+      throw new Error("Wix admin token request failed (400 invalid_client)");
+    };
+    const r = await clearDelivery(deps);
+    expect(r.status).toBe(502);
+    expect((r.body as { detail?: string }).detail).toMatch(/invalid_client/);
   });
 });
 
@@ -170,5 +211,14 @@ describe("clearDelivery", () => {
     const { deps, calls } = setup();
     expect((await clearDelivery(deps)).status).toBe(200);
     expect(calls.some((c) => c.path.endsWith("/remove-line-items"))).toBe(false);
+  });
+});
+
+describe("withoutDetail", () => {
+  it("keeps the cause out of the answer on the live site and in it elsewhere", () => {
+    const body = { error: "We could not add the delivery fee.", unavailable: true, detail: "add fee 403" };
+    expect(withoutDetail(body, true)).toEqual({ error: "We could not add the delivery fee.", unavailable: true });
+    expect(withoutDetail(body, false)).toEqual(body);
+    expect(withoutDetail({ price: 300 }, true)).toEqual({ price: 300 });
   });
 });

@@ -4,6 +4,7 @@
 
 const TOKEN_URL = "https://www.wixapis.com/oauth2/token";
 const API_BASE = "https://www.wixapis.com";
+const REFUSED_FOR = 30_000; // how long a refusal from Wix is remembered
 const EARLY = 60_000; // ask for a new token a minute before the old one expires
 
 type Options = {
@@ -15,13 +16,24 @@ type Options = {
 
 export type AdminFetch = (path: string, init?: RequestInit) => Promise<Response>;
 
-export const createAdminFetch = ({ clientId, clientSecret, fetchImpl = fetch, now = Date.now }: Options): AdminFetch => {
+// A secret pasted into a host's settings can pick up spaces or a new line, which Wix then refuses as "invalid_client".
+const clean = (value: string | undefined): string | undefined => {
+  const trimmed = value?.trim();
+  return trimmed ? trimmed : undefined;
+};
+
+export const createAdminFetch = ({ clientId: rawId, clientSecret: rawSecret, fetchImpl = fetch, now = Date.now }: Options): AdminFetch => {
+  const clientId = clean(rawId);
+  const clientSecret = clean(rawSecret);
   let token: { value: string; expiresAt: number } | null = null;
   let pending: Promise<string> | null = null;
+  // A refusal is remembered briefly, so a wrong secret cannot make every request call Wix's token endpoint again.
+  let refused: { until: number; error: Error } | null = null;
 
   const getToken = async (): Promise<string> => {
     if (!clientId || !clientSecret) throw new Error("Wix admin access is not set up");
     if (token && now() < token.expiresAt - EARLY) return token.value;
+    if (refused && now() < refused.until) throw refused.error;
     pending ??= (async () => {
       try {
         const response = await fetchImpl(TOKEN_URL, {
@@ -29,8 +41,15 @@ export const createAdminFetch = ({ clientId, clientSecret, fetchImpl = fetch, no
           headers: { "content-type": "application/json" },
           body: JSON.stringify({ grant_type: "client_credentials", client_id: clientId, client_secret: clientSecret }),
         });
-        if (!response.ok) throw new Error(`Wix admin token request failed (${response.status})`);
-        const json = await response.json();
+        const json = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          // Wix names the reason ("invalid_client" means the id or secret is wrong). It never echoes the secret back.
+          const reason = typeof json?.error === "string" ? ` ${json.error}`.slice(0, 60) : "";
+          const failure = new Error(`Wix admin token request failed (${response.status}${reason})`);
+          // Only a refusal (wrong id or secret) is remembered. A Wix outage or a dropped connection is tried again at once.
+          if (response.status < 500) refused = { until: now() + REFUSED_FOR, error: failure };
+          throw failure;
+        }
         if (!json?.access_token) throw new Error("Wix admin token request returned no token");
         token = { value: json.access_token, expiresAt: now() + Number(json.expires_in ?? 14400) * 1000 };
         return token.value;
@@ -56,4 +75,4 @@ export const adminFetch: AdminFetch = createAdminFetch({
   clientSecret: process.env.WIX_CLIENT_SECRET,
 });
 
-export const adminConfigured = (): boolean => Boolean(process.env.NEXT_PUBLIC_WIX_CLIENT_ID && process.env.WIX_CLIENT_SECRET);
+export const adminConfigured = (): boolean => Boolean(clean(process.env.NEXT_PUBLIC_WIX_CLIENT_ID) && clean(process.env.WIX_CLIENT_SECRET));

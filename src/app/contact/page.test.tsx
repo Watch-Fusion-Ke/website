@@ -1,0 +1,79 @@
+import { renderToStaticMarkup } from "react-dom/server";
+import { describe, expect, it } from "vitest";
+import ContactPage from "@/app/contact/page";
+
+const html = renderToStaticMarkup(<ContactPage />);
+const text = html.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ");
+
+describe("Contact page", () => {
+  it("shows none of the template's sample details", () => {
+    for (const sample of ["support@store.com", "sales@store.com", "+254 700 000 000", "Westlands", 'href="#"']) {
+      expect(html).not.toContain(sample);
+    }
+  });
+
+  it("shows the shop's real address and opening hours", () => {
+    expect(html).toContain("Stanbank House");
+    expect(html).toContain("Moi Avenue");
+    expect(text).toMatch(/Mon to Fri 8:30am to 7pm/);
+    expect(text).toMatch(/Sat 10am to 7pm/);
+    expect(text).toMatch(/Sun Closed/i);
+  });
+
+  it("links the real WhatsApp number, phone, email, Instagram and TikTok", () => {
+    expect(html).toContain('href="https://wa.me/254796044969"');
+    expect(html).toContain('href="tel:+254796044969"');
+    expect(html).toContain("0796 044 969");
+    expect(html).toContain('href="mailto:watchfusionkenya@gmail.com"');
+    expect(html).toContain('href="https://www.instagram.com/watchfusion_kenya"');
+    expect(html).toContain('href="https://www.tiktok.com/@watchfusion_kenya"');
+  });
+
+  it("has a message form that is really connected, and says nothing about a message being sent before one is", () => {
+    // the form itself appears in the browser, once the shop says it can take messages
+    expect(html).toContain("Send us a message");
+    expect(html).toContain("Loading the message form");
+    expect(html).not.toMatch(/sent successfully|message has been sent/i);
+  });
+
+  it("puts the message form in front of the contact details", () => {
+    expect(html.indexOf("Send us a message")).toBeLessThan(html.indexOf("Call or WhatsApp"));
+  });
+
+  it("makes no delivery, returns or free shipping promise that the shop has not confirmed", () => {
+    expect(html).not.toMatch(/free (delivery|shipping)/i);
+    expect(html).not.toMatch(/30-day|3-7 business|international/i);
+  });
+
+  it("says delivery is not free and depends on the area", () => {
+    expect(html).toMatch(/not free/i);
+  });
+
+  it("gives social links their own card, not the opening hours card", () => {
+    const hours = html.split("Opening hours")[1]?.split("Follow us")[0] ?? "";
+    expect(hours).toContain("Mon to Fri");
+    expect(hours).not.toContain("instagram.com");
+    expect(text).toContain("Follow us");
+  });
+
+  it("offers both a call and a WhatsApp chat under the phone heading", () => {
+    const card = html.split("Call or WhatsApp")[1]?.split("</div>")[0] ?? "";
+    expect(card).toContain('href="tel:+254796044969"');
+    expect(card).toContain('href="https://wa.me/254796044969"');
+  });
+
+  it("has one main heading in the title face, and no pink", () => {
+    expect(html.match(/<h1/g)).toHaveLength(1);
+    expect(html).toMatch(/<h1[^>]*font-display/);
+    expect(html).not.toMatch(/pink|purple|F35C7A/i);
+  });
+
+  it("opens outside links in a new tab without handing over the page", () => {
+    const outside = html.match(/<a [^>]*href="https:\/\/[^"]*"[^>]*>/g) ?? [];
+    expect(outside.length).toBeGreaterThan(0);
+    for (const tag of outside) {
+      expect(tag).toContain('target="_blank"');
+      expect(tag).toContain('rel="noopener noreferrer"');
+    }
+  });
+});

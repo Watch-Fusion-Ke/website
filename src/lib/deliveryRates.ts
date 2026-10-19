@@ -1,0 +1,37 @@
+import type { DeliveryRate } from "@/lib/delivery";
+
+// The Wix content collection that holds the delivery table. Mercy edits it in the Wix dashboard.
+// Fields: title (the places on a rate, separated by "/"), road, price (number), isActive (switch).
+export const DELIVERY_COLLECTION = "DeliveryRates";
+
+const MAX_PRICE = 100000;
+
+// A row as the Wix client returns it: the fields sit beside _id.
+type Row = { _id?: string | null } & Record<string, unknown>;
+
+// Turns rows of the collection into rates, skipping anything that is off, empty or not a sensible price.
+export const parseRates = (rows: Row[]): DeliveryRate[] =>
+  rows.flatMap((row) => {
+    const data = row;
+    if (!row._id) return [];
+    if (data.isActive === false) return [];
+    const places = typeof data.title === "string" ? data.title.trim() : "";
+    const text = String(data.price ?? "").replace(/kes|ksh/gi, "").replace(/[,\s]/g, "");
+    const price = text === "" ? NaN : Math.round(Number(text));
+    if (!places.replace(/[/,\s]/g, "") || !Number.isFinite(price) || price < 0 || price > MAX_PRICE) return [];
+    return [{ id: row._id, places, road: typeof data.road === "string" ? data.road.trim() : "", price }];
+  });
+
+type ItemsClient = {
+  items: { query: (name: string) => { limit: (n: number) => { find: () => Promise<{ items: Row[] }> } } };
+};
+
+// Reads the table. Throws when the collection cannot be read, so the caller can tell "not set up" from "empty".
+export const loadRates = async (client: ItemsClient): Promise<DeliveryRate[]> => {
+  const result = await client.items.query(DELIVERY_COLLECTION).limit(500).find();
+  const rates = parseRates(result.items);
+  if (rates.length < result.items.length) {
+    console.warn(`DeliveryRates: ${result.items.length - rates.length} of ${result.items.length} rows were skipped (switched off, or no places or price)`);
+  }
+  return rates;
+};

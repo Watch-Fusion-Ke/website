@@ -1,8 +1,7 @@
 import { wixClientServer } from "@/lib/wixClientServer";
 import { listProducts } from "@/lib/storeProducts";
-import Image from "next/image";
-import Link from "next/link";
 import Pagination from "./Pagination";
+import ProductCardView from "./ProductCard";
 
 // Normalize category names so "Editors Choice" matches "Editor's Choice" etc.
 const normalize = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, "");
@@ -12,11 +11,15 @@ const ProductList = async ({
     categoryName,
     limit,
     searchParams,
+    onSale,
+    emptyMessage,
 }: {
     categoryId: string;
     categoryName?: string;
     limit?: number;
     searchParams?: any;
+    onSale?: boolean;
+    emptyMessage?: string;
 }) => {
     const wixClient = await wixClientServer();
 
@@ -45,6 +48,7 @@ const ProductList = async ({
             sort: searchParams?.sort,
             page: searchParams?.page,
             limit,
+            onSale,
         });
     } catch (e) {
         console.error("ProductList: product search failed", e);
@@ -55,41 +59,24 @@ const ProductList = async ({
         );
     }
 
+    if (page.items.length === 0) {
+        return (
+            <div className="mt-6">
+                <p className="text-gray-600">{emptyMessage ?? "No products found."}</p>
+                {/* A filter can leave the shopper on a page past the end, so keep a way back. */}
+                {page.hasPrev && (
+                    <div className="flex">
+                        <Pagination currentPage={page.page} hasPrev={page.hasPrev} hasNext={page.hasNext} />
+                    </div>
+                )}
+            </div>
+        );
+    }
+
     return (
-        <div className="mt-6 grid grid-cols-2 lg:grid-cols-4 gap-x-4 gap-y-16">
+        <div className="mt-6 grid grid-cols-2 lg:grid-cols-4 gap-x-4 gap-y-12">
             {page.items.map((product) => (
-                <Link
-                    href={"/" + product.slug}
-                    className="flex flex-col gap-4"
-                    key={product.id}
-                >
-                    <div className="relative w-full aspect-square lg:aspect-auto lg:h-80">
-                        <Image
-                            src={product.imageUrl || "/product.png"}
-                            alt=""
-                            fill
-                            sizes="(max-width: 1023px) 50vw, 25vw"
-                            className={`absolute object-cover rounded-md z-10 transition-opacity duration-500 ${product.hoverImageUrl ? "hover:opacity-0" : ""}`}
-                        />
-                        {product.hoverImageUrl && (
-                            <Image
-                                src={product.hoverImageUrl}
-                                alt=""
-                                fill
-                                sizes="(max-width: 1023px) 50vw, 25vw"
-                                className="absolute object-cover rounded-md"
-                            />
-                        )}
-                    </div>
-                    <div className="flex justify-between">
-                        <span className="font-medium">{product.name}</span>
-                        <span className="font-semibold">{product.priceLabel}</span>
-                    </div>
-                    <button className="relative rounded-2xl ring-2 ring-pink-500 text-pink-600 w-full py-3 px-4 text-sm font-semibold overflow-hidden group">
-                        <span className="absolute inset-0 bg-pink-500 transform -translate-x-full group-hover:translate-x-0 transition-transform duration-300 ease-out"></span>
-                        <span className="relative z-10 group-hover:text-white transition-colors duration-300">Add to Cart</span>
-                    </button>
-                </Link>
+                <ProductCardView product={product} key={product.id} />
             ))}
             <Pagination
                 currentPage={page.page}

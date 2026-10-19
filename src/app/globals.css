@@ -2,10 +2,200 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Light theme. The greys are Tailwind's own, so the site looks exactly as before. */
+:root {
+  --gray-50: 249 250 251;
+  --gray-100: 243 244 246;
+  --gray-200: 229 231 235;
+  --gray-300: 209 213 219;
+  --gray-400: 156 163 175;
+  --gray-500: 107 114 128;
+  --gray-600: 75 85 99;
+  --gray-700: 55 65 81;
+  --gray-800: 31 41 55;
+  --gray-900: 17 24 39;
+  --page: #ffffff;
+  --surface: #ffffff;
+  --card: #faf7f0;
+  --text: #000000;
+  --gold: #f9c92b;
+  --gold-rgb: 249 201 43;
+  --on-gold: #1e2235;
+  --choice-bg: #ffffff;
+  --choice-text: #1e2235;
+  --choice-on-bg: #1e2235;
+  --choice-on-text: #ffffff;
+}
+
+/* Dark theme. The page is the logo's black, cards are a lifted navy, text is the brand off-white,
+   and the gold carries the buttons and prices, with a soft glow. */
+.dark {
+  --gray-50: 18 20 33;
+  --gray-100: 24 27 43;
+  --gray-200: 38 42 64;
+  --gray-300: 58 63 90;
+  --gray-400: 150 156 178;
+  --gray-500: 168 173 194;
+  --gray-600: 188 192 208;
+  --gray-700: 208 211 224;
+  --gray-800: 230 232 240;
+  --gray-900: 250 247 240;
+  --page: #0a0a0a;
+  --surface: #12141f;
+  --card: #171a2a;
+  --text: #faf7f0;
+  --gold: #d4ae53;
+  --gold-rgb: 212 174 83;
+  --on-gold: #1e2235;
+  --choice-bg: #12141f;
+  --choice-text: #faf7f0;
+  --choice-on-bg: #d4ae53;
+  --choice-on-text: #1e2235;
+}
+
+body {
+  background-color: var(--page);
+  color: var(--text);
+}
+
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
 }
 
 .scrollbar-hide{
   scrollbar-width: none;
+}
+
+/* Price slider: two handles on one bar. Only the handles take taps, so both can be reached. */
+.price-range {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  background: transparent;
+  pointer-events: none;
+  -webkit-appearance: none;
+  appearance: none;
+}
+.price-range::-webkit-slider-runnable-track {
+  background: transparent;
+  height: 100%;
+}
+.price-range::-moz-range-track {
+  background: transparent;
+}
+.price-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  pointer-events: auto;
+  width: 28px;
+  height: 28px;
+  margin-top: 2px;
+  border-radius: 9999px;
+  border: 3px solid var(--range-ring, #ffffff);
+  background: var(--range-thumb, #1e2235);
+  box-shadow: 0 1px 4px rgb(0 0 0 / 0.35);
+  cursor: grab;
+}
+.price-range::-moz-range-thumb {
+  pointer-events: auto;
+  width: 22px;
+  height: 22px;
+  border-radius: 9999px;
+  border: 3px solid var(--range-ring, #ffffff);
+  background: var(--range-thumb, #1e2235);
+  box-shadow: 0 1px 4px rgb(0 0 0 / 0.35);
+  cursor: grab;
+}
+.price-range:focus-visible::-webkit-slider-thumb {
+  outline: 2px solid #1e2235;
+  outline-offset: 2px;
+}
+.price-range:focus-visible::-moz-range-thumb {
+  outline: 2px solid #1e2235;
+  outline-offset: 2px;
+}
+
+/* In the dark theme the handles are white with a dark rim. */
+.dark .price-range {
+  --range-thumb: #ffffff;
+  --range-ring: #0a0a0a;
+}
+
+/* Dark theme: the few places where the light classes need a different meaning, not just a flipped grey. */
+.dark .bg-white {
+  background-color: var(--surface);
+}
+.dark .bg-brand-cream {
+  background-color: var(--card);
+}
+.dark input,
+.dark select,
+.dark textarea {
+  color: var(--text);
+}
+.dark ::placeholder {
+  color: rgb(var(--gray-400));
+}
+/* Navy buttons and highlights become a thin gold outline with gold text, like the gold on the logo: used sparingly,
+   on black, with no glow. They fill with gold only when pointed at. */
+.dark .bg-brand-navy {
+  background-color: rgb(var(--gold-rgb) / 0.1);
+  color: var(--gold);
+  box-shadow: inset 0 0 0 1px var(--gold);
+}
+.dark .bg-brand-navy:hover {
+  background-color: var(--gold);
+  color: var(--on-gold);
+}
+/* Prices and link text are the soft white. Gold is kept for the accents. */
+.dark .text-brand-navy {
+  color: var(--text);
+}
+.dark .ring-brand-navy {
+  --tw-ring-color: var(--gold);
+}
+.dark .focus\:border-brand-navy:focus {
+  border-color: var(--gold);
+}
+/* Dark text on a gold background stays dark. */
+.dark .bg-brand-gold.text-brand-navy,
+.dark .bg-brand-gold .text-brand-navy,
+.dark .hover\:text-brand-navy:hover {
+  color: var(--on-gold);
+}
+@media (min-width: 768px) {
+  .dark .group:hover .md\:group-hover\:text-brand-navy {
+    color: var(--on-gold);
+  }
+}
+.dark .bg-brand-gold {
+  color: var(--on-gold);
+}
+/* Whatever text colour the light theme gave a gold background, the text on it stays dark. */
+.dark .bg-brand-gold.text-gray-900,
+.dark .bg-brand-gold.text-black,
+.dark .bg-brand-gold.text-brand-navy {
+  color: var(--on-gold);
+}
+
+.dark .text-black,
+.dark .hover\:text-black:hover {
+  color: var(--text);
+}
+/* Black text on a gold background stays dark, whatever the theme. */
+.dark .bg-brand-gold.text-black,
+.dark .hover\:bg-brand-gold.hover\:text-black:hover {
+  color: var(--on-gold);
+}
+
+/* The sticky header covers the top of the screen. Keyboard focus and in-page jumps stop below it. */
+html {
+  scroll-padding-top: 8rem;
+}
+@media (min-width: 768px) {
+  html {
+    scroll-padding-top: 6.5rem;
+  }
 }

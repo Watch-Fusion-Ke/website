@@ -1,16 +1,18 @@
 import ProductList from "@/components/ProductList";
 import Filter from "@/components/Filter";
 import { wixClientServer } from "@/lib/wixClientServer";
-import Link from "next/link";
+import { getPriceBounds } from "@/lib/storeProducts";
+import CategoryChips from "@/components/CategoryChips";
 import { Suspense } from "react";
 
-const SUBCATEGORIES = [
-    { label: "All Products", slug: "" },
-    { label: "Accessories", slug: "accessories" },
-    { label: "Couple Sets", slug: "couple-sets" },
-    { label: "Gents Watches", slug: "gents-watches" },
-    { label: "Ladies Watches", slug: "ladies-watches" },
-];
+export const metadata = {
+    title: "Shop watches",
+    description: "Browse men's and ladies' watches and gifts from Watch Fusion Kenya, with delivery across Nairobi and Kenya.",
+    alternates: { canonical: "/shop" },
+};
+
+// The store's own "All Products" category is the whole shop, which the first chip already is.
+const isAllProducts = (slug?: string) => slug === "all-products";
 
 export default async function ShopPage({
     searchParams,
@@ -19,73 +21,65 @@ export default async function ShopPage({
 }) {
     const resolvedParams = await searchParams;
     const catSlug = typeof resolvedParams.cat === "string" ? resolvedParams.cat : "";
+    const searched = typeof resolvedParams.name === "string" ? resolvedParams.name.trim() : "";
+
+    const wixClient = await wixClientServer();
+    const bounds = await getPriceBounds((url, init) => wixClient.fetchWithAuth(url, init));
 
     let categoryId = "";
-    let categoryName = "All Products";
-
-    if (catSlug) {
+    let categoryName = "";
+    let unknownCategory = false;
+    if (catSlug && !isAllProducts(catSlug)) {
         try {
-            const wixClient = await wixClientServer();
             const cat = await wixClient.collections.getCollectionBySlug(catSlug);
             categoryId = cat.collection?._id || "";
-            categoryName = cat.collection?.name || catSlug;
+            categoryName = cat.collection?.name || "";
         } catch {
-            // If slug not found, fall back to all products
+            // Unknown category: show the whole shop and say so.
         }
+        unknownCategory = categoryId === "";
+    }
+
+    // The chips come from the store's real categories, so none of them is a dead link.
+    let chips: { name: string; slug: string }[] = [];
+    try {
+        const cats = await wixClient.collections.queryCollections().find();
+        chips = cats.items
+            .filter((c) => c.name && c.slug && !isAllProducts(c.slug))
+            .map((c) => ({ name: c.name as string, slug: c.slug as string }));
+    } catch (e) {
+        console.error("ShopPage: category list failed", e);
     }
 
     return (
         <div className="px-4 md:px-8 lg:px-16 xl:px-32 2xl:px-64 relative">
-            {/* Header */}
-            <div className="py-8 border-b">
-                <h1 className="text-3xl md:text-4xl font-bold mb-2">
-                    {categoryName === "All Products" ? "Shop All Products" : categoryName}
+            <div className="pt-8 pb-6">
+                <h1 className="font-display text-4xl font-bold md:text-5xl mb-2">
+                    {searched ? `Results for “${searched}”` : categoryName || "Shop all products"}
                 </h1>
                 <p className="text-gray-600">
-                    {categoryName === "All Products"
-                        ? "Browse our complete collection"
-                        : `Browse our ${categoryName} collection`}
+                    {searched ? "Matching products from the whole shop" : categoryName ? `Browse our ${categoryName} collection` : "Browse our complete collection"}
                 </p>
             </div>
 
-            {/* Subcategory Navigation */}
-            <div className="flex gap-3 flex-wrap py-6 border-b">
-                {SUBCATEGORIES.map((sub) => (
-                    <Link
-                        key={sub.slug}
-                        href={sub.slug ? `/shop?cat=${sub.slug}` : "/shop"}
-                        className={`px-5 py-2 rounded-full text-sm font-medium transition-colors ${
-                            catSlug === sub.slug
-                                ? "bg-black text-white"
-                                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                        }`}
-                    >
-                        {sub.label}
-                    </Link>
-                ))}
+            {unknownCategory && (
+                <p role="status" className="mb-4 rounded-lg bg-brand-cream px-4 py-3 text-sm text-gray-700">
+                    We could not find that category, so here is everything.
+                </p>
+            )}
+
+            <CategoryChips chips={chips} activeSlug={searched ? null : categoryId !== "" ? catSlug : ""} />
+
+            <div className="mt-6 border-y border-gray-200 py-5">
+                <Suspense fallback={<div className="h-16" />}>
+                    <Filter bounds={bounds} />
+                </Suspense>
             </div>
 
-            {/* Main Content */}
-            <div className="flex flex-col lg:flex-row gap-8 py-8">
-                {/* Filter Sidebar */}
-                <div className="w-full lg:w-1/4">
-                    <div className="sticky top-8">
-                        <h2 className="text-xl font-semibold mb-4">Filters</h2>
-                        <Suspense fallback={<div>Loading filters...</div>}>
-                            <Filter />
-                        </Suspense>
-                    </div>
-                </div>
-
-                {/* Products Grid */}
-                <div className="w-full lg:w-3/4">
-                    <Suspense fallback={<ProductListSkeleton />}>
-                        <ProductList
-                            categoryId={categoryId}
-                            searchParams={resolvedParams}
-                        />
-                    </Suspense>
-                </div>
+            <div className="pb-8">
+                <Suspense fallback={<ProductListSkeleton />}>
+                    <ProductList categoryId={categoryId} searchParams={resolvedParams} />
+                </Suspense>
             </div>
         </div>
     );
@@ -93,12 +87,12 @@ export default async function ShopPage({
 
 function ProductListSkeleton() {
     return (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-            {[...Array(6)].map((_, i) => (
+        <div className="mt-6 grid grid-cols-2 gap-x-4 gap-y-12 lg:grid-cols-4">
+            {[...Array(4)].map((_, i) => (
                 <div key={i} className="flex flex-col gap-4">
-                    <div className="w-full h-80 bg-gray-200 rounded-md animate-pulse" />
-                    <div className="h-4 bg-gray-200 rounded animate-pulse" />
-                    <div className="h-4 bg-gray-200 rounded w-2/3 animate-pulse" />
+                    <div className="aspect-square w-full animate-pulse rounded-md bg-gray-200 lg:aspect-auto lg:h-80" />
+                    <div className="h-4 animate-pulse rounded bg-gray-200" />
+                    <div className="h-4 w-2/3 animate-pulse rounded bg-gray-200" />
                 </div>
             ))}
         </div>

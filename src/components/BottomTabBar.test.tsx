@@ -8,7 +8,7 @@ vi.mock("next/navigation", () => ({
 }));
 
 import BottomTabBar, { TabBarView } from "@/components/BottomTabBar";
-import WhatsAppButton from "@/components/WhatsAppButton";
+import WhatsAppButton, { WhatsAppButtonView } from "@/components/WhatsAppButton";
 
 const render = () => renderToStaticMarkup(<BottomTabBar />);
 
@@ -23,15 +23,15 @@ describe("BottomTabBar", () => {
     const order = ["Home", "Gents", "Ladies", "Cart"].map((l) => html.indexOf(`>${l}<`));
     expect(order.every((i) => i > -1)).toBe(true);
     expect([...order].sort((a, b) => a - b)).toEqual(order);
-    expect(html).toContain('href="/list?cat=gents-watches"');
-    expect(html).toContain('href="/list?cat=ladies-watches"');
+    expect(html).toContain('href="/shop?cat=gents-watches"');
+    expect(html).toContain('href="/shop?cat=ladies-watches"');
     expect(html).toContain('href="/cart"');
   });
 
   it("keeps the first and last tab clear of the notch when the phone is turned sideways", () => {
     const html = render();
-    expect(html).toContain("pl-[env(safe-area-inset-left)]");
-    expect(html).toContain("pr-[env(safe-area-inset-right)]");
+    expect(html).toContain("env(safe-area-inset-left)");
+    expect(html).toContain("env(safe-area-inset-right)");
   });
 
   it("is only for phones, and is the page's main navigation landmark", () => {
@@ -41,11 +41,11 @@ describe("BottomTabBar", () => {
   });
 
   it("marks the current page for screen readers", () => {
-    nav.pathname = "/list";
+    nav.pathname = "/shop";
     nav.cat = "ladies-watches";
     const html = render();
     expect(html.match(/aria-current="page"/g)).toHaveLength(1);
-    const ladiesTag = html.match(/<a [^>]*href="\/list\?cat=ladies-watches"[^>]*>/)?.[0] ?? "";
+    const ladiesTag = html.match(/<a [^>]*href="\/shop\?cat=ladies-watches"[^>]*>/)?.[0] ?? "";
     expect(ladiesTag).toContain('aria-current="page"');
   });
 
@@ -71,6 +71,98 @@ describe("BottomTabBar", () => {
   });
 });
 
+describe("BottomTabBar look", () => {
+  const tabs = (path = "/", cat: string | null = null, counter = 0) =>
+    renderToStaticMarkup(<TabBarView pathname={path} cat={cat} counter={counter} />);
+
+  it("draws finer icons, thinner than the rest of the site, one of its own for each tab", () => {
+    const html = tabs();
+    const svgs = html.match(/<svg[^>]*>[\s\S]*?<\/svg>/g) ?? [];
+    expect(svgs).toHaveLength(4);
+    for (const svg of svgs) expect(svg).toContain('stroke-width="1.5"');
+    expect(new Set(svgs).size).toBe(4);
+  });
+
+  it("shows the labels in small spaced capitals", () => {
+    const label = tabs().match(/<span class="([^"]*)">Home<\/span>/)?.[1].split(" ") ?? [];
+    expect(label).toContain("uppercase");
+    expect(label.some((c) => c.startsWith("tracking-"))).toBe(true);
+    expect(label).toContain("text-[10px]");
+  });
+
+  it("floats as a rounded dock lifted off the edges of the screen, not as a bar across the bottom", () => {
+    const html = tabs();
+    const wrapper = html.match(/^<div [^>]*>/)?.[0] ?? "";
+    expect(wrapper).toContain("fixed");
+    expect(wrapper).toContain("bottom-0");
+    expect(wrapper).toContain("pointer-events-none");
+    expect(wrapper).toContain("env(safe-area-inset-bottom)");
+    const nav = html.match(/<nav [^>]*>/)?.[0] ?? "";
+    expect(nav).toContain("rounded-[1.75rem]");
+    expect(nav).toContain("pointer-events-auto");
+    expect(nav).toMatch(/shadow-/);
+    expect(nav).toMatch(/ring-1/);
+    expect(nav).not.toContain("border-t");
+  });
+
+  it("is a warm white dock in the light theme and a lifted navy dock with a gold edge in the dark theme", () => {
+    const nav = tabs().match(/<nav [^>]*>/)?.[0] ?? "";
+    expect(nav).toContain("bg-[#FFFDF8]");
+    expect(nav).toContain("dark:bg-[#1B1F33]");
+    expect(nav).toContain("dark:ring-brand-gold/40");
+  });
+
+  it("is never the brand navy of the Add to cart buttons, so the two do not compete", () => {
+    const nav = tabs().match(/<nav [^>]*>/)?.[0] ?? "";
+    expect(nav).not.toMatch(/bg-\[#1E2235\]/i);
+    expect(nav).not.toContain("bg-brand-navy");
+  });
+
+  it("has no blur, which would slow older phones", () => {
+    expect(tabs()).not.toMatch(/backdrop-blur/);
+  });
+
+  it("marks the current tab in navy (gold in the dark theme) with a soft gold pill behind the icon", () => {
+    const current = tabs("/", null).match(/<a [^>]*aria-current="page"[^>]*>[\s\S]*?<\/a>/)?.[0] ?? "";
+    expect(current).toContain("text-[#1E2235]");
+    expect(current).toContain("dark:text-brand-gold");
+    expect(current).toContain("bg-brand-gold/25");
+    expect(current).toContain("dark:bg-brand-gold/15");
+    expect(current).not.toMatch(/text-gray-600/);
+    const other = tabs("/", null).match(/<a [^>]*href="\/cart"[^>]*>[\s\S]*?<\/a>/)?.[0] ?? "";
+    expect(other).not.toMatch(/bg-brand-gold/);
+    expect(other).toContain("text-gray-600");
+  });
+
+  it("keeps the other tabs readable on both docks, at a contrast of at least 4.5 to 1", () => {
+    const channel = (v: number) => {
+      const x = v / 255;
+      return x <= 0.03928 ? x / 12.92 : Math.pow((x + 0.055) / 1.055, 2.4);
+    };
+    const lum = ([r, g, b]: number[]) => 0.2126 * channel(r) + 0.7152 * channel(g) + 0.0722 * channel(b);
+    const ratio = (a: number[], b: number[]) => {
+      const [hi, lo] = lum(a) > lum(b) ? [lum(a), lum(b)] : [lum(b), lum(a)];
+      return (hi + 0.05) / (lo + 0.05);
+    };
+    // the grey the site calls gray-600, in each theme, on the dock behind it
+    expect(ratio([75, 85, 99], [255, 253, 248])).toBeGreaterThanOrEqual(4.5);
+    expect(ratio([188, 192, 208], [27, 31, 51])).toBeGreaterThanOrEqual(4.5);
+    // the navy of the current tab on the warm white, and the gold of the dark theme on its dock
+    expect(ratio([30, 34, 53], [255, 253, 248])).toBeGreaterThanOrEqual(4.5);
+    expect(ratio([212, 174, 83], [27, 31, 51])).toBeGreaterThanOrEqual(4.5);
+  });
+
+  it("keeps every tab at least 56 px tall and keeps the cart count readable against the dock", () => {
+    expect(tabs()).toMatch(/min-h-14/);
+    const full = tabs("/", null, 3);
+    expect(full).toContain('data-cart-count="3"');
+    const badge = full.match(/<span data-cart-count[^>]*>/)?.[0] ?? "";
+    expect(badge).toContain("bg-brand-gold");
+    expect(badge).toContain("ring-[#FFFDF8]");
+    expect(badge).toContain("dark:ring-[#1B1F33]");
+  });
+});
+
 describe("WhatsAppButton", () => {
   const html = () => renderToStaticMarkup(<WhatsAppButton />);
 
@@ -89,7 +181,7 @@ describe("WhatsAppButton", () => {
   it("floats above the phone tab bar and the iPhone home strip, then drops to the corner on large screens", () => {
     const classes = html().match(/class="([^"]*)"/)?.[1].split(" ") ?? [];
     expect(classes).toContain("fixed");
-    expect(classes).toContain("bottom-[calc(5rem_+_env(safe-area-inset-bottom))]");
+    expect(classes).toContain("bottom-[calc(6.5rem_+_env(safe-area-inset-bottom))]");
     expect(classes).toContain("md:bottom-6");
   });
 
@@ -99,6 +191,22 @@ describe("WhatsAppButton", () => {
     expect(classes).toContain("md:right-[max(1.5rem,env(safe-area-inset-right))]");
     expect(classes).not.toContain("right-4");
     expect(classes).not.toContain("md:right-6");
+  });
+
+  it("starts visible, fades out of the way while the page scrolls, and cannot be tapped while hidden", () => {
+    const classes = html().match(/class="([^"]*)"/)?.[1].split(" ") ?? [];
+    expect(classes).toContain("opacity-100");
+    expect(classes).toContain("transition-[transform,opacity]");
+    expect(classes).toContain("focus-visible:opacity-100");
+    expect(classes).not.toContain("opacity-0");
+    expect(classes).not.toContain("pointer-events-none");
+  });
+
+  it("fades out and cannot be tapped while hidden", () => {
+    const classes = renderToStaticMarkup(<WhatsAppButtonView hidden />).match(/class="([^"]*)"/)?.[1].split(" ") ?? [];
+    expect(classes).toContain("opacity-0");
+    expect(classes).toContain("pointer-events-none");
+    expect(classes).not.toContain("opacity-100");
   });
 
   it("is a tap target of at least 44 px", () => {

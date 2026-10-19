@@ -40,7 +40,6 @@ const NavIcons = () => {
     //     "http://localhost:3000"
     //   );
 
-    //   console.log(loginRequestData);
 
     //   localStorage.setItem("oAuthRedirectData", JSON.stringify(loginRequestData));
     //   const { authUrl } = await wixClient.auth.getAuthUrl(loginRequestData);
@@ -70,7 +69,7 @@ const NavIcons = () => {
                 alt=""
                 width={22}
                 height={22}
-                className="cursor-pointer"
+                className="cursor-pointer dark:invert"
                 // onClick={login}
                 onClick={handleProfile}
             />
@@ -87,17 +86,17 @@ const NavIcons = () => {
                 alt=""
                 width={22}
                 height={22}
-                className="cursor-pointer"
+                className="dark:invert cursor-pointer"
             />
             <div
                 className="relative cursor-pointer"
                 onClick={() => setIsCartOpen((prev) => !prev)}
             >
-                <Image src="/cart.png" alt="" width={22} height={22} />
+                <Image src="/cart.png" alt="" width={22} height={22} className="dark:invert" />
                 {counter > 0 && (
                     <div
                         key={counter}
-                        className="absolute -top-4 -right-4 w-6 h-6 bg-yellow-400 rounded-full text-gray-900 text-sm font-bold flex items-center justify-center shadow-md animate-cart-badge"
+                        className="absolute -top-4 -right-4 w-6 h-6 bg-brand-gold rounded-full text-gray-900 text-sm font-bold flex items-center justify-center shadow-md animate-cart-badge"
                     >
                         {counter}
                     </div>

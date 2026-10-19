@@ -1,8 +1,0 @@
-{
-  "permissions": {
-    "allow": [
-      "Bash(sips -Z 400 /Users/brianrimi/Documents/watchfusion/public/logo.jpg --out logo_jpg_small.png)",
-      "Bash(sips -Z 400 /Users/brianrimi/Documents/watchfusion/public/logo.png --out logo_png_small.png)"
-    ]
-  }
-}

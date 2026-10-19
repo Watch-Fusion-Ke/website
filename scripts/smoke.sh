@@ -26,7 +26,7 @@ check() { # path, text the page must contain (may be empty), text it must not co
 check / 'KES '
 check /shop 'KES '
 check /deals 'KES '
-check '/list?cat=gents-watches' 'KES '
+check '/shop?cat=gents-watches' 'KES '
 # A name search must show matching products and hide others (names as of Oct 2026).
 check '/shop?name=Naviforce' 'Naviforce' 'Poedagar'
 check /cart ''

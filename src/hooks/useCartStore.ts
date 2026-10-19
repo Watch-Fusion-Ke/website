@@ -1,6 +1,12 @@
 import { create } from "zustand";
 import { currentCart } from "@wix/ecom";
 import { WixClient } from "@/context/wixContext";
+import { isDeliveryLine } from "@/lib/delivery";
+import { STORES_APP_ID } from "@/lib/wixApps";
+
+// The number shown on the cart badge: products only, not the delivery fee line.
+const productCount = (cart?: { lineItems?: { productName?: { original?: string | null } | null }[] } | null) =>
+  (cart?.lineItems ?? []).filter((item) => !isDeliveryLine(item)).length;
 
 type CartState = {
   cart: currentCart.Cart & { 
@@ -29,7 +35,7 @@ export const useCartStore = create<CartState>((set) => ({
       set({
         cart: cart || {} as any,
         isLoading: false,
-        counter: cart?.lineItems.length || 0,
+        counter: productCount(cart),
       });
     } catch (err) {
       set((prev) => ({ ...prev, isLoading: false }));
@@ -42,7 +48,7 @@ export const useCartStore = create<CartState>((set) => ({
         lineItems: [
           {
             catalogReference: {
-              appId: process.env.NEXT_PUBLIC_WIX_APP_ID!,
+              appId: STORES_APP_ID,
               catalogItemId: productId,
               ...(variantId &&
                 variantId !== "00000000-0000-0000-0000-000000000000" && {
@@ -56,7 +62,7 @@ export const useCartStore = create<CartState>((set) => ({
 
       set({
         cart: response.cart,
-        counter: response.cart?.lineItems.length,
+        counter: productCount(response.cart),
         isLoading: false,
       });
     } catch (err) {
@@ -72,7 +78,7 @@ export const useCartStore = create<CartState>((set) => ({
 
     set({
       cart: response.cart,
-      counter: response.cart?.lineItems.length,
+      counter: productCount(response.cart),
       isLoading: false,
     });
   },

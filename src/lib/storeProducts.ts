@@ -3,6 +3,8 @@
 // so listing goes through the V3 product search instead.
 // Docs: https://dev.wix.com/docs/api-reference/business-solutions/stores/catalog-v3/products-v3/search-products
 
+import { roundBounds, type Bounds } from "@/lib/priceRange";
+
 export const PRODUCTS_SEARCH_URL = "https://www.wixapis.com/stores/v3/products/search";
 
 // One search call returns up to 100 products. The store has 48. Paging happens in memory,
@@ -24,6 +26,8 @@ export type ProductListParams = {
   sort?: QueryValue;
   page?: QueryValue;
   limit?: number;
+  // Keep only products that are on sale (see saleInfo).
+  onSale?: boolean;
 };
 
 export type ProductCard = {
@@ -33,6 +37,9 @@ export type ProductCard = {
   imageUrl: string | null;
   hoverImageUrl: string | null;
   priceLabel: string;
+  // Set only when the product is on sale: the old price, and how much cheaper the new one is.
+  compareAtLabel: string | null;
+  discountPercent: number | null;
 };
 
 export type ProductPage = {
@@ -58,6 +65,7 @@ const PRICE_FIELD = "actualPriceRange.minValue.amount";
 const SORT_FIELDS: Record<string, string> = {
   price: PRICE_FIELD,
   lastUpdated: "updatedDate",
+  created: "createdDate",
   name: "name",
 };
 
@@ -103,6 +111,9 @@ export const buildSearchBody = (params: ProductListParams): SearchBody => {
     conditions.push({ productType: { $eq: PRODUCT_TYPES[typeKey] } });
   }
 
+  // For sales, only products that hold a compare-at price can qualify, so Wix does that first cut.
+  if (params.onSale) conditions.push({ "compareAtPriceRange.minValue.amount": { $gt: "0" } });
+
   const min = asNumberString(params.min);
   if (min !== null) conditions.push({ [PRICE_FIELD]: { $gte: min } });
 
@@ -133,6 +144,9 @@ type WixProduct = {
     minValue?: { amount?: string };
     maxValue?: { amount?: string };
   };
+  compareAtPriceRange?: {
+    minValue?: { amount?: string };
+  };
   media?: {
     main?: { image?: { url?: string } };
     itemsInfo?: { items?: { image?: { url?: string } }[] };
@@ -149,6 +163,21 @@ const priceLabel = (product: WixProduct): string => {
   return `${prefix}KES ${formatKes(min)}`;
 };
 
+// A product is on sale when Wix holds a "compare at" price above the price a shopper pays.
+// Only products with one price qualify: with several variants the old price may belong to a different
+// variant than the cheapest one. A saving under 1% is not shown, and the percent never reaches 100.
+const saleInfo = (product: WixProduct): { compareAtLabel: string | null; discountPercent: number | null } => {
+  const none = { compareAtLabel: null, discountPercent: null };
+  const price = Number(product.actualPriceRange?.minValue?.amount);
+  const top = Number(product.actualPriceRange?.maxValue?.amount);
+  const was = Number(product.compareAtPriceRange?.minValue?.amount);
+  if (!Number.isFinite(price) || !Number.isFinite(was) || price <= 0 || was <= price) return none;
+  if (Number.isFinite(top) && top !== price) return none;
+  const percent = Math.min(99, Math.round((1 - price / was) * 100));
+  if (percent < 1) return none;
+  return { compareAtLabel: `KES ${formatKes(was)}`, discountPercent: percent };
+};
+
 const toCard = (product: WixProduct): ProductCard => ({
   id: product.id,
   slug: product.slug,
@@ -156,7 +185,29 @@ const toCard = (product: WixProduct): ProductCard => ({
   imageUrl: product.media?.main?.image?.url ?? null,
   hoverImageUrl: product.media?.itemsInfo?.items?.[1]?.image?.url ?? null,
   priceLabel: priceLabel(product),
+  ...saleInfo(product),
 });
+
+// The cheapest and dearest price in the shop, rounded outward, for the price slider. Nothing when the shop cannot be read.
+export const getPriceBounds = async (fetchLike: FetchLike): Promise<Bounds | null> => {
+  try {
+    const response = await fetchLike(PRODUCTS_SEARCH_URL, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ search: { cursorPaging: { limit: SEARCH_LIMIT } } }),
+    });
+    if (!response.ok) return null;
+    const json = await response.json();
+    if (!Array.isArray(json.products)) return null;
+    const prices = (json.products as WixProduct[])
+      .map((p) => Number(p.actualPriceRange?.minValue?.amount))
+      .filter((n) => Number.isFinite(n));
+    if (prices.length === 0) return null;
+    return roundBounds(Math.min(...prices), Math.max(...prices));
+  } catch {
+    return null;
+  }
+};
 
 export const listProducts = async (
   fetchLike: FetchLike,
@@ -181,7 +232,8 @@ export const listProducts = async (
   if (!Array.isArray(json.products)) {
     throw new Error("Wix product search returned an unexpected response");
   }
-  const all: WixProduct[] = json.products;
+  const found: WixProduct[] = json.products;
+  const all = params.onSale ? found.filter((product) => saleInfo(product).discountPercent !== null) : found;
   const start = page * limit;
   return {
     items: all.slice(start, start + limit).map(toCard),

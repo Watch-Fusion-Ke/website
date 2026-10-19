@@ -14,7 +14,7 @@ const SearchBar = () => {
     const name = formData.get("name") as string;
 
     if (name) {
-      router.push(`/list?name=${encodeURIComponent(name)}`)
+      router.push(`/shop?name=${encodeURIComponent(name)}`)
     }
   };
 
@@ -31,7 +31,7 @@ const SearchBar = () => {
         className="flex-1 bg-transparent outline-none"
       />
       <button className="cursor-pointer" aria-label="Search">
-        <Image src="/search.png" alt="" width={16} height={16} />
+        <Image src="/search.png" alt="" width={16} height={16} className="dark:invert" />
       </button>
     </form>
   );

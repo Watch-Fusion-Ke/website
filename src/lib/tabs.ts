@@ -5,8 +5,8 @@ export type Tab = { key: TabKey; label: string; href: string };
 // The phone tab bar. Gents and Ladies are the store's two main categories; everything else is in the menu. WhatsApp is the floating button, not a tab.
 export const TABS: Tab[] = [
   { key: "home", label: "Home", href: "/" },
-  { key: "gents", label: "Gents", href: "/list?cat=gents-watches" },
-  { key: "ladies", label: "Ladies", href: "/list?cat=ladies-watches" },
+  { key: "gents", label: "Gents", href: "/shop?cat=gents-watches" },
+  { key: "ladies", label: "Ladies", href: "/shop?cat=ladies-watches" },
   { key: "cart", label: "Cart", href: "/cart" },
 ];
 
@@ -14,7 +14,7 @@ export const TABS: Tab[] = [
 export const activeTab = (pathname: string, cat: string | null): TabKey | null => {
   if (pathname === "/") return "home";
   if (pathname === "/cart" || pathname.startsWith("/cart/")) return "cart";
-  if (pathname === "/list" || pathname === "/shop") {
+  if (pathname === "/shop") {
     if (cat === "gents-watches") return "gents";
     if (cat === "ladies-watches") return "ladies";
   }

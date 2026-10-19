@@ -21,24 +21,24 @@ const Pagination = ({
         replace(`${pathname}?${params.toString()}`);
     };
 
+    // A button that leads nowhere is not shown at all, and with only one page there is nothing to show.
+    if (!hasPrev && !hasNext) return null;
+
+    const button =
+        "rounded-md bg-brand-navy text-white p-2 text-sm w-24 cursor-pointer hover:bg-brand-gold hover:text-brand-navy transition-colors";
+
     return (
         <div className="mt-12 flex justify-between w-full col-span-full">
-            <button
-                className="rounded-md text-white p-2 text-sm w-24 cursor-pointer disabled:cursor-not-allowed disabled:bg-pink-200"
-                style={{ backgroundColor: hasPrev ? "#F35C7A" : undefined }}
-                disabled={!hasPrev}
-                onClick={() => createPageUrl(currentPage - 1)}
-            >
-                Previous
-            </button>
-            <button
-                className="rounded-md text-white p-2 text-sm w-24 cursor-pointer disabled:cursor-not-allowed disabled:bg-pink-200"
-                style={{ backgroundColor: hasNext ? "#F35C7A" : undefined }}
-                disabled={!hasNext}
-                onClick={() => createPageUrl(currentPage + 1)}
-            >
-                Next
-            </button>
+            {hasPrev && (
+                <button className={button} onClick={() => createPageUrl(currentPage - 1)}>
+                    Previous
+                </button>
+            )}
+            {hasNext && (
+                <button className={`${button} ml-auto`} onClick={() => createPageUrl(currentPage + 1)}>
+                    Next
+                </button>
+            )}
         </div>
     );
 };

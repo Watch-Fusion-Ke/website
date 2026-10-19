@@ -2,7 +2,9 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import ThemeToggle from "./ThemeToggle";
 import { useEffect, useState } from "react";
+import { useAllCategories } from "@/hooks/useCategories";
 import { useRouter } from "next/navigation";
 import { useWixClient } from "@/hooks/useWixClient";
 import { useCartStore } from "@/hooks/useCartStore";
@@ -13,22 +15,13 @@ type Category = { _id?: string | null; name?: string | null; slug?: string | nul
 const Menu = () => {
   const [open, setOpen] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
-  const [cats, setCats] = useState<Category[]>([]);
+  const allCats = useAllCategories();
+  const cats: Category[] = open ? allCats : [];
 
   const router = useRouter();
   const wixClient = useWixClient();
   const isLoggedIn = wixClient.auth.loggedIn();
   const { counter } = useCartStore();
-
-  // Fetch categories the first time the drawer opens
-  useEffect(() => {
-    if (!open || cats.length > 0) return;
-    wixClient.collections
-      .queryCollections()
-      .find()
-      .then((res) => setCats(res.items))
-      .catch(() => {});
-  }, [open, cats.length, wixClient]);
 
   const handleLogout = async () => {
     setLoggingOut(true);
@@ -104,6 +97,11 @@ const Menu = () => {
           </button>
         </div>
 
+        {/* Theme switch */}
+        <div className="px-6 pt-4">
+          <ThemeToggle showLabel />
+        </div>
+
         {/* Nav links */}
         <nav className="flex flex-col px-6 py-6 gap-1 flex-1 overflow-y-auto">
           {navLinks.map((link) => (
@@ -126,7 +124,7 @@ const Menu = () => {
               {cats.map((cat) => (
                 <Link
                   key={cat._id}
-                  href={`/list?cat=${cat.slug}`}
+                  href={`/shop?cat=${cat.slug}`}
                   onClick={close}
                   className="block text-base font-medium text-gray-800 hover:text-black hover:bg-gray-50 px-3 py-3 rounded-lg transition-colors"
                 >
@@ -144,7 +142,7 @@ const Menu = () => {
           >
             <span>Cart</span>
             {counter > 0 && (
-              <span className="bg-yellow-400 text-gray-900 text-xs font-bold w-6 h-6 rounded-full flex items-center justify-center">
+              <span className="bg-brand-gold text-gray-900 text-xs font-bold w-6 h-6 rounded-full flex items-center justify-center">
                 {counter}
               </span>
             )}
@@ -168,7 +166,7 @@ const Menu = () => {
               <button
                 onClick={handleLogout}
                 disabled={loggingOut}
-                className="w-full text-sm font-semibold text-white bg-black hover:bg-gray-800 px-4 py-3 rounded-lg transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                className="w-full text-sm font-semibold text-white bg-brand-navy hover:bg-brand-gold hover:text-brand-navy px-4 py-3 rounded-lg transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
               >
                 {loggingOut ? "Logging out..." : "Logout"}
               </button>
@@ -177,7 +175,7 @@ const Menu = () => {
             <Link
               href="/login"
               onClick={close}
-              className="w-full text-sm font-semibold text-white bg-black hover:bg-gray-800 px-4 py-3 rounded-lg transition-colors text-center"
+              className="w-full text-sm font-semibold text-white bg-brand-navy hover:bg-brand-gold hover:text-brand-navy px-4 py-3 rounded-lg transition-colors text-center"
             >
               Login / Register
             </Link>

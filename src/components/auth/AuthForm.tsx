@@ -1,0 +1,472 @@
+"use client";
+
+import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
+import Cookies from "js-cookie";
+import { useWixClient } from "@/hooks/useWixClient";
+import { ACCOUNT_CREATED_MESSAGE, describeAuthFailure, interpretAuth, PASSWORD_HELP, RESEND_WAIT_SECONDS, signupProblem, type AuthMode } from "@/lib/auth";
+import { beginRedirectLogin, safeReturnPath } from "@/lib/loginRedirect";
+import PasswordField, { fieldClass, labelClass } from "@/components/auth/PasswordField";
+import AuthShowcase, { type ShowcaseWatch } from "@/components/auth/AuthShowcase";
+import CaptchaBox from "@/components/auth/CaptchaBox";
+import { signInWithCaptcha, type CaptchaKind } from "@/lib/captchaFlow";
+import { getInvisibleToken } from "@/lib/recaptcha";
+
+const TITLES: Record<AuthMode, string> = {
+  LOGIN: "Log in",
+  REGISTER: "Create an account",
+  RESET_PASSWORD: "Reset your password",
+  EMAIL_VERIFICATION: "Verify your email",
+};
+
+const INTRO: Record<AuthMode, string> = {
+  LOGIN: "Welcome back. Log in to see your orders and check out faster.",
+  REGISTER: "It takes a minute. You can then track your orders and check out faster.",
+  RESET_PASSWORD: "Enter your email and we will send you a link to choose a new password.",
+  EMAIL_VERIFICATION: "Enter the code we emailed you.",
+};
+
+const BUTTONS: Record<AuthMode, string> = {
+  LOGIN: "Log in",
+  REGISTER: "Create account",
+  RESET_PASSWORD: "Send reset link",
+  EMAIL_VERIFICATION: "Verify",
+};
+
+const link =
+  "rounded text-sm font-medium text-gray-700 underline underline-offset-4 hover:text-gray-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold";
+
+// Wix can leave this call hanging on phones that block third-party cookies, so it is given a time limit.
+const withTimeout = <T,>(work: Promise<T>, ms: number): Promise<T> =>
+  new Promise((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error("timeout")), ms);
+    work.then(
+      (value) => {
+        clearTimeout(timer);
+        resolve(value);
+      },
+      (error) => {
+        clearTimeout(timer);
+        reject(error);
+      }
+    );
+  });
+
+const AuthForm = ({
+  initialMode = "LOGIN",
+  watches,
+  initialCaptcha = false,
+}: {
+  initialMode?: AuthMode;
+  watches: ShowcaseWatch[];
+  initialCaptcha?: boolean;
+}) => {
+  const wixClient = useWixClient();
+  const router = useRouter();
+
+  const [mode, setMode] = useState<AuthMode>(initialMode);
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [code, setCode] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [message, setMessage] = useState("");
+  const [notice, setNotice] = useState(false); // the message is a heads-up, not a success
+  const [resendIn, setResendIn] = useState(0); // seconds until another emailed code may be asked for
+  // Wix can ask for a robot check (a site setting). It is tried silently first; if Wix will not take that, the box is
+  // shown and the button waits for it. What worked is remembered for this visit.
+  const [captchaMode, setCaptchaMode] = useState<CaptchaKind | null>(initialCaptcha ? "visible" : null);
+  const [captchaToken, setCaptchaToken] = useState("");
+  const [captchaDraw, setCaptchaDraw] = useState(0);
+  // Whether Wix will take members back to this address. Until the check answers, the older method is used.
+  const [redirectLogin, setRedirectLogin] = useState(false);
+
+  useEffect(() => {
+    if (wixClient.auth.loggedIn()) router.push("/");
+  }, [wixClient, router]);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/login-check")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((answer) => {
+        if (!cancelled && answer?.redirectLogin === true) setRedirectLogin(true);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // When the shopper switches forms the link they pressed disappears, so focus moves to the new heading.
+  const heading = useRef<HTMLHeadingElement>(null);
+  const firstRender = useRef(true);
+  useEffect(() => {
+    if (firstRender.current) {
+      firstRender.current = false;
+      return;
+    }
+    heading.current?.focus();
+  }, [mode]);
+
+  useEffect(() => {
+    try {
+      const kept = window.sessionStorage.getItem("wf-captcha-kind");
+      if (kept === "invisible" || kept === "visible") setCaptchaMode((now) => now ?? kept);
+    } catch {
+      // storage is blocked: the check is simply asked for again when needed
+    }
+  }, []);
+
+  useEffect(() => {
+    if (resendIn <= 0) return;
+    const timer = setTimeout(() => setResendIn((n) => n - 1), 1000);
+    return () => clearTimeout(timer);
+  }, [resendIn]);
+
+  const rememberCaptcha = (kind: CaptchaKind) => {
+    setCaptchaMode(kind);
+    try {
+      window.sessionStorage.setItem("wf-captcha-kind", kind);
+    } catch {
+      // storage is blocked
+    }
+  };
+
+  const showBox = captchaMode === "visible" && (mode === "LOGIN" || mode === "REGISTER");
+
+  // Each robot-check answer works once, so a new box is drawn after every attempt.
+  const freshCaptcha = () => {
+    setCaptchaToken("");
+    setCaptchaDraw((n) => n + 1);
+  };
+
+  const switchTo = (next: AuthMode) => {
+    setMode(next);
+    setCaptchaToken("");
+    setError("");
+    setMessage("");
+    setPassword("");
+  };
+
+  // Sign-in is finished by sending the shopper to Wix and back, when Wix accepts this address (see /api/login-check).
+  // Otherwise the older hidden-frame method is used, which works on the shop's own domain.
+  const signedIn = async (sessionToken: string): Promise<void> => {
+    let storage: Storage | null = null;
+    try {
+      storage = window.localStorage;
+    } catch {
+      storage = null;
+    }
+    if (storage && redirectLogin) {
+      const outcome = await beginRedirectLogin({
+        origin: window.location.origin,
+        returnTo: safeReturnPath(new URLSearchParams(window.location.search).get("next")),
+        sessionToken,
+        storage,
+        now: Date.now,
+        generateOAuthData: (redirectUri, originalUri) => wixClient.auth.generateOAuthData(redirectUri, originalUri),
+        getAuthUrl: (data, opts) => wixClient.auth.getAuthUrl(data, opts as never),
+        navigate: (url) => window.location.assign(url),
+      });
+      if (outcome === "redirected") {
+        setMessage("Taking you to finish signing in.");
+        return;
+      }
+    }
+    const tokens = await withTimeout(wixClient.auth.getMemberTokensForDirectLogin(sessionToken), 15000);
+    Cookies.set("refreshToken", JSON.stringify(tokens.refreshToken), { expires: 2, sameSite: "lax", secure: window.location.protocol === "https:" });
+    wixClient.auth.setTokens(tokens);
+    setMessage("You are in. Taking you to the shop.");
+    router.push(safeReturnPath(new URLSearchParams(window.location.search).get("next")));
+  };
+
+  // A new code is asked for by logging in again with the same email and password, which makes Wix email a fresh one.
+  const resending = useRef(false); // a second tap in the same moment must not send a second login
+  const resendCode = async () => {
+    if (resendIn > 0 || isLoading || resending.current) return;
+    resending.current = true;
+    setError("");
+    setMessage("");
+    setNotice(false);
+    if (!email || !password) {
+      setError("Please go back and log in again to get a new code.");
+      return;
+    }
+    setIsLoading(true);
+    let leaving = false;
+    try {
+      const result = await signInWithCaptcha({
+        mode: "LOGIN",
+        remembered: captchaMode,
+        getInvisibleToken: () => getInvisibleToken(wixClient.auth.captchaInvisibleSiteKey),
+        send: (captchaTokens) => wixClient.auth.login({ email, password, captchaTokens }),
+      });
+      if (result.learned) rememberCaptcha(result.learned);
+      if (result.outcome.kind === "verify") {
+        setCode(""); // the old code no longer works, so it is cleared
+        setMessage(`We sent a new code to ${email}. The old one no longer works.`);
+        setResendIn(RESEND_WAIT_SECONDS);
+      } else if (result.outcome.kind === "success") {
+        const sessionToken = (result.response as { data?: { sessionToken?: string } } | undefined)?.data?.sessionToken;
+        if (!sessionToken) throw new Error("Wix said success without a session");
+        await signedIn(sessionToken);
+        leaving = true;
+      } else if (result.outcome.kind === "captcha") {
+        setError("Please go back and log in again, and complete the robot check, to get a new code.");
+      } else if (result.outcome.kind === "error") {
+        setError(result.outcome.message);
+      } else {
+        setMessage(result.outcome.message);
+      }
+    } catch (err) {
+      console.error(err);
+      setError(describeAuthFailure(err, typeof navigator === "undefined" || navigator.onLine !== false));
+    } finally {
+      resending.current = false;
+      if (!leaving) setIsLoading(false);
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+    setMessage("");
+    setNotice(false);
+    if (mode === "REGISTER") {
+      const problem = signupProblem(password);
+      if (problem) {
+        setError(problem);
+        return;
+      }
+    }
+    setIsLoading(true);
+    let leaving = false;
+    let created = false; // the new account exists at Wix, whatever happens next
+
+    try {
+      if (mode === "RESET_PASSWORD") {
+        await wixClient.auth.sendPasswordResetEmail(email, `${window.location.origin}/login`);
+        setMessage("If that email has an account, a reset link is on its way. Check your inbox and spam.");
+        return;
+      }
+
+      let response;
+      let outcome;
+      if (mode === "LOGIN" || mode === "REGISTER") {
+        const result = await signInWithCaptcha({
+          mode,
+          remembered: captchaMode,
+          visibleToken: captchaToken || undefined,
+          getInvisibleToken: () => getInvisibleToken(wixClient.auth.captchaInvisibleSiteKey),
+          send: (captchaTokens) =>
+            mode === "LOGIN"
+              ? wixClient.auth.login({ email, password, captchaTokens })
+              : wixClient.auth.register({
+                  email,
+                  password,
+                  captchaTokens,
+                  profile: name.trim() ? { nickname: name.trim() } : undefined,
+                }),
+        });
+        response = result.response;
+        outcome = result.outcome;
+        if (result.learned) rememberCaptcha(result.learned);
+        if (showBox || result.learned === "visible") freshCaptcha();
+      } else {
+        response = await wixClient.auth.processVerification({ verificationCode: code.trim() });
+        outcome = interpretAuth(response, mode);
+      }
+
+      if (outcome.kind === "success") {
+        created = mode === "REGISTER" || mode === "EMAIL_VERIFICATION";
+        const sessionToken = (response as { data?: { sessionToken?: string } } | undefined)?.data?.sessionToken;
+        if (!sessionToken) throw new Error("Wix said success without a session");
+        await signedIn(sessionToken);
+        leaving = true; // the button stays off while the page changes, so a second tap cannot send it again
+      } else if (outcome.kind === "verify") {
+        setMode("EMAIL_VERIFICATION");
+        setResendIn(RESEND_WAIT_SECONDS);
+        setMessage(outcome.message);
+      } else if (outcome.kind === "pending") {
+        setMessage(outcome.message);
+      } else if (outcome.kind === "captcha") {
+        setError(outcome.message);
+      } else {
+        setError(outcome.message);
+        if (outcome.suggest) setMode(outcome.suggest);
+      }
+    } catch (err) {
+      console.error(err);
+      if (created) {
+        // The account is there, so registering again would only say "already exists". Send the shopper to the login.
+        setMode("LOGIN");
+        setPassword("");
+        setMessage(ACCOUNT_CREATED_MESSAGE);
+        setNotice(true);
+      } else {
+        setError(describeAuthFailure(err, typeof navigator === "undefined" || navigator.onLine !== false));
+      }
+    } finally {
+      if (!leaving) setIsLoading(false);
+    }
+  };
+
+  return (
+    <div className="px-4 py-6 md:px-8 lg:px-16 lg:py-12 xl:px-32 2xl:px-64">
+      <div className="mx-auto grid max-w-5xl gap-6 lg:grid-cols-2 lg:gap-12">
+        <AuthShowcase watches={watches} className="h-64 sm:h-72 lg:h-auto lg:min-h-[32rem]" />
+
+        <div className="flex flex-col justify-center">
+          <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+            <div>
+              <h1 ref={heading} tabIndex={-1} className="font-display text-3xl font-bold focus:outline-none">
+                {TITLES[mode]}
+              </h1>
+              <p className="mt-2 text-sm text-gray-600">{INTRO[mode]}</p>
+            </div>
+
+            {mode === "REGISTER" && (
+              <div>
+                <label htmlFor="auth-name" className={labelClass}>
+                  Your name
+                </label>
+                <input
+                  id="auth-name"
+                  name="name"
+                  type="text"
+                  autoComplete="name"
+                  placeholder="Jane Wanjiru"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  className={fieldClass}
+                />
+              </div>
+            )}
+
+            {mode !== "EMAIL_VERIFICATION" ? (
+              <div>
+                <label htmlFor="auth-email" className={labelClass}>
+                  Email
+                </label>
+                <input
+                  id="auth-email"
+                  name="email"
+                  type="email"
+                  inputMode="email"
+                  autoComplete="email"
+                  autoCapitalize="none"
+                  spellCheck={false}
+                  required
+                  placeholder="you@example.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className={fieldClass}
+                />
+              </div>
+            ) : (
+              <div>
+                <label htmlFor="auth-code" className={labelClass}>
+                  Verification code
+                </label>
+                <input
+                  id="auth-code"
+                  name="code"
+                  type="text"
+                  inputMode="numeric"
+                  autoComplete="one-time-code"
+                  required
+                  placeholder="Code"
+                  value={code}
+                  onChange={(e) => setCode(e.target.value)}
+                  className={fieldClass}
+                />
+              </div>
+            )}
+
+            {(mode === "LOGIN" || mode === "REGISTER") && (
+              <div>
+                <PasswordField
+                  id="auth-password"
+                  label="Password"
+                  value={password}
+                  onChange={setPassword}
+                  autoComplete={mode === "LOGIN" ? "current-password" : "new-password"}
+                  showStrength={mode === "REGISTER"}
+                />
+                {mode === "REGISTER" && password === "" && <p className="mt-1.5 text-xs text-gray-500">{PASSWORD_HELP}</p>}
+                {mode === "LOGIN" && (
+                  <button type="button" onClick={() => switchTo("RESET_PASSWORD")} className={`${link} mt-2`}>
+                    Forgot password?
+                  </button>
+                )}
+              </div>
+            )}
+
+            {error && (
+              <p role="alert" className="text-sm text-red-600">
+                {error}
+              </p>
+            )}
+            {message && (
+              <p role={notice ? "alert" : "status"} className={`text-sm ${notice ? "text-amber-700" : "text-green-700"}`}>
+                {message}
+              </p>
+            )}
+
+            {showBox && (
+              <CaptchaBox
+                key={captchaDraw}
+                siteKey={wixClient.auth.captchaVisibleSiteKey}
+                onToken={setCaptchaToken}
+                onExpired={() => setCaptchaToken("")}
+                onFailed={() => setError("The robot check could not load. If you use an ad blocker, turn it off for this page, then try again.")}
+              />
+            )}
+
+            <button
+              type="submit"
+              disabled={isLoading || (showBox && !captchaToken)}
+              className="rounded-lg bg-brand-navy px-4 py-3 text-base font-semibold text-white transition-colors hover:bg-brand-gold hover:text-brand-navy focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold disabled:cursor-not-allowed disabled:bg-gray-200 disabled:text-gray-500"
+            >
+              {isLoading ? "Please wait..." : BUTTONS[mode]}
+            </button>
+
+            {mode === "EMAIL_VERIFICATION" && (
+              <button type="button" disabled={resendIn > 0 || isLoading} onClick={resendCode} className={`${link} self-start disabled:cursor-not-allowed disabled:opacity-60`}>
+                {resendIn > 0 ? `Send a new code in ${resendIn}s` : "Send a new code"}
+              </button>
+            )}
+
+            <div className="text-sm text-gray-600">
+              {mode === "LOGIN" && (
+                <>
+                  New here?{" "}
+                  <button type="button" onClick={() => switchTo("REGISTER")} className={link}>
+                    Create an account
+                  </button>
+                </>
+              )}
+              {mode === "REGISTER" && (
+                <>
+                  Have an account?{" "}
+                  <button type="button" onClick={() => switchTo("LOGIN")} className={link}>
+                    Log in
+                  </button>
+                </>
+              )}
+              {(mode === "RESET_PASSWORD" || mode === "EMAIL_VERIFICATION") && (
+                <button type="button" onClick={() => switchTo("LOGIN")} className={link}>
+                  Back to log in
+                </button>
+              )}
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default AuthForm;

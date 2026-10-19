@@ -71,6 +71,49 @@ describe("BottomTabBar", () => {
   });
 });
 
+describe("BottomTabBar premium look", () => {
+  const tabs = (path = "/", cat: string | null = null, counter = 0) =>
+    renderToStaticMarkup(<TabBarView pathname={path} cat={cat} counter={counter} />);
+
+  it("draws finer icons, thinner than the rest of the site, one of its own for each tab", () => {
+    const html = tabs();
+    const svgs = html.match(/<svg[^>]*>[\s\S]*?<\/svg>/g) ?? [];
+    expect(svgs).toHaveLength(4);
+    for (const svg of svgs) expect(svg).toContain('stroke-width="1.5"');
+    expect(new Set(svgs).size).toBe(4);
+  });
+
+  it("shows the labels in small spaced capitals", () => {
+    const label = tabs().match(/<span class="([^"]*)">Home<\/span>/)?.[1].split(" ") ?? [];
+    expect(label).toContain("uppercase");
+    expect(label.some((c) => c.startsWith("tracking-"))).toBe(true);
+    expect(label).toContain("text-[10px]");
+  });
+
+  it("marks the current tab with a short gold bar on top, a soft gold halo behind its icon and brand colour text", () => {
+    const html = tabs("/", null);
+    const current = html.match(/<a [^>]*aria-current="page"[^>]*>[\s\S]*?<\/a>/)?.[0] ?? "";
+    const bar = current.match(/<span aria-hidden="true" class="([^"]*)"/)?.[1] ?? "";
+    expect(bar).toContain("bg-brand-gold");
+    expect(bar).toContain("h-0.5");
+    expect(current).toMatch(/bg-brand-gold\/15/);
+    expect(current).toMatch(/text-brand-navy/);
+    const other = html.match(/<a [^>]*href="\/cart"[^>]*>[\s\S]*?<\/a>/)?.[0] ?? "";
+    expect(other).not.toMatch(/bg-brand-gold/);
+  });
+
+  it("is a clean plain bar: no blur, no shadow stack, a hairline on top", () => {
+    const nav = tabs().match(/<nav [^>]*>/)?.[0] ?? "";
+    expect(nav).toContain("border-t");
+    expect(nav).not.toMatch(/backdrop-blur|shadow/);
+  });
+
+  it("keeps every tab at least 56 px tall and keeps the cart count readable", () => {
+    expect(tabs()).toMatch(/min-h-14/);
+    expect(tabs("/", null, 3)).toContain('data-cart-count="3"');
+  });
+});
+
 describe("WhatsAppButton", () => {
   const html = () => renderToStaticMarkup(<WhatsAppButton />);
 

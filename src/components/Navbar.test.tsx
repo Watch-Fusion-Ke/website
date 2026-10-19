@@ -144,6 +144,23 @@ describe("Navbar on a phone", () => {
       expect(dark).toContain('alt=""');
     }
   });
+
+  it("names the home link on the link itself, so screen readers hear it in the dark theme where the lettered image is hidden", () => {
+    const html = renderToStaticMarkup(<Navbar />);
+    const desktopAt = html.indexOf('data-testid="desktop-header"');
+    for (const part of [html.slice(0, desktopAt), html.slice(desktopAt)]) {
+      const link = part.match(/<a [^>]*href="\/"[^>]*>(?=<span[^>]*><img)/)?.[0] ?? "";
+      expect(link).toContain('aria-label="Watch Fusion Kenya, home"');
+    }
+  });
+
+  it("loads whichever logo is shown straight away, without preloading the hidden one", () => {
+    const html = renderToStaticMarkup(<Navbar />);
+    const logos = html.match(/<img[^>]*%2Flogo(?:-on-light)?\.png[^>]*>/g) ?? [];
+    expect(logos).toHaveLength(4);
+    for (const logo of logos) expect(logo).toContain('loading="eager"');
+    expect(html).not.toMatch(/<link[^>]*rel="preload"[^>]*logo/);
+  });
 });
 
 describe("Navbar stays at the top while the page scrolls", () => {

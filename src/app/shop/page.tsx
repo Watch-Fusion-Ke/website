@@ -5,6 +5,12 @@ import { getPriceBounds } from "@/lib/storeProducts";
 import Link from "next/link";
 import { Suspense } from "react";
 
+export const metadata = {
+    title: "Shop watches",
+    description: "Browse men's and ladies' watches and gifts from Watch Fusion Kenya, with delivery across Nairobi and Kenya.",
+    alternates: { canonical: "/shop" },
+};
+
 // The store's own "All Products" category is the whole shop, which the first chip already is.
 const isAllProducts = (slug?: string) => slug === "all-products";
 

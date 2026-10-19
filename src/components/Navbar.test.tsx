@@ -1,4 +1,5 @@
 import { renderToStaticMarkup } from "react-dom/server";
+import { readFileSync } from "node:fs";
 import { describe, expect, it, vi } from "vitest";
 
 vi.mock("next/navigation", () => ({
@@ -139,8 +140,21 @@ describe("Navbar stays at the top while the page scrolls", () => {
     expect(outer).toContain("top-0");
   });
 
-  it("sits above the page and the bottom dock, but under the menu drawer, the cart popup and the zoomed photo", () => {
-    expect(outer).toContain("z-30");
+  it("makes room for itself when a keyboard user tabs to a link or box near the top of the screen", () => {
+    const css = readFileSync("src/app/globals.css", "utf8");
+    expect(css).toMatch(/html\s*\{[^}]*scroll-padding-top:\s*[\d.]+rem/);
+  });
+
+  it("sits above the bottom tab bar and the chat icon, so the open menu covers them, and under the zoomed photo", () => {
+    // The header makes its own layer, so the menu drawer inside it counts at the header's level, not its own.
+    const z = (file: string, pattern: RegExp) => Number(readFileSync(file, "utf8").match(pattern)?.[1]);
+    const dock = z("src/components/BottomTabBar.tsx", /\bz-(\d+)\b/);
+    const chat = z("src/components/WhatsAppButton.tsx", /z-\[(\d+)\]/);
+    const zoom = z("src/components/ProductImages.tsx", /z-\[(\d+)\]/);
+    const header = Number(outer.find((c) => /^z-\[\d+\]$/.test(c))?.match(/\d+/)?.[0]);
+    expect(header).toBeGreaterThan(dock);
+    expect(header).toBeGreaterThan(chat);
+    expect(header).toBeLessThan(zoom);
   });
 
   it("keeps its place in the page when the search row folds, so the content below never jumps", () => {

@@ -41,7 +41,7 @@ const Navbar = () => {
     <div
       ref={frame}
       style={reserve ? ({ '--reserve': `${reserve}px` } as React.CSSProperties) : undefined}
-      className='pointer-events-none sticky top-0 z-30 h-[var(--reserve,auto)] md:pointer-events-auto md:h-20'
+      className='pointer-events-none sticky top-0 z-[45] h-[var(--reserve,auto)] md:pointer-events-auto md:h-20'
     >
     <div
       ref={panel}

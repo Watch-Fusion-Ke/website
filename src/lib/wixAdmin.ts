@@ -4,6 +4,7 @@
 
 const TOKEN_URL = "https://www.wixapis.com/oauth2/token";
 const API_BASE = "https://www.wixapis.com";
+const REFUSED_FOR = 30_000; // how long a refusal from Wix is remembered
 const EARLY = 60_000; // ask for a new token a minute before the old one expires
 
 type Options = {
@@ -26,10 +27,13 @@ export const createAdminFetch = ({ clientId: rawId, clientSecret: rawSecret, fet
   const clientSecret = clean(rawSecret);
   let token: { value: string; expiresAt: number } | null = null;
   let pending: Promise<string> | null = null;
+  // A refusal is remembered briefly, so a wrong secret cannot make every request call Wix's token endpoint again.
+  let refused: { until: number; error: Error } | null = null;
 
   const getToken = async (): Promise<string> => {
     if (!clientId || !clientSecret) throw new Error("Wix admin access is not set up");
     if (token && now() < token.expiresAt - EARLY) return token.value;
+    if (refused && now() < refused.until) throw refused.error;
     pending ??= (async () => {
       try {
         const response = await fetchImpl(TOKEN_URL, {
@@ -41,7 +45,10 @@ export const createAdminFetch = ({ clientId: rawId, clientSecret: rawSecret, fet
         if (!response.ok) {
           // Wix names the reason ("invalid_client" means the id or secret is wrong). It never echoes the secret back.
           const reason = typeof json?.error === "string" ? ` ${json.error}`.slice(0, 60) : "";
-          throw new Error(`Wix admin token request failed (${response.status}${reason})`);
+          const failure = new Error(`Wix admin token request failed (${response.status}${reason})`);
+          // Only a refusal (wrong id or secret) is remembered. A Wix outage or a dropped connection is tried again at once.
+          if (response.status < 500) refused = { until: now() + REFUSED_FOR, error: failure };
+          throw failure;
         }
         if (!json?.access_token) throw new Error("Wix admin token request returned no token");
         token = { value: json.access_token, expiresAt: now() + Number(json.expires_in ?? 14400) * 1000 };

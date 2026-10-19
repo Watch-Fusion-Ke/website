@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { chooseDeliveryArea, clearDelivery, listDelivery, type DeliveryDeps } from "@/lib/deliveryService";
+import { chooseDeliveryArea, clearDelivery, listDelivery, withoutDetail, type DeliveryDeps } from "@/lib/deliveryService";
 import { areasFromRates, type DeliveryRate } from "@/lib/delivery";
 
 const rates: DeliveryRate[] = [
@@ -163,6 +163,20 @@ describe("chooseDeliveryArea", () => {
     expect((r.body as { detail?: string }).detail).toMatch(/400 invalid_client/);
   });
 
+  it("names the Wix status and error when Wix answers with a refusal instead of failing outright", async () => {
+    const deps = setup().deps;
+    deps.adminFetch = async () =>
+      new Response(JSON.stringify({ message: "secret body text", details: { applicationError: { code: "OWNED_CART_NOT_FOUND" } } }), { status: 404 });
+    const read = await chooseDeliveryArea(deps, gigiri.id);
+    expect(read.body).toMatchObject({ unavailable: true });
+    expect((read.body as { detail?: string }).detail).toBe("read cart 404 OWNED_CART_NOT_FOUND");
+
+    const refused = setup({ wixStatus: { "POST add-line-items": 403 } });
+    const add = await chooseDeliveryArea(refused.deps, gigiri.id);
+    expect((add.body as { detail?: string }).detail).toBe("add fee 403");
+    expect(JSON.stringify(add.body)).not.toContain("nope");
+  });
+
   it("gives no detail for a failure that is only the shopper's own", async () => {
     expect((await chooseDeliveryArea(setup().deps, "nope")).body).not.toHaveProperty("detail");
   });
@@ -197,5 +211,14 @@ describe("clearDelivery", () => {
     const { deps, calls } = setup();
     expect((await clearDelivery(deps)).status).toBe(200);
     expect(calls.some((c) => c.path.endsWith("/remove-line-items"))).toBe(false);
+  });
+});
+
+describe("withoutDetail", () => {
+  it("keeps the cause out of the answer on the live site and in it elsewhere", () => {
+    const body = { error: "We could not add the delivery fee.", unavailable: true, detail: "add fee 403" };
+    expect(withoutDetail(body, true)).toEqual({ error: "We could not add the delivery fee.", unavailable: true });
+    expect(withoutDetail(body, false)).toEqual(body);
+    expect(withoutDetail({ price: 300 }, true)).toEqual({ price: 300 });
   });
 });

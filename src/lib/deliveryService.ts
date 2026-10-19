@@ -15,6 +15,22 @@ export type Result<T = Record<string, unknown>> = { status: number; body: T };
 // The reason a call failed, for the response and the server log. It is our own message (a status and a Wix error name), never a secret.
 const detailOf = (err: unknown): string => (err instanceof Error ? err.message : String(err)).slice(0, 160);
 
+// What the shop's own call to Wix got back, in words: the step, Wix's status and its error name. Never Wix's message or body.
+const refusal = async (step: string, response: Response): Promise<string> => {
+  const json = await response.clone().json().catch(() => ({}));
+  const code = json?.details?.applicationError?.code;
+  const detail = `${step} ${response.status}${typeof code === "string" ? ` ${code.slice(0, 60)}` : ""}`;
+  console.error("Delivery fee: Wix refused:", detail);
+  return detail;
+};
+
+// The cause helps whoever sets the shop up, so it is left out of answers on the live site.
+export const withoutDetail = <T extends Record<string, unknown>>(body: T, production: boolean): Omit<T, "detail"> | T => {
+  if (!production || !("detail" in body)) return body;
+  const { detail: _detail, ...rest } = body;
+  return rest;
+};
+
 type CartLine = { id?: string; name?: { original?: string } };
 const lines = (cart: { lineItems?: CartLine[] } | undefined): CartLine[] => cart?.lineItems ?? [];
 const isDelivery = (line: CartLine) => (line.name?.original ?? "").startsWith(DELIVERY_PREFIX);
@@ -33,10 +49,12 @@ export const listDelivery = async (
   }
 };
 
-const readCart = async (deps: DeliveryDeps, cartId: string): Promise<CartLine[] | null> => {
+type CartRead = { lines: CartLine[] } | { failed: string };
+
+const readCart = async (deps: DeliveryDeps, cartId: string): Promise<CartRead> => {
   const response = await deps.adminFetch(`/ecom/v2/carts/${cartId}`, { method: "GET" });
-  if (!response.ok) return null;
-  return lines((await response.json()).cart);
+  if (!response.ok) return { failed: await refusal("read cart", response) };
+  return { lines: lines((await response.json()).cart) };
 };
 
 // Puts the chosen area's fee into the shopper's cart as one delivery line, replacing an earlier one.
@@ -59,9 +77,9 @@ export const chooseDeliveryArea = async (deps: DeliveryDeps, areaId: unknown): P
   if (!cartId) return { status: 409, body: { error: "Your cart is empty." } };
 
   try {
-    const before = await readCart(deps, cartId);
-    if (before === null) return { status: 502, body: { error: "We could not reach your cart.", unavailable: true } };
-    const oldIds = before.filter(isDelivery).map((l) => l.id).filter((id): id is string => Boolean(id));
+    const read = await readCart(deps, cartId);
+    if ("failed" in read) return { status: 502, body: { error: "We could not reach your cart.", unavailable: true, detail: read.failed } };
+    const oldIds = read.lines.filter(isDelivery).map((l) => l.id).filter((id): id is string => Boolean(id));
 
     const add = await deps.adminFetch(`/ecom/v2/carts/${cartId}/add-line-items`, {
       method: "POST",
@@ -76,7 +94,7 @@ export const chooseDeliveryArea = async (deps: DeliveryDeps, areaId: unknown): P
         ],
       }),
     });
-    if (!add.ok) return { status: 502, body: { error: "We could not add the delivery fee.", unavailable: true } };
+    if (!add.ok) return { status: 502, body: { error: "We could not add the delivery fee.", unavailable: true, detail: await refusal("add fee", add) } };
 
     // Keep exactly one delivery line: the one just added. Anything else, including a line from a request
     // that ran at the same moment, goes. If that fails the new line is taken back out too, so the cart never holds two fees.
@@ -100,7 +118,7 @@ export const chooseDeliveryArea = async (deps: DeliveryDeps, areaId: unknown): P
         const error = rolledBack
           ? "We could not replace the earlier delivery fee."
           : "We could not set the delivery fee. Please check your cart before paying.";
-        return { status: 502, body: { error, unavailable: true } };
+        return { status: 502, body: { error, unavailable: true, detail: await refusal("remove old fee", remove) } };
       }
     }
   } catch (err) {
@@ -117,14 +135,14 @@ export const clearDelivery = async (deps: DeliveryDeps): Promise<Result> => {
   const cartId = await deps.getCartId();
   if (!cartId) return { status: 200, body: {} };
   try {
-    const before = await readCart(deps, cartId);
-    const ids = (before ?? []).filter(isDelivery).map((l) => l.id).filter((id): id is string => Boolean(id));
+    const read = await readCart(deps, cartId);
+    const ids = ("lines" in read ? read.lines : []).filter(isDelivery).map((l) => l.id).filter((id): id is string => Boolean(id));
     if (ids.length === 0) return { status: 200, body: {} };
     const remove = await deps.adminFetch(`/ecom/v2/carts/${cartId}/remove-line-items`, {
       method: "POST",
       body: JSON.stringify({ lineItemIds: ids }),
     });
-    if (!remove.ok) return { status: 502, body: { error: "We could not remove the delivery fee." } };
+    if (!remove.ok) return { status: 502, body: { error: "We could not remove the delivery fee.", detail: await refusal("remove fee", remove) } };
   } catch (err) {
     const detail = detailOf(err);
     console.error("Delivery fee: could not remove the fee:", detail);

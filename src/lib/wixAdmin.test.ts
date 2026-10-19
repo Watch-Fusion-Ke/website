@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { createAdminFetch } from "@/lib/wixAdmin";
+import { adminConfigured, createAdminFetch } from "@/lib/wixAdmin";
 
 type Call = { url: string; init?: RequestInit };
 const setup = (opts: { secret?: string; clock?: { t: number } } = {}) => {
@@ -87,6 +87,26 @@ describe("createAdminFetch", () => {
     expect((error as Error).message).not.toContain("the-secret");
   });
 
+  it("does not ask Wix again for 30 seconds after a refusal, so a wrong secret cannot flood Wix", async () => {
+    const clock = { t: 1_000_000 };
+    let asked = 0;
+    const admin = createAdminFetch({
+      clientId: "client-id",
+      clientSecret: "wrong",
+      now: () => clock.t,
+      fetchImpl: async () => {
+        asked++;
+        return new Response(JSON.stringify({ error: "invalid_client" }), { status: 400 });
+      },
+    });
+    await expect(admin("/a", {})).rejects.toThrow(/invalid_client/);
+    await expect(admin("/b", {})).rejects.toThrow(/invalid_client/);
+    expect(asked).toBe(1);
+    clock.t += 31_000;
+    await expect(admin("/c", {})).rejects.toThrow(/invalid_client/);
+    expect(asked).toBe(2);
+  });
+
   it("says it is not set up when the secret is missing, without calling Wix", async () => {
     const { admin, calls } = setup({ secret: undefined });
     await expect(admin("/a", {})).rejects.toThrow(/not set up/i);
@@ -108,7 +128,7 @@ describe("createAdminFetch", () => {
     await admin("/a", {}).catch((e: Error) => expect(e.message).not.toContain("TOP-SECRET-VALUE"));
   });
 
-  it("tries again for a token after a failure instead of remembering the failure", async () => {
+  it("tries again at once after a Wix outage, since only a refusal is remembered", async () => {
     let n = 0;
     const admin = createAdminFetch({
       clientId: "id",
@@ -126,5 +146,31 @@ describe("createAdminFetch", () => {
     });
     await expect(admin("/a", {})).rejects.toThrow();
     await expect(admin("/a", {})).resolves.toBeInstanceOf(Response);
+  });
+});
+
+describe("adminConfigured", () => {
+  const keep = { id: process.env.NEXT_PUBLIC_WIX_CLIENT_ID, secret: process.env.WIX_CLIENT_SECRET };
+  const restore = () => {
+    for (const [name, value] of [["NEXT_PUBLIC_WIX_CLIENT_ID", keep.id], ["WIX_CLIENT_SECRET", keep.secret]] as const) {
+      if (value === undefined) delete process.env[name];
+      else process.env[name] = value;
+    }
+  };
+
+  it("is on when both values are there, even with spaces round them", () => {
+    process.env.NEXT_PUBLIC_WIX_CLIENT_ID = " id ";
+    process.env.WIX_CLIENT_SECRET = "secret\n";
+    expect(adminConfigured()).toBe(true);
+    restore();
+  });
+
+  it("is off when the secret is missing or only spaces", () => {
+    process.env.NEXT_PUBLIC_WIX_CLIENT_ID = "id";
+    process.env.WIX_CLIENT_SECRET = "  \n";
+    expect(adminConfigured()).toBe(false);
+    delete process.env.WIX_CLIENT_SECRET;
+    expect(adminConfigured()).toBe(false);
+    restore();
   });
 });

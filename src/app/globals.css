@@ -199,3 +199,13 @@ html {
     scroll-padding-top: 6.5rem;
   }
 }
+
+/* The category dropdowns on the home page fade in very quickly, and just appear for people who ask for less motion. */
+@keyframes menu-in {
+  from { opacity: 0; transform: translateY(-2px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.menu-in { animation: menu-in 90ms ease-out; }
+@media (prefers-reduced-motion: reduce) {
+  .menu-in { animation: none; }
+}

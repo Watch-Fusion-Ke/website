@@ -7,7 +7,7 @@ const CategoryList = async () => {
   try {
     const wixClient = await wixClientServer();
     const cats = await wixClient.collections.queryCollections().find();
-    const menu = buildMenu(cats.items.map((c) => ({ name: c.name ?? "", slug: c.slug ?? "" })));
+    const menu = buildMenu(cats.items.map((c) => ({ name: c.name ?? "", slug: c.slug ?? "", visible: c.visible })));
     return <CategoryRow menu={menu} />;
   } catch (e) {
     console.error("CategoryList: category list failed", e);

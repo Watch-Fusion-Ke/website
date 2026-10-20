@@ -1,4 +1,4 @@
-export type MenuCategory = { name: string; slug: string };
+export type MenuCategory = { name: string; slug: string; visible?: boolean | null };
 export type MenuGroup = { label: string; items: MenuCategory[] };
 export type SiteMenu = { primary: MenuCategory[]; groups: MenuGroup[]; seasonal: MenuCategory[] };
 
@@ -23,7 +23,7 @@ const ordered = (items: MenuCategory[], order: string[]) => {
 };
 
 export const buildMenu = (categories: MenuCategory[]): SiteMenu => {
-  const shown = categories.filter((c) => c.slug && c.name && !LEFT_OUT.has(c.slug));
+  const shown = categories.filter((c) => c.slug && c.name && c.visible !== false && !LEFT_OUT.has(c.slug));
   const take = (test: (c: MenuCategory) => boolean) => shown.filter(test);
 
   const main = ordered(take((c) => MAIN.includes(c.slug)), MAIN);

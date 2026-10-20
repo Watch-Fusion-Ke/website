@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { buildMenu, nextOpen } from "@/lib/siteMenu";
 
-const cat = (slug: string, name = slug) => ({ slug, name });
+const cat = (slug: string, name = slug, visible?: boolean) => ({ slug, name, visible });
 const today = [
   cat("ladies-watches", "Ladies Watches"),
   cat("all-products", "All Products"),
@@ -58,6 +58,12 @@ describe("the homepage category menu", () => {
 
   it("does not make up categories the store did not send, so a hidden one never shows", () => {
     expect(buildMenu([cat("gents-watches", "Gent's Watches")]).groups).toEqual([]);
+  });
+
+  it("skips a category the store marks as hidden, even if it is a known one", () => {
+    const menu = buildMenu([cat("gents-watches", "Gent's Watches"), cat("valentines-gifts", "Valentine's Gifts", false), cat("olevs-watches-kenya", "Olevs", false)]);
+    const everything = [...menu.primary, ...menu.groups.flatMap((g) => g.items), ...menu.seasonal].map((c) => c.slug);
+    expect(everything).toEqual(["gents-watches"]);
   });
 
   it("keeps the row short however many categories there are", () => {

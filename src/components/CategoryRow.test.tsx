@@ -44,6 +44,23 @@ describe("CategoryRow", () => {
     expect(link).toContain("bg-brand-gold");
   });
 
+  it("keeps the opened links inside the navigation landmark, so a screen reader finds them under it", () => {
+    expect(html.indexOf('hidden=""')).toBeGreaterThan(-1);
+    expect(html.lastIndexOf('hidden=""')).toBeLessThan(html.indexOf("</nav>"));
+  });
+
+  it("gives the plain-text links no white background class, which the dark theme would turn into a grey box behind each word", () => {
+    const link = html.match(/<a[^>]*href="\/shop\?cat=gents-watches"[^>]*>/)?.[0] ?? "";
+    expect(link).not.toMatch(/(^|\s|")bg-white(\s|")/);
+    expect(link).toContain("max-md:bg-[var(--surface)]");
+  });
+
+  it("makes the phone pills at least 44 px tall to tap", () => {
+    for (const tag of [html.match(/<a[^>]*href="\/shop\?cat=gents-watches"[^>]*>/)?.[0] ?? "", html.match(/<button[^>]*>/)?.[0] ?? ""]) {
+      expect(tag).toContain("min-h-11");
+    }
+  });
+
   it("renders nothing when there are no categories", () => {
     expect(renderToStaticMarkup(<CategoryRow menu={{ primary: [], groups: [], seasonal: [] }} />)).toBe("");
   });

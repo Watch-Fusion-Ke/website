@@ -5,13 +5,15 @@ import { useEffect, useId, useRef, useState } from "react";
 import { nextOpen, type SiteMenu } from "@/lib/siteMenu";
 
 // On a phone each entry is a pill in a strip that slides sideways; from a tablet up they are plain words with a gold underline on hover.
+// The pill background is the theme's surface colour, set only below the tablet width: a plain bg-white class would be turned into a
+// grey box behind each word by the dark theme's own bg-white rule, which beats the tablet override.
 const entry =
-  "flex-shrink-0 whitespace-nowrap rounded-full border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-700 transition-colors duration-200 hover:border-black hover:bg-black hover:text-white " +
-  "md:rounded-none md:border-0 md:bg-transparent md:px-0 md:py-0 md:text-xl md:leading-[25.5px] md:text-gray-800 md:underline-offset-4 md:decoration-2 md:decoration-brand-gold md:hover:bg-transparent md:hover:text-gray-800 md:hover:underline";
+  "inline-flex min-h-11 flex-shrink-0 items-center whitespace-nowrap rounded-full border border-gray-200 px-4 text-sm font-semibold text-gray-700 transition-colors duration-200 hover:border-black hover:bg-black hover:text-white max-md:bg-[var(--surface)] " +
+  "md:min-h-0 md:rounded-none md:border-0 md:px-0 md:py-1.5 md:text-xl md:leading-[25.5px] md:text-gray-800 md:underline-offset-4 md:decoration-2 md:decoration-brand-gold md:hover:bg-transparent md:hover:text-gray-800 md:hover:underline";
 const seasonalEntry =
-  "flex-shrink-0 whitespace-nowrap rounded-full bg-brand-gold px-4 py-2 text-sm font-semibold text-brand-navy transition-colors duration-200 hover:brightness-95 md:text-base";
+  "inline-flex min-h-11 flex-shrink-0 items-center whitespace-nowrap rounded-full bg-brand-gold px-4 text-sm font-semibold text-brand-navy transition-colors duration-200 hover:brightness-95 md:min-h-0 md:py-2 md:text-base";
 const subEntry =
-  "whitespace-nowrap rounded-full border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-700 transition-colors duration-200 hover:border-black hover:bg-black hover:text-white";
+  "inline-flex min-h-11 items-center whitespace-nowrap rounded-full border border-gray-200 bg-white px-4 text-sm font-semibold text-gray-700 transition-colors duration-200 hover:border-black hover:bg-black hover:text-white";
 
 const Chevron = ({ open }: { open: boolean }) => (
   <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className={`ml-1.5 inline-block transition-transform duration-200 motion-reduce:transition-none ${open ? "rotate-180" : ""}`}>
@@ -44,7 +46,8 @@ const CategoryRow = ({ menu }: { menu: SiteMenu }) => {
 
   return (
     <div ref={root} className="py-4 md:py-8">
-      <nav aria-label="Shop by category" className="relative">
+      <nav aria-label="Shop by category">
+        <div className="relative">
         <div className="flex gap-3 overflow-x-auto px-4 pr-10 scrollbar-hide md:items-center md:justify-center md:gap-12 md:pr-4 lg:gap-16">
           {menu.primary.map((c) => (
             <Link key={c.slug} href={`/shop?cat=${c.slug}`} className={entry}>
@@ -76,16 +79,17 @@ const CategoryRow = ({ menu }: { menu: SiteMenu }) => {
             <polyline points="9 18 15 12 9 6" />
           </svg>
         </div>
-      </nav>
-      {menu.groups.map((g, i) => (
-        <div key={g.label} id={`${id}-${i}`} hidden={open !== g.label} className="mt-3 flex flex-wrap justify-center gap-2 px-4">
-          {g.items.map((c) => (
-            <Link key={c.slug} href={`/shop?cat=${c.slug}`} className={subEntry}>
-              {c.name}
-            </Link>
-          ))}
         </div>
-      ))}
+        {menu.groups.map((g, i) => (
+          <div key={g.label} id={`${id}-${i}`} hidden={open !== g.label} className="mt-3 flex flex-wrap justify-center gap-2 px-4">
+            {g.items.map((c) => (
+              <Link key={c.slug} href={`/shop?cat=${c.slug}`} className={subEntry}>
+                {c.name}
+              </Link>
+            ))}
+          </div>
+        ))}
+      </nav>
     </div>
   );
 };

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildMenu, nextOpen } from "@/lib/siteMenu";
+import { buildMenu, clampLeft, nextOpen } from "@/lib/siteMenu";
 
 const cat = (slug: string, name = slug, visible?: boolean) => ({ slug, name, visible });
 const today = [
@@ -66,6 +66,34 @@ describe("the homepage category menu", () => {
     expect(everything).toEqual(["gents-watches"]);
   });
 
+  it("shows Gifts as the one gift entry when the Gifts page is visible, folding Customizable Gifts into it", () => {
+    const menu = buildMenu([...today, cat("gifts", "Gifts")]);
+    const row = menu.primary.map((c) => c.slug);
+    expect(row).toContain("gifts");
+    expect(row).not.toContain("customizable-gifts");
+    expect(menu.groups.find((g) => g.label === "Gifts")).toBeUndefined();
+  });
+
+  it("makes Gifts a menu that starts with All Gifts once there is more than one gift page", () => {
+    const menu = buildMenu([...today, cat("gifts", "Gifts"), cat("corporate-gifts", "Corporate Gifts")]);
+    const gifts = menu.groups.find((g) => g.label === "Gifts");
+    expect(gifts?.items.map((c) => c.slug)).toEqual(["gifts", "corporate-gifts", "customizable-gifts"]);
+    expect(gifts?.items[0].name).toBe("All Gifts");
+    expect(menu.primary.map((c) => c.slug)).not.toContain("gifts");
+  });
+
+  it("falls back to the gift pages themselves when the Gifts page is hidden", () => {
+    const menu = buildMenu([...today, cat("gifts", "Gifts", false)]);
+    expect(menu.primary.map((c) => c.slug)).toContain("customizable-gifts");
+    expect(menu.primary.map((c) => c.slug)).not.toContain("gifts");
+  });
+
+  it("never lists the Brands page itself, because the Brands menu is the entry for it", () => {
+    const menu = buildMenu([...today, cat("brands", "Brands")]);
+    const everything = [...menu.primary, ...menu.groups.flatMap((g) => g.items), ...menu.seasonal].map((c) => c.slug);
+    expect(everything).not.toContain("brands");
+  });
+
   it("keeps the row short however many categories there are", () => {
     const many = [
       ...today,
@@ -82,5 +110,19 @@ describe("opening a menu", () => {
     expect(nextOpen(null, "Brands")).toBe("Brands");
     expect(nextOpen("Brands", "Brands")).toBeNull();
     expect(nextOpen("Brands", "Gifts")).toBe("Gifts");
+  });
+});
+
+describe("placing a dropdown under its button", () => {
+  it("lines it up with the button's left edge", () => {
+    expect(clampLeft(300, 240, 1200)).toBe(300);
+  });
+
+  it("pulls it back in when it would run past the right edge", () => {
+    expect(clampLeft(1100, 240, 1200)).toBe(960);
+  });
+
+  it("never lets it start left of the page", () => {
+    expect(clampLeft(-20, 240, 1200)).toBe(0);
   });
 });

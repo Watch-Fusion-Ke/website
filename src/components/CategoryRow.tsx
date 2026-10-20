@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useId, useRef, useState } from "react";
-import { nextOpen, type SiteMenu } from "@/lib/siteMenu";
+import { clampLeft, nextOpen, type SiteMenu } from "@/lib/siteMenu";
 
 // On a phone each entry is a pill in a strip that slides sideways; from a tablet up they are plain words with a gold underline on hover.
 // The pill background is the theme's surface colour, set only below the tablet width: a plain bg-white class would be turned into a
@@ -12,8 +12,13 @@ const entry =
   "md:min-h-0 md:rounded-none md:border-0 md:px-0 md:py-1.5 md:text-xl md:leading-[25.5px] md:text-gray-800 md:underline-offset-4 md:decoration-2 md:decoration-brand-gold md:hover:bg-transparent md:hover:text-gray-800 md:hover:underline";
 const seasonalEntry =
   "inline-flex min-h-11 flex-shrink-0 items-center whitespace-nowrap rounded-full bg-brand-gold px-4 text-sm font-semibold text-brand-navy transition-colors duration-200 hover:brightness-95 md:min-h-0 md:py-2 md:text-base";
-const subEntry =
-  "inline-flex min-h-11 items-center whitespace-nowrap rounded-full border border-gray-200 bg-white px-4 text-sm font-semibold text-gray-700 transition-colors duration-200 hover:border-black hover:bg-black hover:text-white";
+// The floating box under a menu button. These classes are only on the box while it is open: a closed box carries no display class,
+// because a display class would override the hidden attribute and show the links before anyone clicked.
+const panel =
+  "menu-in absolute top-full z-30 mt-1 flex flex-col rounded-2xl border border-gray-200 bg-white p-2 shadow-xl dark:shadow-black/60 " +
+  "max-md:left-4 max-md:right-4 md:left-[var(--menu-left)] md:w-60";
+const panelLink =
+  "block rounded-xl px-4 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:bg-brand-gold/20 focus-visible:bg-brand-gold/20";
 
 const Chevron = ({ open }: { open: boolean }) => (
   <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className={`ml-1.5 inline-block transition-transform duration-200 motion-reduce:transition-none ${open ? "rotate-180" : ""}`}>
@@ -21,12 +26,25 @@ const Chevron = ({ open }: { open: boolean }) => (
   </svg>
 );
 
-// The categories above the banner: the main ones as links, the rest gathered into a few menus that open a second row of links
-// under the first. The links of a closed menu stay in the page, hidden, so they can still be found and followed.
+// The categories above the banner: the main ones as links, the rest gathered into a few menus that open as a floating dropdown
+// under their button. The links of a closed menu stay in the page, hidden, so they can still be found and followed.
 const CategoryRow = ({ menu }: { menu: SiteMenu }) => {
   const [open, setOpen] = useState<string | null>(null);
+  const [left, setLeft] = useState(0);
   const root = useRef<HTMLDivElement>(null);
   const id = useId();
+
+  const toggle = (label: string, button: HTMLElement) => {
+    const nav = root.current;
+    if (nav) setLeft(clampLeft(button.getBoundingClientRect().left - nav.getBoundingClientRect().left, 240, nav.getBoundingClientRect().width));
+    setOpen((cur) => nextOpen(cur, label));
+  };
+
+  // A menu that has just opened puts the keyboard on its first link, so Tab does not have to cross the rest of the row first.
+  useEffect(() => {
+    if (open === null) return;
+    root.current?.querySelector<HTMLElement>(`[data-menu="${CSS.escape(open)}"] a`)?.focus();
+  }, [open]);
 
   useEffect(() => {
     if (open === null) return;
@@ -46,7 +64,7 @@ const CategoryRow = ({ menu }: { menu: SiteMenu }) => {
 
   return (
     <div ref={root} className="py-4 md:py-8">
-      <nav aria-label="Shop by category">
+      <nav aria-label="Shop by category" className="relative" style={{ "--menu-left": `${left}px` } as React.CSSProperties}>
         <div className="relative">
         <div className="flex gap-3 overflow-x-auto px-4 pr-10 scrollbar-hide md:items-center md:justify-center md:gap-12 md:pr-4 lg:gap-16">
           {menu.primary.map((c) => (
@@ -60,7 +78,7 @@ const CategoryRow = ({ menu }: { menu: SiteMenu }) => {
               type="button"
               aria-expanded={open === g.label}
               aria-controls={`${id}-${i}`}
-              onClick={() => setOpen((cur) => nextOpen(cur, g.label))}
+              onClick={(e) => toggle(g.label, e.currentTarget)}
               className={entry}
             >
               {g.label}
@@ -81,12 +99,16 @@ const CategoryRow = ({ menu }: { menu: SiteMenu }) => {
         </div>
         </div>
         {menu.groups.map((g, i) => (
-          <div key={g.label} id={`${id}-${i}`} hidden={open !== g.label} className="mt-3 flex flex-wrap justify-center gap-2 px-4">
-            {g.items.map((c) => (
-              <Link key={c.slug} href={`/shop?cat=${c.slug}`} className={subEntry}>
-                {c.name}
-              </Link>
-            ))}
+          <div key={g.label} id={`${id}-${i}`} data-menu={g.label} hidden={open !== g.label} className={open === g.label ? panel : undefined}>
+            <ul aria-label={g.label}>
+              {g.items.map((c) => (
+                <li key={c.slug}>
+                  <Link href={`/shop?cat=${c.slug}`} className={panelLink} onClick={() => setOpen(null)}>
+                    {c.name}
+                  </Link>
+                </li>
+              ))}
+            </ul>
           </div>
         ))}
       </nav>

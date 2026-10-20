@@ -44,6 +44,20 @@ describe("CategoryRow", () => {
     expect(link).toContain("bg-brand-gold");
   });
 
+  it("really hides a closed menu: its box carries no display class that would override the hidden attribute", () => {
+    const panels = html.match(/<div[^>]*hidden=""[^>]*>/g) ?? [];
+    expect(panels).toHaveLength(2);
+    for (const panel of panels) {
+      const classes = panel.match(/class="([^"]*)"/)?.[1].split(" ") ?? [];
+      expect(classes.filter((c) => /^(flex|block|grid|inline|inline-flex|absolute)$/.test(c))).toEqual([]);
+    }
+  });
+
+  it("gives each menu a list of links with the menu's name, to open as a floating dropdown", () => {
+    expect(html).toMatch(/<ul[^>]*aria-label="Brands"/);
+    expect(html).toMatch(/<ul[^>]*aria-label="Gifts"/);
+  });
+
   it("keeps the opened links inside the navigation landmark, so a screen reader finds them under it", () => {
     expect(html.indexOf('hidden=""')).toBeGreaterThan(-1);
     expect(html.lastIndexOf('hidden=""')).toBeLessThan(html.indexOf("</nav>"));

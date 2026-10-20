@@ -32,10 +32,12 @@ const CategoryRow = ({ menu }: { menu: SiteMenu }) => {
   const [open, setOpen] = useState<string | null>(null);
   const [left, setLeft] = useState(0);
   const root = useRef<HTMLDivElement>(null);
+  const lastButton = useRef<HTMLElement | null>(null);
   const id = useId();
 
   const toggle = (label: string, button: HTMLElement) => {
     const nav = root.current;
+    lastButton.current = button;
     if (nav) setLeft(clampLeft(button.getBoundingClientRect().left - nav.getBoundingClientRect().left, 240, nav.getBoundingClientRect().width));
     setOpen((cur) => nextOpen(cur, label));
   };
@@ -48,15 +50,23 @@ const CategoryRow = ({ menu }: { menu: SiteMenu }) => {
 
   useEffect(() => {
     if (open === null) return;
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setOpen(null);
+    // Escape gives the keyboard back to the button that opened the menu, so focus is not left on a link that has just disappeared.
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== "Escape") return;
+      setOpen(null);
+      lastButton.current?.focus();
+    };
+    const onResize = () => setOpen(null); // the box was placed under its button, so a resized window would leave it misplaced
     const onPress = (e: PointerEvent) => {
       if (root.current && !root.current.contains(e.target as Node)) setOpen(null);
     };
     document.addEventListener("keydown", onKey);
     document.addEventListener("pointerdown", onPress);
+    window.addEventListener("resize", onResize);
     return () => {
       document.removeEventListener("keydown", onKey);
       document.removeEventListener("pointerdown", onPress);
+      window.removeEventListener("resize", onResize);
     };
   }, [open]);
 

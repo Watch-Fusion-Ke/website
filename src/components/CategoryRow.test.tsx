@@ -44,6 +44,18 @@ describe("CategoryRow", () => {
     expect(link).toContain("bg-brand-gold");
   });
 
+  it("keeps the dropdown light: a thin border and a small shadow, not a heavy one", () => {
+    const source = readFileSync("src/components/CategoryRow.tsx", "utf8");
+    expect(source).not.toMatch(/shadow-(xl|2xl)/);
+    expect(source).toMatch(/shadow-sm/);
+  });
+
+  it("opens a menu when the pointer rests on its button, and keeps it while the pointer is over the box", () => {
+    const source = readFileSync("src/components/CategoryRow.tsx", "utf8");
+    expect(source).toContain("onPointerEnter");
+    expect(source).toContain("onPointerLeave");
+  });
+
   it("really hides a closed menu: its box carries no display class that would override the hidden attribute", () => {
     const panels = html.match(/<div[^>]*hidden=""[^>]*>/g) ?? [];
     expect(panels).toHaveLength(2);

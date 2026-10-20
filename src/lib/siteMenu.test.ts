@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildMenu, clampLeft, nextOpen } from "@/lib/siteMenu";
+import { buildMenu, clampLeft, closed, hoverIn, hoverOut, press } from "@/lib/siteMenu";
 
 const cat = (slug: string, name = slug, visible?: boolean) => ({ slug, name, visible });
 const today = [
@@ -105,24 +105,49 @@ describe("the homepage category menu", () => {
   });
 });
 
-describe("opening a menu", () => {
-  it("opens the one pressed, closes it when pressed again, and swaps when another is pressed", () => {
-    expect(nextOpen(null, "Brands")).toBe("Brands");
-    expect(nextOpen("Brands", "Brands")).toBeNull();
-    expect(nextOpen("Brands", "Gifts")).toBe("Gifts");
+describe("opening a menu by hover and by click", () => {
+  it("opens a menu when the pointer rests on its button, without pinning it", () => {
+    expect(hoverIn(closed, "Brands")).toEqual({ open: "Brands", pinned: false });
+  });
+
+  it("closes a menu that was only hovered when the pointer leaves", () => {
+    expect(hoverOut(hoverIn(closed, "Brands"))).toEqual(closed);
+  });
+
+  it("pins a menu when its button is clicked, so leaving no longer closes it", () => {
+    const pinned = press(closed, "Brands");
+    expect(pinned).toEqual({ open: "Brands", pinned: true });
+    expect(hoverOut(pinned)).toEqual(pinned);
+  });
+
+  it("pins a menu that was open from hovering instead of closing it when the button is clicked", () => {
+    expect(press(hoverIn(closed, "Brands"), "Brands")).toEqual({ open: "Brands", pinned: true });
+  });
+
+  it("closes a pinned menu when its button is clicked again", () => {
+    expect(press(press(closed, "Brands"), "Brands")).toEqual(closed);
+  });
+
+  it("swaps to another menu when its button is hovered, and keeps the pin if there was one", () => {
+    expect(hoverIn(hoverIn(closed, "Brands"), "Gifts")).toEqual({ open: "Gifts", pinned: false });
+    expect(hoverIn(press(closed, "Brands"), "Gifts")).toEqual({ open: "Gifts", pinned: true });
+  });
+
+  it("opens and pins a different menu when its button is clicked while another is open", () => {
+    expect(press(press(closed, "Brands"), "Gifts")).toEqual({ open: "Gifts", pinned: true });
   });
 });
 
 describe("placing a dropdown under its button", () => {
   it("lines it up with the button's left edge", () => {
-    expect(clampLeft(300, 240, 1200)).toBe(300);
+    expect(clampLeft(300, 208, 1200)).toBe(300);
   });
 
   it("pulls it back in when it would run past the right edge", () => {
-    expect(clampLeft(1100, 240, 1200)).toBe(960);
+    expect(clampLeft(1100, 208, 1200)).toBe(992);
   });
 
   it("never lets it start left of the page", () => {
-    expect(clampLeft(-20, 240, 1200)).toBe(0);
+    expect(clampLeft(-20, 208, 1200)).toBe(0);
   });
 });

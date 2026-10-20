@@ -48,8 +48,13 @@ export const buildMenu = (categories: MenuCategory[]): SiteMenu => {
   return { primary, groups, seasonal };
 };
 
-// Pressing a menu opens it, pressing it again closes it, and pressing another one swaps to that one.
-export const nextOpen = (current: string | null, pressed: string) => (current === pressed ? null : pressed);
+// Which menu is open, and whether a click has pinned it. A menu opened by hovering closes when the pointer leaves; once clicked it stays
+// until it is clicked again, another is opened, or the shopper presses somewhere else.
+export type MenuState = { open: string | null; pinned: boolean };
+export const closed: MenuState = { open: null, pinned: false };
+export const hoverIn = (state: MenuState, label: string): MenuState => ({ open: label, pinned: state.pinned && state.open !== null });
+export const hoverOut = (state: MenuState): MenuState => (state.pinned ? state : closed);
+export const press = (state: MenuState, label: string): MenuState => (state.open === label && state.pinned ? closed : { open: label, pinned: true });
 
 // Where a dropdown starts so it lines up with its button but never runs past the right edge or off the left edge.
 export const clampLeft = (buttonLeft: number, panelWidth: number, containerWidth: number) =>

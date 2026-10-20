@@ -24,6 +24,9 @@ const panelLink =
 const LEAVE_GRACE_MS = 120;
 const PANEL_WIDTH = 208;
 
+// The store's All Products page is the whole shop, which is the plain shop address.
+const shopHref = (slug: string) => (slug === "all-products" ? "/shop" : `/shop?cat=${slug}`);
+
 const Chevron = ({ open }: { open: boolean }) => (
   <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className={`ml-1.5 inline-block transition-transform duration-200 motion-reduce:transition-none ${open ? "rotate-180" : ""}`}>
     <polyline points="6 9 12 15 18 9" />
@@ -110,7 +113,7 @@ const CategoryRow = ({ menu }: { menu: SiteMenu }) => {
         <div className="relative">
         <div className="flex gap-3 overflow-x-auto px-4 pr-10 scrollbar-hide md:items-center md:justify-center md:gap-12 md:pr-4 lg:gap-16">
           {menu.primary.map((c) => (
-            <Link key={c.slug} href={`/shop?cat=${c.slug}`} className={entry}>
+            <Link key={c.slug} href={shopHref(c.slug)} className={entry}>
               {c.name}
             </Link>
           ))}

@@ -5,7 +5,8 @@ export type SiteMenu = { primary: MenuCategory[]; groups: MenuGroup[]; seasonal:
 // The shop's category row would otherwise print every Wix category side by side. These lists decide which ones stay in the row,
 // which go into a menu, and where. A category Wix does not send (a hidden one) never appears, and a category listed here that the
 // store has not made visible simply is not there.
-const LEFT_OUT = new Set(["all-products", "featured", "brands", "gifts"]); // the Shop link, the Customer Favourites section and the two menus below already cover these
+const LEFT_OUT = new Set(["all-products", "featured", "brands", "gifts"]); // each is handled on its own below, or is already covered by a home page section or a menu
+const ALL_PRODUCTS = "all-products";
 const GIFTS_PAGE = "gifts";
 const MAIN = ["gents-watches", "ladies-watches"];
 const BRAND_ORDER = ["casio-watches-kenya", "naviforce-watches-kenya"];
@@ -27,7 +28,9 @@ export const buildMenu = (categories: MenuCategory[]): SiteMenu => {
   const shown = categories.filter((c) => c.slug && c.name && c.visible !== false && !LEFT_OUT.has(c.slug));
   const take = (test: (c: MenuCategory) => boolean) => shown.filter(test);
 
-  const main = ordered(take((c) => MAIN.includes(c.slug)), MAIN);
+  // The whole shop leads the row whenever the store shows its All Products page.
+  const everything = categories.filter((c) => c.slug === ALL_PRODUCTS && c.name && c.visible !== false);
+  const main = [...everything, ...ordered(take((c) => MAIN.includes(c.slug)), MAIN)];
   const seasonal = ordered(take((c) => SEASONAL.includes(c.slug)), SEASONAL);
   const brands = ordered(take((c) => isBrand(c.slug)), BRAND_ORDER);
   const gifts = ordered(take((c) => GIFT_ORDER.includes(c.slug)), GIFT_ORDER);

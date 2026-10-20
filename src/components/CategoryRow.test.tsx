@@ -5,7 +5,7 @@ import CategoryRow from "@/components/CategoryRow";
 import type { SiteMenu } from "@/lib/siteMenu";
 
 const menu: SiteMenu = {
-  primary: [{ name: "Gent's Watches", slug: "gents-watches" }, { name: "Ladies Watches", slug: "ladies-watches" }],
+  primary: [{ name: "All Products", slug: "all-products" }, { name: "Gent's Watches", slug: "gents-watches" }, { name: "Ladies Watches", slug: "ladies-watches" }],
   groups: [
     { label: "Brands", items: [{ name: "Casio", slug: "casio-watches-kenya" }, { name: "Naviforce", slug: "naviforce-watches-kenya" }] },
     { label: "Gifts", items: [{ name: "Corporate Gifts", slug: "corporate-gifts" }, { name: "Customizable Gifts", slug: "customizable-gifts" }] },
@@ -22,6 +22,12 @@ describe("CategoryRow", () => {
   it("links the main categories straight to the shop", () => {
     expect(html).toContain('href="/shop?cat=gents-watches"');
     expect(html).toContain('href="/shop?cat=ladies-watches"');
+  });
+
+  it("sends All Products to the plain shop page, first in the row", () => {
+    expect(html).toContain('href="/shop"');
+    expect(html).not.toContain("cat=all-products");
+    expect(html.indexOf('href="/shop"')).toBeLessThan(html.indexOf('href="/shop?cat=gents-watches"'));
   });
 
   it("shows each menu as a button that starts closed and says what it controls", () => {

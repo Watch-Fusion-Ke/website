@@ -13,14 +13,18 @@ const today = [
 ];
 
 describe("the homepage category menu", () => {
-  it("puts Gent's and Ladies first, in that order, whatever order the store sends them", () => {
-    expect(buildMenu(today).primary.map((c) => c.slug).slice(0, 2)).toEqual(["gents-watches", "ladies-watches"]);
+  it("puts All Products first, then Gent's and Ladies, whatever order the store sends them", () => {
+    expect(buildMenu(today).primary.map((c) => c.slug).slice(0, 3)).toEqual(["all-products", "gents-watches", "ladies-watches"]);
   });
 
-  it("leaves All Products and Editor's Picks out of the row, because the Shop link and the home page sections already cover them", () => {
+  it("leaves All Products out only when the store does not show it", () => {
+    expect(buildMenu(today.filter((c) => c.slug !== "all-products")).primary.map((c) => c.slug)).not.toContain("all-products");
+    expect(buildMenu(today.map((c) => (c.slug === "all-products" ? { ...c, visible: false } : c))).primary.map((c) => c.slug)).not.toContain("all-products");
+  });
+
+  it("leaves Editor's Picks out of the row, because the Customer Favourites section on the home page already is that", () => {
     const menu = buildMenu(today);
     const everything = [...menu.primary, ...menu.groups.flatMap((g) => g.items), ...menu.seasonal].map((c) => c.slug);
-    expect(everything).not.toContain("all-products");
     expect(everything).not.toContain("featured");
   });
 

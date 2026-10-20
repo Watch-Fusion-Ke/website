@@ -45,7 +45,6 @@ const CategoryRow = ({ menu }: { menu: SiteMenu }) => {
 
   const place = (button: HTMLElement) => {
     const nav = root.current;
-    lastButton.current = button;
     if (nav) setLeft(clampLeft(button.getBoundingClientRect().left - nav.getBoundingClientRect().left, PANEL_WIDTH, nav.getBoundingClientRect().width));
   };
   const cancelLeave = () => {
@@ -60,6 +59,7 @@ const CategoryRow = ({ menu }: { menu: SiteMenu }) => {
   // A menu opened from the keyboard puts the keyboard on its first link, so Tab does not have to cross the rest of the row first.
   useEffect(() => {
     if (open === null || !byKeyboard.current) return;
+    byKeyboard.current = false;
     root.current?.querySelector<HTMLElement>(`[data-menu="${CSS.escape(open)}"] a`)?.focus();
   }, [open]);
 
@@ -71,7 +71,14 @@ const CategoryRow = ({ menu }: { menu: SiteMenu }) => {
       setState(closed);
       lastButton.current?.focus();
     };
-    const onResize = () => setState(closed); // the box was placed under its button, so a resized window would leave it misplaced
+    // The box was placed under its button, so a window that changes width would leave it misplaced. A phone's address bar sliding in and
+    // out changes only the height, which must not close a menu someone is reading.
+    let width = window.innerWidth;
+    const onResize = () => {
+      if (window.innerWidth === width) return;
+      width = window.innerWidth;
+      setState(closed);
+    };
     const onPress = (e: PointerEvent) => {
       if (root.current && !root.current.contains(e.target as Node)) setState(closed);
     };
@@ -116,11 +123,13 @@ const CategoryRow = ({ menu }: { menu: SiteMenu }) => {
               onPointerEnter={(e) => {
                 if (!hovering(e)) return;
                 cancelLeave();
+                byKeyboard.current = false;
                 place(e.currentTarget);
                 setState((s) => hoverIn(s, g.label));
               }}
               onClick={(e) => {
                 byKeyboard.current = e.detail === 0;
+                lastButton.current = e.currentTarget;
                 place(e.currentTarget);
                 setState((s) => press(s, g.label));
               }}

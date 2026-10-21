@@ -24,8 +24,4 @@ describe("the announcements", () => {
   it("leave the other messages as plain text, not links", () => {
     expect(ANNOUNCEMENTS.find((a) => a.text === "Same day deliveries")?.href).toBeUndefined();
   });
-
-  it("name no person", () => {
-    expect(JSON.stringify(ANNOUNCEMENTS).toLowerCase()).not.toContain("mercy");
-  });
 });

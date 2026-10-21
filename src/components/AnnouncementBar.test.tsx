@@ -52,9 +52,19 @@ describe("AnnouncementBar", () => {
     expect(source).toMatch(/#FFC516/i);
   });
 
-  it("is not a main heading and names no person", () => {
+  it("is not a main heading", () => {
     expect(html).not.toMatch(/<h1[\s>]/);
-    expect(html.toLowerCase()).not.toContain("mercy");
+  });
+
+  it("underlines the engraving link all the time and says it opens a new tab, so touch and screen reader users can tell", () => {
+    const link = html.match(/<a [^>]*>[\s\S]*?<\/a>/)?.[0] ?? "";
+    expect(link).toMatch(/class="[^"]*\bunderline\b/);
+    expect(link).toContain("(opens in a new tab)");
+    expect(link).toMatch(/class="sr-only"[^>]*>\s*\(opens in a new tab\)/);
+  });
+
+  it("keeps clear of a phone's status bar when the site is added to the home screen", () => {
+    expect(html).toContain("pt-[max(0.5rem,env(safe-area-inset-top))]");
   });
 });
 

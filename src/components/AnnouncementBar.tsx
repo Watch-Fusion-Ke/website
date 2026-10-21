@@ -15,9 +15,10 @@ const Run = ({ readable }: { readable: boolean }) => (
             target="_blank"
             rel="noopener noreferrer"
             tabIndex={readable ? undefined : -1}
-            className="underline-offset-4 decoration-[#FFC516] decoration-2 transition-colors hover:underline focus-visible:underline focus-visible:outline-none"
+            className="underline decoration-[#FFC516] decoration-2 underline-offset-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FFC516]"
           >
             {a.text}
+            <span className="sr-only"> (opens in a new tab)</span>
           </a>
         ) : (
           <span>{a.text}</span>
@@ -40,7 +41,7 @@ const AnnouncementBar = () => {
     <div
       role="region"
       aria-label="Shop announcements"
-      className="marquee overflow-hidden bg-[#1E2235] py-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-white md:text-xs"
+      className="marquee overflow-hidden bg-[#1E2235] pb-2 pt-[max(0.5rem,env(safe-area-inset-top))] text-[11px] font-semibold uppercase tracking-[0.14em] text-white md:text-xs"
     >
       <div className="marquee-track flex w-max" style={{ animationDuration: `${seconds}s` }}>
         <div className="flex flex-shrink-0">{group(true)}</div>

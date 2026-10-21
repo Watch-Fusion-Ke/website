@@ -1,4 +1,4 @@
-// Delivery areas and their fees. The shop's own table of rates (kept in Wix, where Mercy edits it) has one
+// Delivery areas and their fees. The shop's own table of rates (kept in Wix, where the shop edits it) has one
 // row per rate: "UNEP / GIGIRI / VILLAGE MARKET", a road and a price. The picker turns each place on a row
 // into its own searchable area.
 

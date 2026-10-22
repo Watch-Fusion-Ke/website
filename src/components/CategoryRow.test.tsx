@@ -160,6 +160,15 @@ describe("CategoryRow", () => {
     expect(renamed).toContain("Presents</em>");
   });
 
+  it("puts the Christmas link first on a phone, where the row slides and its end is out of sight, and leaves it in its own place from a tablet up", () => {
+    const tag = html.match(/<a[^>]*href="\/shop\?cat=christmas-gift-packages"[^>]*>/)?.[0] ?? "";
+    const classes = tag.match(/class="([^"]*)"/)?.[1].split(" ") ?? [];
+    expect(classes).toContain("max-md:order-first");
+    expect(classes.filter((c) => /^(md|lg):order-/.test(c))).toEqual([]);
+    const other = html.match(/<a[^>]*href="\/shop\?cat=customizable-gifts"[^>]*>/)?.[0] ?? "";
+    expect(other).not.toContain("order-first");
+  });
+
   it("hides every decoration from screen readers, so the link is read as just its name", () => {
     const christmas = html.match(/<a[^>]*href="\/shop\?cat=christmas-gift-packages"[\s\S]*?<\/a>/)?.[0] ?? "";
     const svgs = christmas.match(/<svg[^>]*>/g) ?? [];

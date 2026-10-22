@@ -2,19 +2,19 @@ import { describe, expect, it } from "vitest";
 import { TABS, activeTab } from "@/lib/tabs";
 
 describe("TABS", () => {
-  it("are Home, Gents, Ladies and Cart, in that order", () => {
-    expect(TABS.map((t) => t.label)).toEqual(["Home", "Gents", "Ladies", "Cart"]);
+  it("are Home, Shop, Search and Cart, in that order", () => {
+    expect(TABS.map((t) => t.label)).toEqual(["Home", "Shop", "Search", "Cart"]);
   });
 
-  it("send Gents and Ladies to the store's two watch categories", () => {
+  it("opens the full catalogue from Shop and uses a button for Search", () => {
     const href = (key: string) => TABS.find((t) => t.key === key)?.href;
-    expect(href("gents")).toBe("/shop?cat=gents-watches");
-    expect(href("ladies")).toBe("/shop?cat=ladies-watches");
+    expect(href("shop")).toBe("/shop");
+    expect(href("search")).toBeUndefined();
     expect(href("cart")).toBe("/cart");
   });
 
   it("keep every tab inside the site, so no tab opens WhatsApp", () => {
-    expect(TABS.every((t) => t.href.startsWith("/"))).toBe(true);
+    expect(TABS.every((t) => !t.href || t.href.startsWith("/"))).toBe(true);
   });
 });
 
@@ -24,15 +24,15 @@ describe("activeTab", () => {
     expect(activeTab("/contact", null)).toBeNull();
   });
 
-  it("marks Gents and Ladies on their category pages of the shop", () => {
-    expect(activeTab("/shop", "gents-watches")).toBe("gents");
-    expect(activeTab("/shop", "ladies-watches")).toBe("ladies");
-    expect(activeTab("/list", "gents-watches")).toBeNull(); // the old address only redirects
+  it("marks Shop on the full catalogue and its category pages", () => {
+    expect(activeTab("/shop", null)).toBe("shop");
+    expect(activeTab("/shop", "")).toBe("shop");
+    expect(activeTab("/list", null)).toBeNull();
   });
 
-  it("marks nothing on other categories or on the whole shop", () => {
-    expect(activeTab("/list", "naviforce-watches-kenya")).toBeNull();
-    expect(activeTab("/shop", null)).toBeNull();
+  it("marks Search on search results", () => {
+    expect(activeTab("/shop", "MEGIR")).toBe("search");
+    expect(activeTab("/shop", "  ")).toBe("shop");
   });
 
   it("marks Cart on the cart page", () => {

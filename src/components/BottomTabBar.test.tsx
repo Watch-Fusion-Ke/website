@@ -1,10 +1,11 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const nav = vi.hoisted(() => ({ pathname: "/", cat: null as string | null }));
+const nav = vi.hoisted(() => ({ pathname: "/", name: null as string | null }));
 vi.mock("next/navigation", () => ({
   usePathname: () => nav.pathname,
-  useSearchParams: () => new URLSearchParams(nav.cat ? { cat: nav.cat } : {}),
+  useSearchParams: () => new URLSearchParams(nav.name ? { name: nav.name } : {}),
+  useRouter: () => ({ push: () => {} }),
 }));
 
 import BottomTabBar, { TabBarView } from "@/components/BottomTabBar";
@@ -14,17 +15,17 @@ const render = () => renderToStaticMarkup(<BottomTabBar />);
 
 beforeEach(() => {
   nav.pathname = "/";
-  nav.cat = null;
+  nav.name = null;
 });
 
 describe("BottomTabBar", () => {
-  it("shows the four tabs in order, as links", () => {
+  it("shows Home, Shop, Search and Cart in order", () => {
     const html = render();
-    const order = ["Home", "Gents", "Ladies", "Cart"].map((l) => html.indexOf(`>${l}<`));
+    const order = ["Home", "Shop", "Search", "Cart"].map((l) => html.indexOf(`>${l}<`));
     expect(order.every((i) => i > -1)).toBe(true);
     expect([...order].sort((a, b) => a - b)).toEqual(order);
-    expect(html).toContain('href="/shop?cat=gents-watches"');
-    expect(html).toContain('href="/shop?cat=ladies-watches"');
+    expect(html).toContain('href="/shop"');
+    expect(html).toContain('aria-expanded="false"');
     expect(html).toContain('href="/cart"');
   });
 
@@ -42,11 +43,23 @@ describe("BottomTabBar", () => {
 
   it("marks the current page for screen readers", () => {
     nav.pathname = "/shop";
-    nav.cat = "ladies-watches";
     const html = render();
     expect(html.match(/aria-current="page"/g)).toHaveLength(1);
-    const ladiesTag = html.match(/<a [^>]*href="\/shop\?cat=ladies-watches"[^>]*>/)?.[0] ?? "";
-    expect(ladiesTag).toContain('aria-current="page"');
+    const shopTag = html.match(/<a [^>]*href="\/shop"[^>]*>/)?.[0] ?? "";
+    expect(shopTag).toContain('aria-current="page"');
+  });
+
+  it("marks Search on search results and shows its field above the dock when opened", () => {
+    const results = renderToStaticMarkup(<TabBarView pathname="/shop" name="NAVIFORCE" counter={0} />);
+    expect(results.match(/aria-current="page"/g)).toHaveLength(1);
+    expect(results).not.toContain('role="search"');
+    const open = renderToStaticMarkup(<TabBarView pathname="/shop" name={null} counter={0} searchOpen />);
+    expect(open).toContain('role="search"');
+    expect(open).toContain('name="name"');
+    expect(open).toContain('aria-expanded="true"');
+    expect(open).toContain('placeholder="e.g. MEGIR or NAVIFORCE"');
+    expect(open.indexOf('role="search"')).toBeLessThan(open.indexOf('<nav aria-label="Main"'));
+    expect(open.match(/^<div class="([^"]*)"/)?.[1]).toContain("z-40");
   });
 
   it("marks nothing on a page that has no tab", () => {
@@ -55,10 +68,10 @@ describe("BottomTabBar", () => {
   });
 
   it("shows the number of items in the cart, and nothing when it is empty", () => {
-    const empty = renderToStaticMarkup(<TabBarView pathname="/" cat={null} counter={0} />);
+    const empty = renderToStaticMarkup(<TabBarView pathname="/" name={null} counter={0} />);
     expect(empty).not.toContain("data-cart-count");
     expect(empty).not.toContain('aria-label="Cart');
-    const full = renderToStaticMarkup(<TabBarView pathname="/" cat={null} counter={3} />);
+    const full = renderToStaticMarkup(<TabBarView pathname="/" name={null} counter={3} />);
     expect(full).toContain('data-cart-count="3"');
     expect(full).toContain('aria-label="Cart, 3 items"');
   });
@@ -72,8 +85,8 @@ describe("BottomTabBar", () => {
 });
 
 describe("BottomTabBar look", () => {
-  const tabs = (path = "/", cat: string | null = null, counter = 0) =>
-    renderToStaticMarkup(<TabBarView pathname={path} cat={cat} counter={counter} />);
+  const tabs = (path = "/", name: string | null = null, counter = 0) =>
+    renderToStaticMarkup(<TabBarView pathname={path} name={name} counter={counter} />);
 
   it("draws finer icons, thinner than the rest of the site, one of its own for each tab", () => {
     const html = tabs();

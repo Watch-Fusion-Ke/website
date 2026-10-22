@@ -1,39 +1,36 @@
-
 "use client";
 
 import Image from "next/image";
-import { useRouter } from "next/navigation";
+import { OPEN_SEARCH_EVENT } from "@/lib/productSearch";
 
+// The search box in the header does not search in place: it opens the full search page, which has the results as you type.
+// It opens on a click, Enter or Space and never on focus alone, because closing the page puts focus back here.
 const SearchBar = () => {
-
-  const router = useRouter();
-
-  const handleSearch = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    const formData = new FormData(e.currentTarget);
-    const name = formData.get("name") as string;
-
-    if (name) {
-      router.push(`/shop?name=${encodeURIComponent(name)}`)
-    }
-  };
+  const open = () => window.dispatchEvent(new Event(OPEN_SEARCH_EVENT));
 
   return (
-    <form
-      className="flex items-center justify-between gap-3 bg-gray-100 px-4 py-2.5 rounded-lg flex-1"
-      onSubmit={handleSearch}
-    >
+    <div className="flex items-center justify-between gap-3 bg-gray-100 px-4 py-2.5 rounded-lg flex-1">
       <input
         type="text"
         name="name"
+        readOnly
         placeholder="Search watches"
         aria-label="Search watches"
-        className="flex-1 bg-transparent outline-none"
+        aria-haspopup="dialog"
+        autoComplete="off"
+        onClick={open}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            open();
+          }
+        }}
+        className="flex-1 cursor-text bg-transparent outline-none"
       />
-      <button className="cursor-pointer" aria-label="Search">
+      <button type="button" className="cursor-pointer" aria-label="Search" aria-haspopup="dialog" onClick={open}>
         <Image src="/search.png" alt="" width={16} height={16} className="dark:invert" />
       </button>
-    </form>
+    </div>
   );
 };
 

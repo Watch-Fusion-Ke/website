@@ -5,6 +5,7 @@ import "./globals.css";
 import { SITE_URL } from "@/lib/site";
 import AnnouncementBar from "@/components/AnnouncementBar";
 import Navbar from "@/components/Navbar";
+import SearchOverlay from "@/components/SearchOverlay";
 import Footer from "@/components/Footer";
 import WhatsAppButton from "@/components/WhatsAppButton";
 import BottomTabBar from "@/components/BottomTabBar";
@@ -107,6 +108,7 @@ export default function RootLayout({
         <WixClientContextProvider>
           <AnnouncementBar />
           <Navbar />
+          <SearchOverlay />
           {children}
           <Footer />
           <WhatsAppButton />

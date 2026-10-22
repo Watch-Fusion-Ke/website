@@ -112,7 +112,7 @@ const CategoryRow = ({ menu }: { menu: SiteMenu }) => {
         }}
       >
         <div className="relative">
-        <div className="flex gap-1.5 overflow-x-auto px-4 pr-6 scrollbar-hide md:items-center md:justify-center md:gap-12 md:pr-4 lg:gap-16">
+        <div className="flex gap-1.5 overflow-x-auto px-4 pr-8 scrollbar-hide md:items-center md:justify-center md:gap-12 md:pr-4 lg:gap-16">
           {menu.row.map((e) => {
             if (e.kind === "link") {
               const c = e.category;

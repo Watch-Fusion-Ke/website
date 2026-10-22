@@ -116,7 +116,7 @@ describe("CategoryRow", () => {
     }
     const row = html.match(/<div class="([^"]*overflow-x-auto[^"]*)"/)?.[1].split(" ") ?? [];
     expect(row).toContain("gap-1.5");
-    expect(row).toContain("pr-6");
+    expect(row).toContain("pr-8");
   });
 
   it("renders nothing when there are no categories", () => {

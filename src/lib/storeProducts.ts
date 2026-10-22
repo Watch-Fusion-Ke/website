@@ -103,8 +103,7 @@ export const buildSearchBody = (params: ProductListParams): SearchBody => {
     });
   }
 
-  const name = asText(params.name)?.trim();
-  if (name) conditions.push({ name: { $startsWith: name } });
+  // The name is matched in listProducts, not by Wix: Wix can only match the start of a name, which would miss "MTP" in "Casio MTP-B146D".
 
   const typeKey = asText(params.type)?.toLowerCase() ?? "";
   if (has(PRODUCT_TYPES, typeKey)) {
@@ -134,6 +133,17 @@ export const buildSearchBody = (params: ProductListParams): SearchBody => {
   }
 
   return body;
+};
+
+// Lower-case words made of letters and digits only, so "MTP-B146D" and "mtp b146d" are the same to a search.
+const nameWords = (text: string): string[] => text.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim().split(" ").filter(Boolean);
+
+// A product fits a search when every word typed appears somewhere in its name, in any order.
+export const matchesName = (name: string, query: string): boolean => {
+  const typed = nameWords(query);
+  if (typed.length === 0) return true;
+  const hay = nameWords(name).join(" ");
+  return typed.every((word) => hay.indexOf(word) !== -1);
 };
 
 type WixProduct = {
@@ -233,7 +243,9 @@ export const listProducts = async (
     throw new Error("Wix product search returned an unexpected response");
   }
   const found: WixProduct[] = json.products;
-  const all = params.onSale ? found.filter((product) => saleInfo(product).discountPercent !== null) : found;
+  const typedName = asText(params.name)?.trim();
+  const named = typedName ? found.filter((product) => matchesName(product.name, typedName)) : found;
+  const all = params.onSale ? named.filter((product) => saleInfo(product).discountPercent !== null) : named;
   const start = page * limit;
   return {
     items: all.slice(start, start + limit).map(toCard),

@@ -4,6 +4,7 @@ import {
   getPriceBounds,
   buildSearchBody,
   listProducts,
+  matchesName,
   type FetchLike,
 } from "@/lib/storeProducts";
 
@@ -90,9 +91,10 @@ describe("buildSearchBody", () => {
     ]);
   });
 
-  it("maps name and product type", () => {
+  it("maps the product type, and leaves the name to be matched in the shop's own code", () => {
     const { filter } = buildSearchBody({ name: "Navi", type: "digital" }).search;
-    expect(filter?.$and).toContainEqual({ name: { $startsWith: "Navi" } });
+    expect(JSON.stringify(filter)).not.toContain("$startsWith");
+    expect(JSON.stringify(filter)).not.toContain("Navi");
     expect(filter?.$and).toContainEqual({ productType: { $eq: "DIGITAL" } });
   });
 
@@ -122,7 +124,6 @@ describe("buildSearchBody", () => {
       type: ["physical", "digital"],
       min: ["1000", "2000"],
     }).search;
-    expect(filter?.$and).toContainEqual({ name: { $startsWith: "Navi" } });
     expect(filter?.$and).toContainEqual({ productType: { $eq: "PHYSICAL" } });
     expect(filter?.$and).toContainEqual({ "actualPriceRange.minValue.amount": { $gte: "1000" } });
     expect(buildSearchBody({ sort: ["asc price", "desc name"] }).search.sort).toHaveLength(1);
@@ -141,7 +142,39 @@ describe("buildSearchBody", () => {
   });
 });
 
+describe("matching a product name to what a shopper typed", () => {
+  it("finds the name anywhere in the product's name, whatever the case", () => {
+    expect(matchesName("Casio Vintage A159WA-N1DF", "casio")).toBe(true);
+    expect(matchesName("Casio Vintage A159WA-N1DF", "VINTAGE")).toBe(true);
+  });
+
+  it("finds a model number typed in part, with or without the dashes", () => {
+    expect(matchesName("Casio MTP-B146D-1AV", "b146")).toBe(true);
+    expect(matchesName("Casio MTP-B146D-1AV", "mtp-b146")).toBe(true);
+    expect(matchesName("Casio MTP-B146D-1AV", "mtp b146d")).toBe(true);
+  });
+
+  it("needs every word, in any order", () => {
+    expect(matchesName("Naviforce 9282 Gold Chronograph", "gold naviforce")).toBe(true);
+    expect(matchesName("Naviforce 9282 Gold Chronograph", "gold curren")).toBe(false);
+  });
+
+  it("matches everything when nothing useful was typed, and nothing when the name does not fit", () => {
+    expect(matchesName("Anything", "")).toBe(true);
+    expect(matchesName("Anything", "  - ")).toBe(true);
+    expect(matchesName("Casio", "naviforce")).toBe(false);
+  });
+});
+
 describe("listProducts", () => {
+  it("keeps only the products whose name fits the search, and pages through those", async () => {
+    const products = [1, 2, 3, 4, 5].map((n) => wixProduct(n, { name: n % 2 ? `Casio Vintage ${n}` : `Naviforce ${n}` }));
+    const page = await listProducts(fakeFetch(products).fetchLike, { name: "casio", limit: 2 });
+    expect(page.items.map((i) => i.name)).toEqual(["Casio Vintage 1", "Casio Vintage 3"]);
+    expect(page.hasNext).toBe(true);
+    expect((await listProducts(fakeFetch(products).fetchLike, { name: "casio", limit: 2, page: "1" })).items.map((i) => i.name)).toEqual(["Casio Vintage 5"]);
+  });
+
   it("posts one search to the V3 products endpoint", async () => {
     const { fetchLike, calls } = fakeFetch([wixProduct(1)]);
     await listProducts(fetchLike, { categoryId: CATEGORY });

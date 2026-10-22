@@ -7,13 +7,13 @@ import type { SiteMenu } from "@/lib/siteMenu";
 const link = (name: string, slug: string, seasonal?: boolean) => ({ kind: "link" as const, category: { name, slug }, seasonal });
 const menu: SiteMenu = {
   row: [
-    link("All Products", "all-products"),
-    link("Gent's Watches", "gents-watches"),
-    link("Ladies Watches", "ladies-watches"),
     { kind: "menu", group: { label: "Watch Brands", items: [{ name: "Casio", slug: "casio-watches-kenya" }, { name: "Naviforce", slug: "naviforce-watches-kenya" }] } },
     link("Customizable Gifts", "customizable-gifts"),
     link("Valentine's Gifts", "valentines-gifts", true),
+    link("Gent's Watches", "gents-watches"),
+    link("Ladies Watches", "ladies-watches"),
     { kind: "menu", group: { label: "More", items: [{ name: "Corporate Gifts", slug: "corporate-gifts" }, { name: "Birthday Gifts", slug: "birthday-gifts" }] } },
+    link("All Products", "all-products"),
   ],
 };
 const html = renderToStaticMarkup(<CategoryRow menu={menu} />);
@@ -28,10 +28,10 @@ describe("CategoryRow", () => {
     expect(html).toContain('href="/shop?cat=ladies-watches"');
   });
 
-  it("sends All Products to the plain shop page, first in the row", () => {
+  it("sends All Products to the plain shop page, wherever the menu puts it", () => {
     expect(html).toContain('href="/shop"');
     expect(html).not.toContain("cat=all-products");
-    expect(html.indexOf('href="/shop"')).toBeLessThan(html.indexOf('href="/shop?cat=gents-watches"'));
+    expect(html.indexOf('href="/shop"')).toBeGreaterThan(html.indexOf('href="/shop?cat=ladies-watches"'));
   });
 
   it("shows each menu as a button that starts closed and says what it controls", () => {
@@ -51,10 +51,10 @@ describe("CategoryRow", () => {
 
   it("keeps the row in the order the menu gives, with a menu button between the links either side of it", () => {
     const at = (needle: string) => html.indexOf(needle);
-    expect(at('href="/shop?cat=ladies-watches"')).toBeLessThan(at("Watch Brands"));
-    expect(at("Watch Brands")).toBeLessThan(at('href="/shop?cat=customizable-gifts"'));
-    expect(at('href="/shop?cat=customizable-gifts"')).toBeLessThan(at('href="/shop?cat=valentines-gifts"'));
-    expect(at('href="/shop?cat=valentines-gifts"')).toBeLessThan(html.indexOf(">More<"));
+    const order = ["Watch Brands", 'href="/shop?cat=customizable-gifts"', 'href="/shop?cat=valentines-gifts"', 'href="/shop?cat=gents-watches"', 'href="/shop?cat=ladies-watches"', ">More<", 'href="/shop"'];
+    const places = order.map(at);
+    expect(places.every((p) => p > -1)).toBe(true);
+    expect(places).toEqual([...places].sort((x, y) => x - y));
   });
 
   it("shows a seasonal page as a gold highlighted link", () => {

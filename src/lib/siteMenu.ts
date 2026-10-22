@@ -5,8 +5,8 @@ export type RowEntry = { kind: "link"; category: MenuCategory; seasonal?: boolea
 export type SiteMenu = { row: RowEntry[] };
 
 // The shop's category row would otherwise print every Wix category side by side. These lists decide which ones stay in the row,
-// which go into a menu, and where. The row reads: All Products, Gent's, Ladies, Watch Brands, Customizable Gifts, the seasonal pages,
-// then the other gift pages. A category Wix does not send (a hidden one) never appears, and a category listed here that the store has
+// which go into a menu, and where. The row reads: Watch Brands, Customizable Gifts, the seasonal pages, Gent's, Ladies, the other gift
+// pages, then All Products last. A category Wix does not send (a hidden one) never appears, and a category listed here that the store has
 // not made visible simply is not there.
 const LEFT_OUT = new Set(["all-products", "featured", "brands", "gifts"]); // each is handled on its own below, or is already covered by a home page section
 const ALL_PRODUCTS = "all-products";
@@ -37,9 +37,9 @@ export const buildMenu = (categories: MenuCategory[]): SiteMenu => {
   const take = (test: (c: MenuCategory) => boolean) => shown.filter(test);
   const link = (c: MenuCategory, seasonal?: boolean): RowEntry => ({ kind: "link", category: c, seasonal });
 
-  // The whole shop leads the row whenever the store shows its All Products page.
+  // The whole shop closes the row whenever the store shows its All Products page.
   const everything = categories.filter((c) => c.slug === ALL_PRODUCTS && c.name && c.visible !== false);
-  const main = [...everything, ...ordered(take((c) => MAIN.includes(c.slug)), MAIN)];
+  const main = ordered(take((c) => MAIN.includes(c.slug)), MAIN);
   // The menu takes its name from the store's Watch Brands category, so renaming it in Wix renames the menu.
   const brandsLabel = categories.find((c) => c.slug === BRANDS_PAGE && c.name && c.visible !== false)?.name ?? "Brands";
   const brands = ordered(take((c) => isBrand(c.slug)), BRAND_ORDER);
@@ -49,11 +49,12 @@ export const buildMenu = (categories: MenuCategory[]): SiteMenu => {
 
   return {
     row: [
-      ...main.map((c) => link(c)),
       ...menuOrLink(brandsLabel, brands),
       ...giftEntry.map((c) => link(c)),
       ...seasonal.map((c) => link(c, true)),
+      ...main.map((c) => link(c)),
       ...menuOrLink("More", rest),
+      ...everything.map((c) => link(c)),
     ],
   };
 };

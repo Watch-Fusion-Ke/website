@@ -20,8 +20,8 @@ const slugs = (menu: SiteMenu) => menu.row.flatMap((e) => (e.kind === "menu" ? e
 const menuOf = (menu: SiteMenu, label: string) => menu.row.flatMap((e) => (e.kind === "menu" && e.group.label === label ? [e.group] : []))[0];
 
 describe("the homepage category menu", () => {
-  it("reads in the order the shop asked for: All Products, Gent's, Ladies, Watch Brands, Customizable Gifts, Christmas Gifts", () => {
-    expect(names(buildMenu(today))).toEqual(["All Products", "Gent's Watches", "Ladies Watches", "[Watch Brands]", "Customizable Gifts", "Christmas Gifts"]);
+  it("reads in the order the shop asked for: Watch Brands, Customizable Gifts, Christmas Gifts, then the rest, All Products last", () => {
+    expect(names(buildMenu(today))).toEqual(["[Watch Brands]", "Customizable Gifts", "Christmas Gifts", "Gent's Watches", "Ladies Watches", "All Products"]);
   });
 
   it("keeps that order whatever order the store sends the categories in", () => {
@@ -65,24 +65,24 @@ describe("the homepage category menu", () => {
     expect(names(menu)).toContain("Customizable Gifts");
   });
 
-  it("marks seasonal pages, so they can be shown highlighted, and puts them right after Customizable Gifts", () => {
+  it("marks seasonal pages, so they can be shown highlighted, and puts them right after Customizable Gifts, ahead of the watches", () => {
     const menu = buildMenu([...today, cat("valentines-gifts", "Valentine's Gifts")]);
     expect(menu.row.filter((e) => e.kind === "link" && e.seasonal).map((e) => (e.kind === "link" ? e.category.slug : ""))).toEqual(["christmas-gift-packages", "valentines-gifts"]);
-    expect(names(menu).slice(4)).toEqual(["Customizable Gifts", "Christmas Gifts", "Valentine's Gifts"]);
+    expect(names(menu).slice(0, 4)).toEqual(["[Watch Brands]", "Customizable Gifts", "Christmas Gifts", "Valentine's Gifts"]);
   });
 
   it("lists seasonal pages only when the store shows them", () => {
     expect(names(buildMenu(today.filter((c) => c.slug !== "christmas-gift-packages")))).not.toContain("Christmas Gifts");
   });
 
-  it("lets the other gift pages follow, after the seasonal ones, in a More menu", () => {
+  it("lets the other gift pages follow the watches, in a More menu just before All Products", () => {
     const menu = buildMenu([...today, cat("gift-packages", "Gift Packages"), cat("corporate-gifts", "Corporate Gifts"), cat("birthday-gifts", "Birthday Gifts")]);
-    expect(names(menu).slice(-2)).toEqual(["Christmas Gifts", "[More]"]);
+    expect(names(menu).slice(-3)).toEqual(["Ladies Watches", "[More]", "All Products"]);
     expect(menuOf(menu, "More")?.items.map((c) => c.slug)).toEqual(["gift-packages", "birthday-gifts", "corporate-gifts"]);
   });
 
-  it("shows a lone other gift page as itself at the end of the row", () => {
-    expect(names(buildMenu([...today, cat("gift-packages", "Gift Packages")])).slice(-1)).toEqual(["Gift Packages"]);
+  it("shows a lone other gift page as itself, just before All Products", () => {
+    expect(names(buildMenu([...today, cat("gift-packages", "Gift Packages")])).slice(-2)).toEqual(["Gift Packages", "All Products"]);
   });
 
   it("keeps a category it does not know about, under More, so nothing disappears from the shop", () => {

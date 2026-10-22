@@ -109,17 +109,12 @@ describe("CategoryRow", () => {
     expect(renderToStaticMarkup(<CategoryRow menu={{ row: [] }} />)).toBe("");
   });
 
-  it("uses the site font and no main heading", () => {
+  it("uses the site font, no main heading, and a fade at the right end of the phone strip in both themes", () => {
     const source = readFileSync("src/components/CategoryRow.tsx", "utf8");
     expect(source).not.toMatch(/fontFamily|Futura/);
     expect(source).not.toMatch(/<h1[\s>]/);
-  });
-
-  it("wraps onto a second line on a phone, so every entry can be seen without sliding the row sideways", () => {
-    const row = html.match(/<div class="([^"]*flex-wrap[^"]*)"/)?.[1].split(" ") ?? [];
-    expect(row).toContain("flex-wrap");
-    expect(row).toContain("justify-center");
-    expect(row).not.toContain("overflow-x-auto");
-    expect(html).not.toContain("bg-gradient-to-l");
+    expect(source).toMatch(/from-white/);
+    expect(source).toMatch(/dark:from-\[#0a0a0a\]/i);
+    expect(source).toMatch(/dark:via-\[#0a0a0a\]/i);
   });
 });

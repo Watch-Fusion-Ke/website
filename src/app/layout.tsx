@@ -3,6 +3,7 @@ import { Suspense } from "react";
 import { Cormorant_Garamond, Jost } from "next/font/google";
 import "./globals.css";
 import { SITE_URL } from "@/lib/site";
+import AnnouncementBar from "@/components/AnnouncementBar";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import WhatsAppButton from "@/components/WhatsAppButton";
@@ -104,6 +105,7 @@ export default function RootLayout({
       </head>
       <body className={`${jost.variable} ${cormorant.variable} font-sans antialiased pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)] pb-[calc(5.5rem_+_env(safe-area-inset-bottom))] md:pb-0`}>
         <WixClientContextProvider>
+          <AnnouncementBar />
           <Navbar />
           {children}
           <Footer />

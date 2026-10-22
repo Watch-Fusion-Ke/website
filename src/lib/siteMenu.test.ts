@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildMenu, clampLeft, closed, hoverIn, hoverOut, press } from "@/lib/siteMenu";
+import { buildMenu, clampLeft, closed, hoverIn, hoverOut, press, type SiteMenu } from "@/lib/siteMenu";
 
 const cat = (slug: string, name = slug, visible?: boolean) => ({ slug, name, visible });
 const today = [
@@ -10,102 +10,106 @@ const today = [
   cat("casio-watches-kenya", "Casio"),
   cat("featured", "Editor's Picks"),
   cat("customizable-gifts", "Customizable Gifts"),
+  cat("christmas-gift-packages", "Christmas Gifts"),
+  cat("brands", "Watch Brands"),
 ];
 
+// The row as a shopper reads it: a plain entry is its name, a menu is its label in brackets.
+const names = (menu: SiteMenu) => menu.row.map((e) => (e.kind === "menu" ? `[${e.group.label}]` : e.category.name));
+const slugs = (menu: SiteMenu) => menu.row.flatMap((e) => (e.kind === "menu" ? e.group.items : [e.category]).map((c) => c.slug));
+const menuOf = (menu: SiteMenu, label: string) => menu.row.flatMap((e) => (e.kind === "menu" && e.group.label === label ? [e.group] : []))[0];
+
 describe("the homepage category menu", () => {
-  it("puts All Products first, then Gent's and Ladies, whatever order the store sends them", () => {
-    expect(buildMenu(today).primary.map((c) => c.slug).slice(0, 3)).toEqual(["all-products", "gents-watches", "ladies-watches"]);
+  it("reads in the order the shop asked for: Watch Brands, Customizable Gifts, Christmas Gifts, then the rest, All Products last", () => {
+    expect(names(buildMenu(today))).toEqual(["[Watch Brands]", "Customizable Gifts", "Christmas Gifts", "Gent's Watches", "Ladies Watches", "All Products"]);
+  });
+
+  it("keeps that order whatever order the store sends the categories in", () => {
+    expect(names(buildMenu([...today].reverse()))).toEqual(names(buildMenu(today)));
   });
 
   it("leaves All Products out only when the store does not show it", () => {
-    expect(buildMenu(today.filter((c) => c.slug !== "all-products")).primary.map((c) => c.slug)).not.toContain("all-products");
-    expect(buildMenu(today.map((c) => (c.slug === "all-products" ? { ...c, visible: false } : c))).primary.map((c) => c.slug)).not.toContain("all-products");
+    expect(slugs(buildMenu(today.filter((c) => c.slug !== "all-products")))).not.toContain("all-products");
+    expect(slugs(buildMenu(today.map((c) => (c.slug === "all-products" ? { ...c, visible: false } : c))))).not.toContain("all-products");
   });
 
   it("leaves Editor's Picks out of the row, because the Customer Favourites section on the home page already is that", () => {
-    const menu = buildMenu(today);
-    const everything = [...menu.primary, ...menu.groups.flatMap((g) => g.items), ...menu.seasonal].map((c) => c.slug);
-    expect(everything).not.toContain("featured");
+    expect(slugs(buildMenu(today))).not.toContain("featured");
   });
 
-  it("gathers the brands under one Brands menu, Casio before Naviforce", () => {
-    const brands = buildMenu(today).groups.find((g) => g.label === "Brands");
-    expect(brands?.items.map((c) => c.slug)).toEqual(["casio-watches-kenya", "naviforce-watches-kenya"]);
+  it("gathers the brands under one menu named after the store's Watch Brands category, Casio before Naviforce", () => {
+    expect(menuOf(buildMenu(today), "Watch Brands")?.items.map((c) => c.slug)).toEqual(["casio-watches-kenya", "naviforce-watches-kenya"]);
   });
 
-  it("puts any new brand category into Brands without a code change", () => {
-    const menu = buildMenu([...today, cat("olevs-watches-kenya", "Olevs")]);
-    expect(menu.groups.find((g) => g.label === "Brands")?.items.map((c) => c.slug)).toContain("olevs-watches-kenya");
+  it("calls the menu Brands when the store has no Watch Brands category to take the name from", () => {
+    expect(names(buildMenu(today.filter((c) => c.slug !== "brands")))).toContain("[Brands]");
+  });
+
+  it("puts any new brand category into the brands menu without a code change", () => {
+    expect(menuOf(buildMenu([...today, cat("olevs-watches-kenya", "Olevs")]), "Watch Brands")?.items.map((c) => c.slug)).toContain("olevs-watches-kenya");
+  });
+
+  it("never lists the Watch Brands page itself, because the menu is the entry for it", () => {
+    expect(slugs(buildMenu(today))).not.toContain("brands");
   });
 
   it("shows a menu with a single category as that category itself, not as a menu with one entry", () => {
+    const menu = buildMenu(today.filter((c) => c.slug !== "naviforce-watches-kenya"));
+    expect(menuOf(menu, "Watch Brands")).toBeUndefined();
+    expect(names(menu)).toContain("Casio");
+  });
+
+  it("shows Customizable Gifts as a link of its own, not inside a Gifts menu", () => {
     const menu = buildMenu(today);
-    expect(menu.groups.find((g) => g.label === "Gifts")).toBeUndefined();
-    expect(menu.primary.map((c) => c.slug)).toContain("customizable-gifts");
+    expect(menuOf(menu, "Gifts")).toBeUndefined();
+    expect(names(menu)).toContain("Customizable Gifts");
   });
 
-  it("makes a Gifts menu once there are two gift categories", () => {
-    const menu = buildMenu([...today, cat("corporate-gifts", "Corporate Gifts")]);
-    expect(menu.groups.find((g) => g.label === "Gifts")?.items.map((c) => c.slug)).toEqual(["corporate-gifts", "customizable-gifts"]);
-  });
-
-  it("lists the seasonal pages last and only when the store shows them", () => {
-    expect(buildMenu(today).seasonal).toEqual([]);
+  it("marks seasonal pages, so they can be shown highlighted, and puts them right after Customizable Gifts, ahead of the watches", () => {
     const menu = buildMenu([...today, cat("valentines-gifts", "Valentine's Gifts")]);
-    expect(menu.seasonal.map((c) => c.slug)).toEqual(["valentines-gifts"]);
+    expect(menu.row.filter((e) => e.kind === "link" && e.seasonal).map((e) => (e.kind === "link" ? e.category.slug : ""))).toEqual(["christmas-gift-packages", "valentines-gifts"]);
+    expect(names(menu).slice(0, 4)).toEqual(["[Watch Brands]", "Customizable Gifts", "Christmas Gifts", "Valentine's Gifts"]);
+  });
+
+  it("lists seasonal pages only when the store shows them", () => {
+    expect(names(buildMenu(today.filter((c) => c.slug !== "christmas-gift-packages")))).not.toContain("Christmas Gifts");
+  });
+
+  it("lets the other gift pages follow the watches, in a More menu just before All Products", () => {
+    const menu = buildMenu([...today, cat("gift-packages", "Gift Packages"), cat("corporate-gifts", "Corporate Gifts"), cat("birthday-gifts", "Birthday Gifts")]);
+    expect(names(menu).slice(-3)).toEqual(["Ladies Watches", "[More]", "All Products"]);
+    expect(menuOf(menu, "More")?.items.map((c) => c.slug)).toEqual(["gift-packages", "birthday-gifts", "corporate-gifts"]);
+  });
+
+  it("shows a lone other gift page as itself, just before All Products", () => {
+    expect(names(buildMenu([...today, cat("gift-packages", "Gift Packages")])).slice(-2)).toEqual(["Gift Packages", "All Products"]);
   });
 
   it("keeps a category it does not know about, under More, so nothing disappears from the shop", () => {
-    const menu = buildMenu([...today, cat("watch-straps", "Watch Straps"), cat("watch-boxes", "Watch Boxes")]);
-    expect(menu.groups.find((g) => g.label === "More")?.items.map((c) => c.slug)).toEqual(["watch-straps", "watch-boxes"]);
+    const menu = buildMenu([...today, cat("gift-packages", "Gift Packages"), cat("watch-straps", "Watch Straps")]);
+    expect(menuOf(menu, "More")?.items.map((c) => c.slug)).toEqual(["gift-packages", "watch-straps"]);
   });
 
   it("does not make up categories the store did not send, so a hidden one never shows", () => {
-    expect(buildMenu([cat("gents-watches", "Gent's Watches")]).groups).toEqual([]);
+    expect(names(buildMenu([cat("gents-watches", "Gent's Watches")]))).toEqual(["Gent's Watches"]);
   });
 
   it("skips a category the store marks as hidden, even if it is a known one", () => {
-    const menu = buildMenu([cat("gents-watches", "Gent's Watches"), cat("valentines-gifts", "Valentine's Gifts", false), cat("olevs-watches-kenya", "Olevs", false)]);
-    const everything = [...menu.primary, ...menu.groups.flatMap((g) => g.items), ...menu.seasonal].map((c) => c.slug);
-    expect(everything).toEqual(["gents-watches"]);
+    const menu = buildMenu([cat("gents-watches", "Gent's Watches"), cat("valentines-gifts", "Valentine's Gifts", false), cat("olevs-watches-kenya", "Olevs", false), cat("brands", "Watch Brands", false)]);
+    expect(slugs(menu)).toEqual(["gents-watches"]);
   });
 
-  it("shows Gifts as the one gift entry when the Gifts page is visible, folding Customizable Gifts into it", () => {
-    const menu = buildMenu([...today, cat("gifts", "Gifts")]);
-    const row = menu.primary.map((c) => c.slug);
-    expect(row).toContain("gifts");
-    expect(row).not.toContain("customizable-gifts");
-    expect(menu.groups.find((g) => g.label === "Gifts")).toBeUndefined();
-  });
-
-  it("makes Gifts a menu that starts with All Gifts once there is more than one gift page", () => {
-    const menu = buildMenu([...today, cat("gifts", "Gifts"), cat("corporate-gifts", "Corporate Gifts")]);
-    const gifts = menu.groups.find((g) => g.label === "Gifts");
-    expect(gifts?.items.map((c) => c.slug)).toEqual(["gifts", "corporate-gifts", "customizable-gifts"]);
-    expect(gifts?.items[0].name).toBe("All Gifts");
-    expect(menu.primary.map((c) => c.slug)).not.toContain("gifts");
-  });
-
-  it("falls back to the gift pages themselves when the Gifts page is hidden", () => {
-    const menu = buildMenu([...today, cat("gifts", "Gifts", false)]);
-    expect(menu.primary.map((c) => c.slug)).toContain("customizable-gifts");
-    expect(menu.primary.map((c) => c.slug)).not.toContain("gifts");
-  });
-
-  it("never lists the Brands page itself, because the Brands menu is the entry for it", () => {
-    const menu = buildMenu([...today, cat("brands", "Brands")]);
-    const everything = [...menu.primary, ...menu.groups.flatMap((g) => g.items), ...menu.seasonal].map((c) => c.slug);
-    expect(everything).not.toContain("brands");
+  it("ignores a Gifts page, because Customizable Gifts is the gift entry the shop chose", () => {
+    expect(slugs(buildMenu([...today, cat("gifts", "Gifts")]))).not.toContain("gifts");
   });
 
   it("keeps the row short however many categories there are", () => {
     const many = [
       ...today,
       ...["curren", "poedagar", "crrju", "olevs", "hannah-martin", "reward"].map((b) => cat(`${b}-watches-kenya`, b)),
-      cat("gift-packages"), cat("birthday-gifts"), cat("corporate-gifts"),
+      cat("gift-packages"), cat("birthday-gifts"), cat("corporate-gifts"), cat("valentines-gifts"),
     ];
-    const menu = buildMenu(many);
-    expect(menu.primary.length + menu.groups.length + menu.seasonal.length).toBeLessThanOrEqual(5);
+    expect(buildMenu(many).row.length).toBeLessThanOrEqual(8);
   });
 });
 

@@ -91,6 +91,12 @@ describe("the search page", () => {
     expect(readFileSync("src/components/SearchOverlay.tsx", "utf8")).toMatch(/onClick=\{onNavigate\}/);
   });
 
+  it("gives the magnifier button a full-size tap area", () => {
+    const button = view().match(/<button[^>]*aria-label="Search"[^>]*>/)?.[0] ?? "";
+    expect(button).toMatch(/min-h-11/);
+    expect(button).toMatch(/min-w-11/);
+  });
+
   it("is a form, so Enter or the search button takes the shopper to the shop's results", () => {
     expect(view()).toMatch(/<form/);
     expect(view()).toMatch(/aria-label="Search"/);
@@ -105,6 +111,10 @@ describe("how the search page behaves", () => {
     expect(source).toContain('"Tab"');
     expect(source).toMatch(/overflow\s*=\s*"hidden"/);
     expect(source).toMatch(/\.focus\(\)/);
+  });
+
+  it("does not pull focus back to the header's search box when the shopper has gone to another page", () => {
+    expect(source).toContain("skipRestore");
   });
 
   it("waits a moment after typing and drops an answer that is out of date", () => {

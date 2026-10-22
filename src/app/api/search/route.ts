@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { wixClientServer } from "@/lib/wixClientServer";
 import { listProducts } from "@/lib/storeProducts";
+import { cachedFetch } from "@/lib/catalogueCache";
 import { SUGGESTION_LIMIT, canSearch, cleanQuery, toSuggestion, type SearchReply } from "@/lib/productSearch";
 
 export const dynamic = "force-dynamic";
@@ -32,7 +33,7 @@ export async function GET(request: Request) {
 
   try {
     const wixClient = await wixClientServer();
-    const page = await listProducts((url, init) => wixClient.fetchWithAuth(url, init), { name: q, limit: SUGGESTION_LIMIT });
+    const page = await listProducts(cachedFetch((url, init) => wixClient.fetchWithAuth(url, init)), { name: q, limit: SUGGESTION_LIMIT });
     const reply: SearchReply = { items: page.items.map(toSuggestion), hasMore: page.hasNext };
     return NextResponse.json(reply, { headers: HEADERS });
   } catch (e) {

@@ -79,7 +79,7 @@ export const SearchOverlayView = ({
             }}
             className="flex min-h-11 flex-1 items-center gap-3 rounded-lg bg-gray-100 px-4"
           >
-            <button type="submit" aria-label="Search" className="flex-shrink-0">
+            <button type="submit" aria-label="Search" className="-ml-3 inline-flex min-h-11 min-w-11 flex-shrink-0 items-center justify-center">
               <Image src="/search.png" alt="" width={16} height={16} className="dark:invert" />
             </button>
             <input
@@ -175,6 +175,8 @@ const SearchOverlay = () => {
   const panel = useRef<HTMLDivElement>(null);
   const input = useRef<HTMLInputElement>(null);
   const opener = useRef<HTMLElement | null>(null);
+  // Set when the search closes because the shopper is going to another page: focus then belongs at the top of that page.
+  const skipRestore = useRef(false);
 
   const close = useCallback(() => setOpen(false), []);
 
@@ -202,7 +204,8 @@ const SearchOverlay = () => {
     input.current?.select();
     return () => {
       html.style.overflow = before;
-      opener.current?.focus();
+      if (!skipRestore.current) opener.current?.focus();
+      skipRestore.current = false;
     };
   }, [open]);
 
@@ -277,11 +280,15 @@ const SearchOverlay = () => {
       onSubmit={() => {
         const q = cleanQuery(query);
         if (!q) return;
+        skipRestore.current = true;
         close();
         router.push(shopSearchHref(q));
       }}
       onClose={close}
-      onNavigate={close}
+      onNavigate={() => {
+        skipRestore.current = true;
+        close();
+      }}
       panelRef={panel}
       inputRef={input}
       onKeyDown={onKeyDown}

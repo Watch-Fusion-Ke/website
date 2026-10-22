@@ -13,6 +13,7 @@ vi.mock("@/lib/wixClientServer", () => ({
 }));
 
 import { GET } from "@/app/api/search/route";
+import { clearCatalogueCache } from "@/lib/catalogueCache";
 
 const product = (n: number, name: string) => ({
   id: `id-${n}`,
@@ -25,6 +26,7 @@ const call = (q: string | null, ip = "1.1.1.1") =>
   GET(new Request(`https://shop.test/api/search${q === null ? "" : `?q=${encodeURIComponent(q)}`}`, { headers: { "x-forwarded-for": ip } }));
 
 beforeEach(() => {
+  clearCatalogueCache();
   state.products = [product(1, "Casio MTP-B146D-1AV"), product(2, "Naviforce 9282"), product(3, "Casio Vintage A159WA")];
   state.fail = false;
   state.bodies = [];
@@ -39,6 +41,13 @@ describe("GET /api/search", () => {
     expect(Object.keys(json.items[0]).sort()).toEqual(["compareAtLabel", "id", "imageUrl", "name", "priceLabel", "slug"]);
     expect(json.items[0].priceLabel).toBe("KES 6,500");
     expect(json.hasMore).toBe(false);
+  });
+
+  it("reads the shop's product list once for a whole run of searches, however many words are typed", async () => {
+    await call("ca");
+    await call("cas");
+    await call("casio");
+    expect(state.bodies).toHaveLength(1);
   });
 
   it("finds a model number typed in part", async () => {

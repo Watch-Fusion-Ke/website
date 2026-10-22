@@ -179,6 +179,12 @@ describe("CategoryRow", () => {
     expect(css).toMatch(/\.link\s*\{[^}]*background:\s*transparent;/);
   });
 
+  it("keeps the stars hidden until the animation starts, so they do not flash on a slow phone, and gives a mouse some feedback on hover", () => {
+    const css = readFileSync("src/components/ChristmasCategoryLink.module.css", "utf8");
+    expect(css).toMatch(/@media \(prefers-reduced-motion: no-preference\)\s*\{\s*\.star\s*\{[^}]*opacity:\s*0/);
+    expect(css).toMatch(/\.link:hover \.words/);
+  });
+
   it("starts the falling stars on its own, with no hover, and stops them for people who ask for less motion", () => {
     const source = readFileSync("src/components/ChristmasCategoryLink.tsx", "utf8");
     expect(source).toContain("useGSAP");

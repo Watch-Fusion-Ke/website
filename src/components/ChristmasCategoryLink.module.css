@@ -133,6 +133,14 @@
   .star:nth-child(3n) { width: 5px; height: 5px; }
 }
 
+@media (prefers-reduced-motion: no-preference) {
+  .star { opacity: 0; }
+}
+
+@media (hover: hover) {
+  .link:hover .words { text-decoration: underline; text-decoration-color: #d89b27; text-decoration-thickness: 2px; text-underline-offset: 5px; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .star { opacity: 0.65; }
   .giftHalo { opacity: 0.65; }

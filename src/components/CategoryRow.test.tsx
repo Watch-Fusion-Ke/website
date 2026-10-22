@@ -105,6 +105,20 @@ describe("CategoryRow", () => {
     }
   });
 
+  it("keeps the phone pills as small as they can be while still easy to read and tap, so more of the row shows", () => {
+    const tags = [html.match(/<a[^>]*href="\/shop\?cat=gents-watches"[^>]*>/)?.[0] ?? "", html.match(/<button[^>]*>/)?.[0] ?? "", html.match(/<a[^>]*href="\/shop\?cat=valentines-gifts"[^>]*>/)?.[0] ?? ""];
+    for (const tag of tags) {
+      const classes = tag.match(/class="([^"]*)"/)?.[1].split(" ") ?? [];
+      expect(classes).toContain("px-2.5");
+      expect(classes).toContain("text-xs");
+      expect(classes).toContain("min-h-11");
+      expect(classes).not.toContain("px-4");
+    }
+    const row = html.match(/<div class="([^"]*overflow-x-auto[^"]*)"/)?.[1].split(" ") ?? [];
+    expect(row).toContain("gap-1.5");
+    expect(row).toContain("pr-6");
+  });
+
   it("renders nothing when there are no categories", () => {
     expect(renderToStaticMarkup(<CategoryRow menu={{ row: [] }} />)).toBe("");
   });

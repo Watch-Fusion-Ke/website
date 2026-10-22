@@ -99,7 +99,7 @@ const CategoryRow = ({ menu }: { menu: SiteMenu }) => {
   const groups = menu.row.flatMap((e) => (e.kind === "menu" ? [e.group] : []));
 
   return (
-    <div ref={root} className="py-4 md:py-8">
+    <div ref={root} className="py-3 md:py-8">
       <nav
         aria-label="Shop by category"
         className="relative"

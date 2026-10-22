@@ -119,6 +119,11 @@ describe("CategoryRow", () => {
     expect(row).toContain("pr-8");
   });
 
+  it("sits close under the header on a phone, with a smaller gap above and below than on a computer", () => {
+    expect(html).toMatch(/<div class="py-3 md:py-8"/);
+    expect(readFileSync("src/app/page.tsx", "utf8")).toMatch(/<div className="mt-0 md:mt-6">\s*<Suspense/);
+  });
+
   it("renders nothing when there are no categories", () => {
     expect(renderToStaticMarkup(<CategoryRow menu={{ row: [] }} />)).toBe("");
   });

@@ -95,7 +95,8 @@ const CategoryRow = ({ menu }: { menu: SiteMenu }) => {
     };
   }, [open]);
 
-  if (menu.primary.length + menu.groups.length + menu.seasonal.length === 0) return null;
+  if (menu.row.length === 0) return null;
+  const groups = menu.row.flatMap((e) => (e.kind === "menu" ? [e.group] : []));
 
   return (
     <div ref={root} className="py-4 md:py-8">
@@ -112,41 +113,43 @@ const CategoryRow = ({ menu }: { menu: SiteMenu }) => {
       >
         <div className="relative">
         <div className="flex gap-3 overflow-x-auto px-4 pr-10 scrollbar-hide md:items-center md:justify-center md:gap-12 md:pr-4 lg:gap-16">
-          {menu.primary.map((c) => (
-            <Link key={c.slug} href={shopHref(c.slug)} className={entry}>
-              {c.name}
-            </Link>
-          ))}
-          {menu.groups.map((g, i) => (
-            <button
-              key={g.label}
-              type="button"
-              aria-expanded={open === g.label}
-              aria-controls={`${id}-${i}`}
-              onPointerEnter={(e) => {
-                if (!hovering(e)) return;
-                cancelLeave();
-                byKeyboard.current = false;
-                place(e.currentTarget);
-                setState((s) => hoverIn(s, g.label));
-              }}
-              onClick={(e) => {
-                byKeyboard.current = e.detail === 0;
-                lastButton.current = e.currentTarget;
-                place(e.currentTarget);
-                setState((s) => press(s, g.label));
-              }}
-              className={entry}
-            >
-              {g.label}
-              <Chevron open={open === g.label} />
-            </button>
-          ))}
-          {menu.seasonal.map((c) => (
-            <Link key={c.slug} href={`/shop?cat=${c.slug}`} className={seasonalEntry}>
-              {c.name}
-            </Link>
-          ))}
+          {menu.row.map((e) => {
+            if (e.kind === "link") {
+              const c = e.category;
+              return (
+                <Link key={c.slug} href={shopHref(c.slug)} className={e.seasonal ? seasonalEntry : entry}>
+                  {c.name}
+                </Link>
+              );
+            }
+            const g = e.group;
+            const i = groups.indexOf(g);
+            return (
+              <button
+                key={g.label}
+                type="button"
+                aria-expanded={open === g.label}
+                aria-controls={`${id}-${i}`}
+                onPointerEnter={(ev) => {
+                  if (!hovering(ev)) return;
+                  cancelLeave();
+                  byKeyboard.current = false;
+                  place(ev.currentTarget);
+                  setState((s) => hoverIn(s, g.label));
+                }}
+                onClick={(ev) => {
+                  byKeyboard.current = ev.detail === 0;
+                  lastButton.current = ev.currentTarget;
+                  place(ev.currentTarget);
+                  setState((s) => press(s, g.label));
+                }}
+                className={entry}
+              >
+                {g.label}
+                <Chevron open={open === g.label} />
+              </button>
+            );
+          })}
         </div>
         {/* Right-edge fade + chevron: hints that the strip scrolls on a phone */}
         <div className="pointer-events-none absolute inset-y-0 right-0 flex w-14 items-center justify-end bg-gradient-to-l from-white via-white/80 to-transparent dark:from-[#0a0a0a] dark:via-[#0a0a0a]/80 md:hidden">
@@ -155,7 +158,7 @@ const CategoryRow = ({ menu }: { menu: SiteMenu }) => {
           </svg>
         </div>
         </div>
-        {menu.groups.map((g, i) => (
+        {groups.map((g, i) => (
           <div key={g.label} id={`${id}-${i}`} data-menu={g.label} hidden={open !== g.label} className={open === g.label ? panelOuter : undefined}>
             <div className={panelInner}>
               <ul aria-label={g.label}>

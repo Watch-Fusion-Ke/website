@@ -4,13 +4,17 @@ import { describe, expect, it } from "vitest";
 import CategoryRow from "@/components/CategoryRow";
 import type { SiteMenu } from "@/lib/siteMenu";
 
+const link = (name: string, slug: string, seasonal?: boolean) => ({ kind: "link" as const, category: { name, slug }, seasonal });
 const menu: SiteMenu = {
-  primary: [{ name: "All Products", slug: "all-products" }, { name: "Gent's Watches", slug: "gents-watches" }, { name: "Ladies Watches", slug: "ladies-watches" }],
-  groups: [
-    { label: "Brands", items: [{ name: "Casio", slug: "casio-watches-kenya" }, { name: "Naviforce", slug: "naviforce-watches-kenya" }] },
-    { label: "Gifts", items: [{ name: "Corporate Gifts", slug: "corporate-gifts" }, { name: "Customizable Gifts", slug: "customizable-gifts" }] },
+  row: [
+    link("All Products", "all-products"),
+    link("Gent's Watches", "gents-watches"),
+    link("Ladies Watches", "ladies-watches"),
+    { kind: "menu", group: { label: "Watch Brands", items: [{ name: "Casio", slug: "casio-watches-kenya" }, { name: "Naviforce", slug: "naviforce-watches-kenya" }] } },
+    link("Customizable Gifts", "customizable-gifts"),
+    link("Valentine's Gifts", "valentines-gifts", true),
+    { kind: "menu", group: { label: "More", items: [{ name: "Corporate Gifts", slug: "corporate-gifts" }, { name: "Birthday Gifts", slug: "birthday-gifts" }] } },
   ],
-  seasonal: [{ name: "Valentine's Gifts", slug: "valentines-gifts" }],
 };
 const html = renderToStaticMarkup(<CategoryRow menu={menu} />);
 
@@ -45,6 +49,14 @@ describe("CategoryRow", () => {
     expect(html.match(/<div[^>]*hidden=""[^>]*>/g) ?? []).toHaveLength(2);
   });
 
+  it("keeps the row in the order the menu gives, with a menu button between the links either side of it", () => {
+    const at = (needle: string) => html.indexOf(needle);
+    expect(at('href="/shop?cat=ladies-watches"')).toBeLessThan(at("Watch Brands"));
+    expect(at("Watch Brands")).toBeLessThan(at('href="/shop?cat=customizable-gifts"'));
+    expect(at('href="/shop?cat=customizable-gifts"')).toBeLessThan(at('href="/shop?cat=valentines-gifts"'));
+    expect(at('href="/shop?cat=valentines-gifts"')).toBeLessThan(html.indexOf(">More<"));
+  });
+
   it("shows a seasonal page as a gold highlighted link", () => {
     const link = html.match(/<a[^>]*href="\/shop\?cat=valentines-gifts"[^>]*>/)?.[0] ?? "";
     expect(link).toContain("bg-brand-gold");
@@ -72,8 +84,8 @@ describe("CategoryRow", () => {
   });
 
   it("gives each menu a list of links with the menu's name, to open as a floating dropdown", () => {
-    expect(html).toMatch(/<ul[^>]*aria-label="Brands"/);
-    expect(html).toMatch(/<ul[^>]*aria-label="Gifts"/);
+    expect(html).toMatch(/<ul[^>]*aria-label="Watch Brands"/);
+    expect(html).toMatch(/<ul[^>]*aria-label="More"/);
   });
 
   it("keeps the opened links inside the navigation landmark, so a screen reader finds them under it", () => {
@@ -94,7 +106,7 @@ describe("CategoryRow", () => {
   });
 
   it("renders nothing when there are no categories", () => {
-    expect(renderToStaticMarkup(<CategoryRow menu={{ primary: [], groups: [], seasonal: [] }} />)).toBe("");
+    expect(renderToStaticMarkup(<CategoryRow menu={{ row: [] }} />)).toBe("");
   });
 
   it("uses the site font, no main heading, and a fade at the right end of the phone strip in both themes", () => {

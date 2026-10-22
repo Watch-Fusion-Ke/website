@@ -14,7 +14,7 @@ const HomePage = async () => {
 
   return (
     <div className="">
-      <div className="mt-6">
+      <div className="mt-0 md:mt-6">
         <Suspense fallback={<Skeleton />}>
           <CategoryList />
         </Suspense>

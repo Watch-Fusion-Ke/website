@@ -30,10 +30,12 @@ const categoriesList = [
 ];
 vi.mock("@/lib/wixClientServer", () => ({
   wixClientServer: async () => ({
-    fetchWithAuth: async (url: string) => {
+    fetchWithAuth: async (url: string, init?: RequestInit) => {
       if (store.fail && url.includes("/categories/")) return new Response("{}", { status: 500 });
+      // Like the store, a category's description is sent only when the request asks for it.
+      const asked = String(init?.body ?? "").includes("DESCRIPTION");
       return url.includes("/categories/")
-        ? new Response(JSON.stringify({ categories: categoriesList }), { status: 200 })
+        ? new Response(JSON.stringify({ categories: categoriesList.map((c) => (asked ? c : { ...c, description: undefined })) }), { status: 200 })
         : new Response(JSON.stringify({ products: [{ actualPriceRange: { minValue: { amount: "10" } } }, { actualPriceRange: { minValue: { amount: "6450" } } }] }), { status: 200 });
     },
   }),
@@ -115,6 +117,16 @@ describe("a category page's metadata", () => {
     const m = await meta("gift-packages");
     expect(m.alternates?.canonical).toBe("/shop/gift-packages");
     expect(m.openGraph).toMatchObject({ url: "/shop/gift-packages" });
+  });
+
+  it("keeps the share picture and the site's name in its link preview, which a page's own tags would otherwise replace", async () => {
+    const m = await meta("gift-packages");
+    expect(m.openGraph).toMatchObject({
+      type: "website",
+      locale: "en_KE",
+      siteName: "WatchFusion Kenya",
+      images: [{ url: "/share-image.png", width: 1200, height: 630 }],
+    });
   });
 
   it("is left in the search results when plain or on a later page, and left out when it shows a search or filters", async () => {

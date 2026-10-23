@@ -32,7 +32,8 @@ export const loadCategoryPages = async (fetchLike: FetchLike): Promise<CategoryP
   const response = await fetchLike(CATEGORIES_QUERY_URL, {
     method: "POST",
     headers: { "content-type": "application/json" },
-    body: JSON.stringify({ query: { cursorPaging: { limit: 100 } }, treeReference: { appNamespace: "@wix/stores", treeKey: null } }),
+    // The store sends a description only when asked for it, and at most 1,000 categories a request.
+    body: JSON.stringify({ query: { cursorPaging: { limit: 1000 } }, fields: ["DESCRIPTION"], treeReference: { appNamespace: "@wix/stores", treeKey: null } }),
   });
   const json = await response.json().catch(() => ({}));
   if (!response.ok || !Array.isArray(json?.categories)) {
@@ -71,7 +72,7 @@ export const legacyCategoryTarget = (params: Query): string | null => {
     if (key === "cat" || value == null) continue;
     for (const v of Array.isArray(value) ? value : [value]) rest.append(key, v);
   }
-  const path = !slug || slug === ALL_PRODUCTS_SLUG || slug.length > 100 ? "/shop" : `/shop/${encodeURIComponent(slug)}`;
+  const path = !slug || slug === "." || slug === ".." || slug === ALL_PRODUCTS_SLUG || slug.length > 100 ? "/shop" : `/shop/${encodeURIComponent(slug)}`;
   const query = rest.toString();
   return query ? `${path}?${query}` : path;
 };

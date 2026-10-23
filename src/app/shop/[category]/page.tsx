@@ -45,7 +45,16 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
     title,
     description,
     alternates: { canonical: href },
-    openGraph: { title: typeof title === "string" ? title : title.absolute, description, url: href },
+    // A page's own openGraph replaces the site's whole one, so what a link preview needs from it is repeated here.
+    openGraph: {
+      type: "website",
+      locale: "en_KE",
+      siteName: "WatchFusion Kenya",
+      title: typeof title === "string" ? title : title.absolute,
+      description,
+      url: href,
+      images: [{ url: "/share-image.png", width: 1200, height: 630, alt: "WatchFusion Kenya: Wear the Moment, Own the Legacy" }],
+    },
     ...robots,
   };
 }

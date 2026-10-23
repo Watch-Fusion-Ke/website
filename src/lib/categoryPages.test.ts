@@ -47,6 +47,8 @@ describe("loading the categories", () => {
     const list = await loadCategoryPages(fetchLike);
     expect(calls[0].url).toBe(CATEGORIES_QUERY_URL);
     expect(calls[0].body).toMatchObject({ treeReference: { appNamespace: "@wix/stores", treeKey: null } });
+    // The store sends a category's description only when it is asked for, and sends at most 1,000 categories a request.
+    expect(calls[0].body).toMatchObject({ fields: ["DESCRIPTION"], query: { cursorPaging: { limit: 1000 } } });
     expect(JSON.stringify(calls[0].body)).not.toContain("returnNonVisibleCategories\":true");
     expect(list.map((c) => c.slug)).toEqual(["casio-watches-kenya", "curren-watches-kenya"]);
     expect(list[0]).toMatchObject({ id: "c1", name: "Casio", description: "Casio watches." });
@@ -137,6 +139,12 @@ describe("the old ?cat= address", () => {
     expect(legacyCategoryTarget({ cat: "../admin" })).toBe("/shop/..%2Fadmin");
     expect(legacyCategoryTarget({ cat: "https://evil.example" })).toBe("/shop/https%3A%2F%2Fevil.example");
     expect(legacyCategoryTarget({ cat: "//evil.example" })?.startsWith("/shop/")).toBe(true);
+  });
+
+  it("treats a dot or two dots as no category, so the address cannot climb out of /shop", () => {
+    expect(legacyCategoryTarget({ cat: ".." })).toBe("/shop");
+    expect(legacyCategoryTarget({ cat: "." })).toBe("/shop");
+    expect(legacyCategoryTarget({ cat: "..", name: "x" })).toBe("/shop?name=x");
   });
 
   it("gives up on an absurdly long option instead of building an address from it", () => {

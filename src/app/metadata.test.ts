@@ -24,7 +24,7 @@ describe("page titles", () => {
   it("give the shop, deals and contact pages a title and a description of their own", () => {
     for (const file of ["src/app/shop/page.tsx", "src/app/deals/page.tsx", "src/app/contact/page.tsx"]) {
       const source = read(file);
-      expect(source).toMatch(/export const metadata/);
+      expect(source).toMatch(/export const metadata|export async function generateMetadata/);
       expect(source).toMatch(/title:\s*["'][^"']+["']/);
       expect(source).toMatch(/description:\s*"[^"]{40,}"/);
     }

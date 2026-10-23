@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useRef } from "react";
+import { categoryHref } from "@/lib/categoryPages";
 
 export type Chip = { name: string; slug: string };
 
@@ -37,7 +38,7 @@ const CategoryChips = ({ chips, activeSlug }: { chips: Chip[]; activeSlug: strin
       {chips.map((c) => (
         <Link
           key={c.slug}
-          href={`/shop?cat=${c.slug}`}
+          href={categoryHref(c.slug)}
           aria-current={activeSlug === c.slug ? "page" : undefined}
           className={chip(activeSlug === c.slug)}
         >

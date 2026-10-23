@@ -135,6 +135,13 @@ describe("CategoryRow", () => {
     expect(html).toMatch(/<ul[^>]*aria-label="Casio"/);
   });
 
+  it("puts the Men and Women list inside Casio's own row, not beside it", () => {
+    const row = html.match(/<li><a[^>]*href="\/shop\?cat=casio-watches-kenya"[\s\S]*?<\/ul><\/li>/)?.[0] ?? "";
+    expect(row).toContain('href="/shop?cat=casio-men"');
+    expect(row).toContain('href="/shop?cat=casio-women"');
+    expect(row).not.toContain("naviforce");
+  });
+
   it("gives a brand with no submenu no nested list", () => {
     expect((html.match(/<ul[^>]*aria-label="Casio"/g) ?? []).length).toBe(1);
     expect(html).not.toMatch(/<ul[^>]*aria-label="Naviforce"/);

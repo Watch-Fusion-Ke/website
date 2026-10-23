@@ -69,6 +69,17 @@ describe("the homepage category menu", () => {
     expect(menuOf(none, "Watch Brands")?.items[0].children).toBeUndefined();
   });
 
+  it("keeps the brands menu, so Men and Women still show, when Casio is the only brand the store shows", () => {
+    const menu = buildMenu([...today.filter((c) => c.slug !== "naviforce-watches-kenya"), cat("casio-men", "Casio Men"), cat("casio-women", "Casio Women")]);
+    const brands = menuOf(menu, "Watch Brands");
+    expect(brands?.items.map((c) => c.slug)).toEqual(["casio-watches-kenya"]);
+    expect(brands?.items[0].children?.map((c) => c.slug)).toEqual(["casio-men", "casio-women"]);
+  });
+
+  it("still shows a lone brand with no pages as a plain link", () => {
+    expect(menuOf(buildMenu(today.filter((c) => c.slug !== "naviforce-watches-kenya")), "Watch Brands")).toBeUndefined();
+  });
+
   it("gives no other brand a submenu", () => {
     const menu = buildMenu([...today, cat("casio-men", "Casio Men"), cat("casio-women", "Casio Women")]);
     expect(menuOf(menu, "Watch Brands")?.items.filter((c) => c.children).map((c) => c.slug)).toEqual(["casio-watches-kenya"]);

@@ -32,9 +32,9 @@ const ordered = (items: MenuCategory[], order: string[]) => {
   return items.map((item, at) => ({ item, at })).sort((a, b) => rank(a.item.slug) - rank(b.item.slug) || a.at - b.at).map((x) => x.item);
 };
 
-// A menu with one entry is just that entry, and a menu with none is not there.
+// A menu with one entry is just that entry (unless that entry has pages of its own to show), and a menu with none is not there.
 const menuOrLink = (label: string, items: MenuCategory[]): RowEntry[] =>
-  items.length > 1 ? [{ kind: "menu", group: { label, items } }] : items.map((category) => ({ kind: "link", category }));
+  items.length > 1 || items.some((c) => c.children) ? [{ kind: "menu", group: { label, items } }] : items.map((category) => ({ kind: "link", category }));
 
 export const buildMenu = (categories: MenuCategory[]): SiteMenu => {
   const shown = categories.filter((c) => c.slug && c.name && c.visible !== false && !LEFT_OUT.has(c.slug));

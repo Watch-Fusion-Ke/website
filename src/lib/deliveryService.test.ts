@@ -10,12 +10,18 @@ const gigiri = areasFromRates(rates).find((a) => a.place === "Gigiri")!;
 
 type Call = { method: string; path: string; body?: unknown };
 
-const setup = (opts: { cartId?: string | null; existing?: { id: string; name: string; price?: string }[]; ratesFail?: boolean; wixStatus?: Record<string, number>; goods?: { price?: string; quantity?: number }[] } = {}) => {
+const setup = (opts: { cartId?: string | null; existing?: { id: string; name: string; price?: string }[]; ratesFail?: boolean; wixStatus?: Record<string, number>; goods?: { total?: string; quantity?: number }[] } = {}) => {
   const calls: Call[] = [];
   const cartId = "cartId" in opts ? opts.cartId : "cart-1";
   const existing = opts.existing ?? [];
-  const goods = (opts.goods ?? [{}]).map((g, i) => ({ id: i === 0 ? "p1" : `p${i + 1}`, name: { original: "Watch" }, ...(g.price ? { price: { amount: g.price } } : {}), ...(g.quantity ? { quantity: g.quantity } : {}) }));
-  const lineOf = (e: { id: string; name: string; price?: string }) => ({ id: e.id, name: { original: e.name }, ...(e.price ? { price: { amount: e.price } } : {}), quantity: 1 });
+  // Products as Cart V2 returns them: the line's final total after discounts is `pricing.totalPrice.amount`, the quantity is in `quantityInfo`.
+  const goods = (opts.goods ?? [{}]).map((g, i) => ({
+    id: i === 0 ? "p1" : `p${i + 1}`,
+    name: { original: "Watch" },
+    ...(g.total ? { pricing: { unitPrice: { amount: g.total }, totalPrice: { amount: g.total } } } : {}),
+    quantityInfo: { requestedQuantity: g.quantity ?? 1, confirmedQuantity: g.quantity ?? 1 },
+  }));
+  const lineOf = (e: { id: string; name: string; price?: string }) => ({ id: e.id, name: { original: e.name }, ...(e.price ? { pricing: { totalPrice: { amount: e.price } } } : {}), quantityInfo: { confirmedQuantity: 1 } });
   const deps: DeliveryDeps = {
     loadRates: async () => {
       if (opts.ratesFail) throw new Error("no collection");
@@ -84,7 +90,7 @@ describe("chooseDeliveryArea", () => {
     const addBody = (calls: Call[]) => calls.find((c) => c.path.endsWith("/add-line-items"))!.body as { customItems: { name: { original: string }; pricing: { price: { amount: string } } }[] };
 
     it("charges nothing when the products come to more than Ksh 10,000, and keeps the area's name on the line", async () => {
-      const { deps, calls } = setup({ goods: [{ price: "6500.00", quantity: 2 }] });
+      const { deps, calls } = setup({ goods: [{ total: "13000.00", quantity: 2 }] });
       const r = await chooseDeliveryArea(deps, gigiri.id);
       expect(r.status).toBe(200);
       const item = addBody(calls).customItems[0];
@@ -94,17 +100,17 @@ describe("chooseDeliveryArea", () => {
     });
 
     it("adds up several products, not just one", async () => {
-      const { deps, calls } = setup({ goods: [{ price: "6000", quantity: 1 }, { price: "4500", quantity: 1 }] });
+      const { deps, calls } = setup({ goods: [{ total: "6000" }, { total: "4500" }] });
       await chooseDeliveryArea(deps, gigiri.id);
       expect(addBody(calls).customItems[0].pricing.price.amount).toBe("0.00");
     });
 
     it("still charges the area's fee at exactly Ksh 10,000 and below", async () => {
-      const exact = setup({ goods: [{ price: "5000", quantity: 2 }] });
+      const exact = setup({ goods: [{ total: "10000", quantity: 2 }] });
       const r = await chooseDeliveryArea(exact.deps, gigiri.id);
       expect(addBody(exact.calls).customItems[0].pricing.price.amount).toBe("450.00");
       expect(r.body).toMatchObject({ price: 450, free: false });
-      const small = setup({ goods: [{ price: "6500", quantity: 1 }] });
+      const small = setup({ goods: [{ total: "6500" }] });
       await chooseDeliveryArea(small.deps, gigiri.id);
       expect(addBody(small.calls).customItems[0].pricing.price.amount).toBe("450.00");
     });
@@ -116,13 +122,40 @@ describe("chooseDeliveryArea", () => {
     });
 
     it("does not count an earlier delivery line towards the goods", async () => {
-      const { deps, calls } = setup({ goods: [{ price: "6000", quantity: 1 }], existing: [{ id: "old-1", name: "Delivery: Kilimani, Ngong Road", price: "9000" }] });
+      const { deps, calls } = setup({ goods: [{ total: "6000" }], existing: [{ id: "old-1", name: "Delivery: Kilimani, Ngong Road", price: "9000" }] });
       await chooseDeliveryArea(deps, gigiri.id);
       expect(addBody(calls).customItems[0].pricing.price.amount).toBe("450.00");
     });
 
+    it("reads the final price of each line after discounts, the field Cart V2 really returns, and not an older cart's price field", async () => {
+      const { deps, calls } = setup({ goods: [{ total: "6500" }, { total: "6500" }] });
+      await chooseDeliveryArea(deps, gigiri.id);
+      expect(addBody(calls).customItems[0].pricing.price.amount).toBe("0.00");
+    });
+
+    it("sums to the cent: exactly Ksh 10,000 in odd amounts still pays", async () => {
+      const { deps, calls } = setup({ goods: [{ total: "4742.70" }, { total: "4148.02" }, { total: "1109.28" }] });
+      await chooseDeliveryArea(deps, gigiri.id);
+      expect(addBody(calls).customItems[0].pricing.price.amount).toBe("450.00");
+    });
+
+    it("takes the earlier fee out when the free line is refused, so the shopper is not left paying a fee they no longer owe", async () => {
+      const { deps, calls } = setup({ goods: [{ total: "13000", quantity: 2 }], existing: [{ id: "old-1", name: "Delivery: Gigiri, Limuru Road", price: "450" }], wixStatus: { "POST add-line-items": 400 } });
+      const r = await chooseDeliveryArea(deps, gigiri.id);
+      expect(r.status).toBe(502);
+      expect(r.body).toMatchObject({ unavailable: true });
+      const remove = calls.find((c) => c.path.endsWith("/remove-line-items"));
+      expect(remove?.body).toEqual({ lineItemIds: ["old-1"] });
+    });
+
+    it("leaves the earlier fee alone when a paid line is refused, as before", async () => {
+      const { deps, calls } = setup({ goods: [{ total: "5000" }], existing: [{ id: "old-1", name: "Delivery: Kilimani, Ngong Road", price: "300" }], wixStatus: { "POST add-line-items": 400 } });
+      await chooseDeliveryArea(deps, gigiri.id);
+      expect(calls.some((c) => c.path.endsWith("/remove-line-items"))).toBe(false);
+    });
+
     it("works out the fee from the cart on the server, never from anything the shopper sends", async () => {
-      const { deps, calls } = setup({ goods: [{ price: "100", quantity: 1 }] });
+      const { deps, calls } = setup({ goods: [{ total: "100" }] });
       await chooseDeliveryArea(deps, gigiri.id);
       expect(addBody(calls).customItems[0].pricing.price.amount).toBe("450.00");
     });

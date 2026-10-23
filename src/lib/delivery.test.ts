@@ -6,6 +6,7 @@ import {
   feeToRefresh,
   goodsTotal,
   isFreeDelivery,
+  sumMoney,
   deliveryLineName,
   formatKes,
   isDeliveryLine,
@@ -139,6 +140,18 @@ describe("free delivery", () => {
     expect(isFreeDelivery(10000)).toBe(false);
     expect(isFreeDelivery(10000.01)).toBe(true);
     expect(isFreeDelivery(13000)).toBe(true);
+  });
+
+  it("adds in whole cents, so a basket of exactly Ksh 10,000 can never tip over by a rounding crumb", () => {
+    expect(sumMoney(["4742.70", "4148.02", "1109.28"])).toBe(10000);
+    expect(isFreeDelivery(sumMoney(["4742.70", "4148.02", "1109.28"]))).toBe(false);
+    expect(isFreeDelivery(sumMoney(["4742.70", "4148.02", "1109.29"]))).toBe(true);
+    expect(sumMoney(["0.1", "0.2"])).toBe(0.3);
+  });
+
+  it("skips an amount it cannot read and treats an empty list as nothing", () => {
+    expect(sumMoney(["100", "x", null, undefined, ""])).toBe(100);
+    expect(sumMoney([])).toBe(0);
   });
 
   it("is never free when the total is not a real number", () => {

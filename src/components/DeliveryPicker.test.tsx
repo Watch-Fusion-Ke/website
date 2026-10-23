@@ -66,6 +66,12 @@ describe("DeliveryPickerView", () => {
     expect(html).not.toContain("KES 0");
   });
 
+  it("says Free for a chosen area only when the fee in the cart really is nothing, never when a fee is still charged", () => {
+    const html = view({ selectedLabel: "Gigiri, Limuru Road", selectedPrice: 450, free: true });
+    expect(html).not.toMatch(/Free delivery/);
+    expect(html).toContain("Delivery fee KES 450");
+  });
+
   it("tells the shopper about an error and does not hide the search", () => {
     const html = view({ error: "We could not save that." });
     expect(html).toContain("We could not save that.");

@@ -52,7 +52,7 @@ export const DeliveryPickerView = ({
         <div>
           <p className="text-xs font-medium text-gray-500">Delivering to</p>
           <p className="font-semibold text-gray-900">{selectedLabel}</p>
-          {selectedPrice != null && (free || selectedPrice === 0 ? <p className="text-sm font-semibold text-gray-700">Free delivery</p> : <p className="text-sm text-gray-700">Delivery fee {formatKes(selectedPrice)}</p>)}
+          {selectedPrice != null && (selectedPrice === 0 ? <p className="text-sm font-semibold text-gray-700">Free delivery</p> : <p className="text-sm text-gray-700">Delivery fee {formatKes(selectedPrice)}</p>)}
         </div>
         <button type="button" onClick={onChange} disabled={busy} className="py-1 text-sm font-medium text-gray-700 underline underline-offset-4 hover:text-gray-900 disabled:opacity-50">
           Change

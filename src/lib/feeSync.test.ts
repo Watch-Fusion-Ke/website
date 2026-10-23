@@ -47,6 +47,17 @@ describe("keeping the delivery fee in step with the basket", () => {
     expect(getCart).not.toHaveBeenCalled();
   });
 
+  it("keeps others waiting until the cart has been reloaded too, not just until the fee is saved", async () => {
+    let reloaded = () => {};
+    const getCart = vi.fn(() => new Promise<void>((resolve) => { reloaded = resolve; }));
+    const first = syncFee(ref(), area, true, async () => {}, getCart);
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(await syncFee(ref(), area, false, vi.fn(async () => {}), vi.fn())).toBe("busy");
+    reloaded();
+    await first;
+  });
+
   it("lets only one re-pricing run at a time, across the cart page and the pop-up, and tells the other to wait", async () => {
     let release = () => {};
     const slow = vi.fn(() => new Promise<void>((resolve) => { release = resolve; }));

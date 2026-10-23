@@ -15,7 +15,7 @@ export const syncFee = async (
   area: DeliveryArea | null,
   free: boolean,
   choose: (area: DeliveryArea) => Promise<void>,
-  getCart: () => unknown
+  getCart: () => unknown // may return a promise; the next run waits for it
 ): Promise<"skipped" | "busy" | "done"> => {
   if (!area) {
     tried.current = null;
@@ -26,8 +26,8 @@ export const syncFee = async (
   if (running) return "busy";
   tried.current = key;
   const job = choose(area)
-    .then(() => {
-      getCart();
+    .then(async () => {
+      await getCart();
     })
     .catch(() => {});
   running = job;

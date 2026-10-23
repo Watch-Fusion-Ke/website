@@ -137,6 +137,20 @@ export const TabHomeIcon = ({ className }: IconProps) => (
   </Icon>
 );
 
+export const TabShopIcon = ({ className }: IconProps) => (
+  <Icon className={className} strokeWidth={1.5}>
+    <path d="M4 10V20h16V10M3 9l2-5h14l2 5-1.5 2a2 2 0 0 1-3.2 0 2 2 0 0 1-3.2 0 2 2 0 0 1-3.2 0 2 2 0 0 1-3.2 0A2 2 0 0 1 3 9Z" />
+    <path d="M9 20v-6h6v6" />
+  </Icon>
+);
+
+export const TabSearchIcon = ({ className }: IconProps) => (
+  <Icon className={className} strokeWidth={1.5}>
+    <circle cx="10.5" cy="10.5" r="6.5" />
+    <path d="m15.5 15.5 5 5" />
+  </Icon>
+);
+
 export const TabGentsIcon = ({ className }: IconProps) => (
   <Icon className={className} strokeWidth={1.5}>
     <rect x="6.5" y="6.5" width="11" height="11" rx="2.5" />

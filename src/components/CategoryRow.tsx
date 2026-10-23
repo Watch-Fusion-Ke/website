@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useId, useRef, useState } from "react";
+import ChristmasCategoryLink from "@/components/ChristmasCategoryLink";
 import { clampLeft, closed, hoverIn, hoverOut, press, type MenuState, type SiteMenu } from "@/lib/siteMenu";
 
 // On a phone each entry is a pill in a strip that slides sideways; from a tablet up they are plain words with a gold underline on hover.
@@ -116,6 +117,9 @@ const CategoryRow = ({ menu }: { menu: SiteMenu }) => {
           {menu.row.map((e) => {
             if (e.kind === "link") {
               const c = e.category;
+              if (c.slug === "christmas-gift-packages") {
+                return <ChristmasCategoryLink key={c.slug} name={c.name} href={shopHref(c.slug)} />;
+              }
               return (
                 <Link key={c.slug} href={shopHref(c.slug)} className={e.seasonal ? seasonalEntry : entry}>
                   {c.name}

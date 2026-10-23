@@ -1,4 +1,5 @@
-export type MenuCategory = { name: string; slug: string; visible?: boolean | null };
+// A brand can carry a few pages of its own, shown indented under it in the brands menu (Casio: Men and Women).
+export type MenuCategory = { name: string; slug: string; visible?: boolean | null; children?: MenuCategory[] };
 export type MenuGroup = { label: string; items: MenuCategory[] };
 // One stop in the row: a plain link (a seasonal page is shown highlighted) or a menu that opens a dropdown.
 export type RowEntry = { kind: "link"; category: MenuCategory; seasonal?: boolean } | { kind: "menu"; group: MenuGroup };
@@ -13,6 +14,9 @@ const ALL_PRODUCTS = "all-products";
 const BRANDS_PAGE = "brands";
 const MAIN = ["gents-watches", "ladies-watches"];
 const BRAND_ORDER = ["casio-watches-kenya", "naviforce-watches-kenya"];
+// Only Casio has pages of its own (the shop asked for Men and Women under it, and said the other brands need none).
+const BRAND_PAGES: Record<string, string[]> = { "casio-watches-kenya": ["casio-men", "casio-women"] };
+const BRAND_PAGE_SLUGS = new Set(Object.keys(BRAND_PAGES).flatMap((brand) => BRAND_PAGES[brand]));
 const GIFT_ENTRY = "customizable-gifts";
 const OTHER_GIFT_ORDER = ["gift-packages", "birthday-gifts", "corporate-gifts"];
 const SEASONAL = ["christmas-gift-packages", "valentines-gifts"];
@@ -28,9 +32,9 @@ const ordered = (items: MenuCategory[], order: string[]) => {
   return items.map((item, at) => ({ item, at })).sort((a, b) => rank(a.item.slug) - rank(b.item.slug) || a.at - b.at).map((x) => x.item);
 };
 
-// A menu with one entry is just that entry, and a menu with none is not there.
+// A menu with one entry is just that entry (unless that entry has pages of its own to show), and a menu with none is not there.
 const menuOrLink = (label: string, items: MenuCategory[]): RowEntry[] =>
-  items.length > 1 ? [{ kind: "menu", group: { label, items } }] : items.map((category) => ({ kind: "link", category }));
+  items.length > 1 || items.some((c) => c.children) ? [{ kind: "menu", group: { label, items } }] : items.map((category) => ({ kind: "link", category }));
 
 export const buildMenu = (categories: MenuCategory[]): SiteMenu => {
   const shown = categories.filter((c) => c.slug && c.name && c.visible !== false && !LEFT_OUT.has(c.slug));
@@ -42,10 +46,20 @@ export const buildMenu = (categories: MenuCategory[]): SiteMenu => {
   const main = ordered(take((c) => MAIN.includes(c.slug)), MAIN);
   // The menu takes its name from the store's Watch Brands category, so renaming it in Wix renames the menu.
   const brandsLabel = categories.find((c) => c.slug === BRANDS_PAGE && c.name && c.visible !== false)?.name ?? "Brands";
-  const brands = ordered(take((c) => isBrand(c.slug)), BRAND_ORDER);
+  // A brand's own pages are listed under it, with the brand's name dropped from the front ("Casio Men" reads "Men").
+  const withPages = (brand: MenuCategory): MenuCategory => {
+    const wanted = BRAND_PAGES[brand.slug];
+    if (!wanted) return brand;
+    const pages = ordered(take((c) => wanted.includes(c.slug)), wanted).map((c) => ({
+      name: c.name.replace(new RegExp(`^${brand.name.replace(/[^a-z0-9]/gi, "\\$&")}\\s+`, "i"), "") || c.name,
+      slug: c.slug,
+    }));
+    return pages.length > 0 ? { ...brand, children: pages } : brand;
+  };
+  const brands = ordered(take((c) => isBrand(c.slug)), BRAND_ORDER).map(withPages);
   const giftEntry = take((c) => c.slug === GIFT_ENTRY);
   const seasonal = ordered(take((c) => SEASONAL.includes(c.slug)), SEASONAL);
-  const rest = ordered(take((c) => !MAIN.includes(c.slug) && c.slug !== GIFT_ENTRY && !SEASONAL.includes(c.slug) && !isBrand(c.slug)), OTHER_GIFT_ORDER);
+  const rest = ordered(take((c) => !MAIN.includes(c.slug) && c.slug !== GIFT_ENTRY && !SEASONAL.includes(c.slug) && !isBrand(c.slug) && !BRAND_PAGE_SLUGS.has(c.slug)), OTHER_GIFT_ORDER);
 
   return {
     row: [

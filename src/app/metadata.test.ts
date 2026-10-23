@@ -30,3 +30,26 @@ describe("page titles", () => {
     }
   });
 });
+
+describe("the picture shown when a link to the shop is shared", () => {
+  const layout = read("src/app/layout.tsx");
+
+  it("is a card of its own on the brand navy, not the white-lettered logo, which is invisible on a white link card", () => {
+    expect(layout).not.toMatch(/images:\s*\[\s*\{\s*url:\s*"\/logo\.png"/);
+    expect(layout).not.toMatch(/images:\s*\["\/logo\.png"\]/);
+    expect(layout).toContain('url: "/share-image.png"');
+    expect(layout).toContain('images: ["/share-image.png"]');
+  });
+
+  it("is the 1200 by 630 size link previews ask for, and the file is that size and a real PNG", () => {
+    expect(layout).toMatch(/width:\s*1200,\s*height:\s*630/);
+    const png = readFileSync("public/share-image.png");
+    expect(png.subarray(1, 4).toString()).toBe("PNG");
+    expect(png.readUInt32BE(16)).toBe(1200);
+    expect(png.readUInt32BE(20)).toBe(630);
+  });
+
+  it("is a small file, so a chat app does not skip it", () => {
+    expect(readFileSync("public/share-image.png").length).toBeLessThan(300_000);
+  });
+});

@@ -63,10 +63,10 @@ export const metadata: Metadata = {
       "Shop premium watches in Kenya. Luxury, sport & casual watches with fast delivery across Nairobi and Kenya.",
     images: [
       {
-        url: "/logo.png",
-        width: 800,
-        height: 600,
-        alt: "WatchFusion Kenya",
+        url: "/share-image.png",
+        width: 1200,
+        height: 630,
+        alt: "WatchFusion Kenya: Wear the Moment, Own the Legacy",
       },
     ],
   },
@@ -75,7 +75,7 @@ export const metadata: Metadata = {
     title: "WatchFusion Kenya | Premium Watches in Nairobi",
     description:
       "Shop premium watches in Kenya. Fast delivery across Nairobi and Kenya.",
-    images: ["/logo.png"],
+    images: ["/share-image.png"],
   },
   robots: {
     index: true,

@@ -167,6 +167,17 @@ const CategoryRow = ({ menu }: { menu: SiteMenu }) => {
                     <Link href={`/shop?cat=${c.slug}`} className={panelLink} onClick={() => setState(closed)}>
                       {c.name}
                     </Link>
+                    {c.children && c.children.length > 0 && (
+                      <ul aria-label={c.name}>
+                        {c.children.map((child) => (
+                          <li key={child.slug}>
+                            <Link href={`/shop?cat=${child.slug}`} className={`${panelLink} pl-6`} onClick={() => setState(closed)}>
+                              {child.name}
+                            </Link>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
                   </li>
                 ))}
               </ul>

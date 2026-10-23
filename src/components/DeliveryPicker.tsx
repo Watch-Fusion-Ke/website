@@ -63,7 +63,7 @@ export const DeliveryPickerView = ({
 
   return (
     <div aria-busy={busy}>
-      <label htmlFor={`${id}-input`} className="mb-1 block text-sm font-semibold text-gray-900">Where should we deliver?</label>
+      <label htmlFor={`${id}-input`} className="mb-1 block text-sm font-semibold text-gray-900">{"What's your delivery address?"}</label>
       <input
         id={`${id}-input`}
         type="text"

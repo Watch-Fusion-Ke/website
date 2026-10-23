@@ -18,7 +18,8 @@ const view = (extra: Partial<React.ComponentProps<typeof DeliveryPickerView>> = 
 describe("DeliveryPickerView", () => {
   it("asks for the area with a visible label, as a search box with a list of choices", () => {
     const html = view();
-    expect(html).toMatch(/<label[^>]*>Where should we deliver\?<\/label>/);
+    expect(html).toMatch(/<label[^>]*>What(?:&#x27;|')s your delivery address\?<\/label>/);
+    expect(html).not.toContain("Where should we deliver");
     expect(html).toContain('role="combobox"');
     expect(html).toContain('aria-autocomplete="list"');
   });

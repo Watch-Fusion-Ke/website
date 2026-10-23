@@ -42,7 +42,7 @@ describe("Footer", () => {
     const shopColumn = html.split(">Shop<")[1]?.split("</nav>")[0] ?? "";
     expect(shopColumn).toContain('href="/shop"');
     for (const slug of ["ladies-watches", "gents-watches", "naviforce-watches-kenya", "editors-picks", "customizable-gifts"]) {
-      expect(shopColumn).toContain(`href="/shop?cat=${slug}"`);
+      expect(shopColumn).toContain(`href="/shop/${slug}"`);
     }
     expect(shopColumn).not.toContain("all-products");
   });

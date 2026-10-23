@@ -1,6 +1,7 @@
 import { MetadataRoute } from "next";
 import { wixClientServer } from "@/lib/wixClientServer";
 import { SITE_URL } from "@/lib/site";
+import { ALL_PRODUCTS_SLUG, categoryHref, loadCategoryPages } from "@/lib/categoryPages";
 
 const BASE_URL = SITE_URL;
 
@@ -33,6 +34,23 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     },
   ];
 
+  // A page for each category the store shows, at its own address. Without them the shop still lists everything else.
+  const categoryPages: MetadataRoute.Sitemap = [];
+  try {
+    const wixClient = await wixClientServer();
+    for (const category of await loadCategoryPages((url, init) => wixClient.fetchWithAuth(url, init))) {
+      if (category.slug === ALL_PRODUCTS_SLUG) continue;
+      categoryPages.push({
+        url: `${BASE_URL}${categoryHref(category.slug)}`,
+        lastModified: new Date(),
+        changeFrequency: "weekly" as const,
+        priority: 0.8,
+      });
+    }
+  } catch (error) {
+    console.error("Error generating category sitemap:", error);
+  }
+
   // Every product, page by page. A product with no slug has no page, and an address is listed once.
   const productPages: MetadataRoute.Sitemap = [];
   try {
@@ -57,5 +75,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     console.error("Error generating product sitemap:", error);
   }
 
-  return [...staticPages, ...productPages];
+  return [...staticPages, ...categoryPages, ...productPages];
 }

@@ -5,6 +5,8 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const state = vi.hoisted(() => ({
   pages: [] as { items: { slug?: string; lastUpdated?: string }[] }[],
   fail: false,
+  categories: [] as { id: string; name: string; slug: string }[],
+  categoriesFail: false,
 }));
 
 vi.mock("@/lib/wixClientServer", () => ({
@@ -15,6 +17,10 @@ vi.mock("@/lib/wixClientServer", () => ({
       next: async () => result(index + 1),
     });
     return {
+      fetchWithAuth: async () => {
+        if (state.categoriesFail) return new Response("{}", { status: 500 });
+        return new Response(JSON.stringify({ categories: state.categories }), { status: 200 });
+      },
       products: {
         queryProducts: () => ({
           limit: () => ({
@@ -57,6 +63,8 @@ describe("sitemap", () => {
   beforeEach(() => {
     state.fail = false;
     state.pages = [];
+    state.categories = [];
+    state.categoriesFail = false;
   });
 
   it("lists the main pages on the www address", async () => {
@@ -80,6 +88,29 @@ describe("sitemap", () => {
     state.pages = [{ items: [{ slug: "a" }, { slug: "a" }] }];
     const urls = (await sitemap()).map((entry) => entry.url);
     expect(urls.filter((u) => u === `${SITE_URL}/a`)).toHaveLength(1);
+  });
+
+  it("lists a page for each category the store shows, at its own address", async () => {
+    state.categories = [
+      { id: "1", name: "Gift Packages", slug: "gift-packages" },
+      { id: "2", name: "Casio", slug: "casio-watches-kenya" },
+    ];
+    const urls = (await sitemap()).map((entry) => entry.url);
+    expect(urls).toEqual(expect.arrayContaining([`${SITE_URL}/shop/gift-packages`, `${SITE_URL}/shop/casio-watches-kenya`]));
+  });
+
+  it("does not list the store's own All Products category, which is the plain shop already listed", async () => {
+    state.categories = [{ id: "1", name: "All Products", slug: "all-products" }];
+    const urls = (await sitemap()).map((entry) => entry.url);
+    expect(urls).not.toContain(`${SITE_URL}/shop/all-products`);
+    expect(urls.filter((u) => u === `${SITE_URL}/shop`)).toHaveLength(1);
+  });
+
+  it("still lists the main pages and the products when the categories cannot be read", async () => {
+    state.categoriesFail = true;
+    state.pages = [{ items: [{ slug: "a" }] }];
+    const urls = (await sitemap()).map((entry) => entry.url);
+    expect(urls).toEqual(expect.arrayContaining([`${SITE_URL}/shop`, `${SITE_URL}/a`]));
   });
 
   it("still lists the main pages when the products cannot be read", async () => {

@@ -8,8 +8,8 @@ describe("TABS", () => {
 
   it("send Gents and Ladies to the store's two watch categories", () => {
     const href = (key: string) => TABS.find((t) => t.key === key)?.href;
-    expect(href("gents")).toBe("/shop?cat=gents-watches");
-    expect(href("ladies")).toBe("/shop?cat=ladies-watches");
+    expect(href("gents")).toBe("/shop/gents-watches");
+    expect(href("ladies")).toBe("/shop/ladies-watches");
     expect(href("cart")).toBe("/cart");
   });
 
@@ -20,27 +20,28 @@ describe("TABS", () => {
 
 describe("activeTab", () => {
   it("marks Home only on the homepage", () => {
-    expect(activeTab("/", null)).toBe("home");
-    expect(activeTab("/contact", null)).toBeNull();
+    expect(activeTab("/")).toBe("home");
+    expect(activeTab("/contact")).toBeNull();
   });
 
-  it("marks Gents and Ladies on their category pages of the shop", () => {
-    expect(activeTab("/shop", "gents-watches")).toBe("gents");
-    expect(activeTab("/shop", "ladies-watches")).toBe("ladies");
-    expect(activeTab("/list", "gents-watches")).toBeNull(); // the old address only redirects
+  it("marks Gents and Ladies on their own category pages", () => {
+    expect(activeTab("/shop/gents-watches")).toBe("gents");
+    expect(activeTab("/shop/ladies-watches")).toBe("ladies");
+    expect(activeTab("/list")).toBeNull(); // the old address only redirects
   });
 
   it("marks nothing on other categories or on the whole shop", () => {
-    expect(activeTab("/list", "naviforce-watches-kenya")).toBeNull();
-    expect(activeTab("/shop", null)).toBeNull();
+    expect(activeTab("/shop/naviforce-watches-kenya")).toBeNull();
+    expect(activeTab("/shop")).toBeNull();
+    expect(activeTab("/shop/gents-watches-extra")).toBeNull();
   });
 
   it("marks Cart on the cart page", () => {
-    expect(activeTab("/cart", null)).toBe("cart");
+    expect(activeTab("/cart")).toBe("cart");
   });
 
   it("does not mark Cart on a product whose address merely starts with 'cart'", () => {
-    expect(activeTab("/cartier-style-watch", null)).toBeNull();
-    expect(activeTab("/cartoon-kids-watch", null)).toBeNull();
+    expect(activeTab("/cartier-style-watch")).toBeNull();
+    expect(activeTab("/cartoon-kids-watch")).toBeNull();
   });
 });

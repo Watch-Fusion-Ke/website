@@ -24,14 +24,14 @@ describe("CategoryRow", () => {
   });
 
   it("links the main categories straight to the shop", () => {
-    expect(html).toContain('href="/shop?cat=gents-watches"');
-    expect(html).toContain('href="/shop?cat=ladies-watches"');
+    expect(html).toContain('href="/shop/gents-watches"');
+    expect(html).toContain('href="/shop/ladies-watches"');
   });
 
   it("sends All Products to the plain shop page, wherever the menu puts it", () => {
     expect(html).toContain('href="/shop"');
     expect(html).not.toContain("cat=all-products");
-    expect(html.indexOf('href="/shop"')).toBeGreaterThan(html.indexOf('href="/shop?cat=ladies-watches"'));
+    expect(html.indexOf('href="/shop"')).toBeGreaterThan(html.indexOf('href="/shop/ladies-watches"'));
   });
 
   it("shows each menu as a button that starts closed and says what it controls", () => {
@@ -44,21 +44,21 @@ describe("CategoryRow", () => {
   });
 
   it("keeps the links inside every menu in the page, hidden until opened, so they can still be found and followed", () => {
-    expect(html).toContain('href="/shop?cat=casio-watches-kenya"');
-    expect(html).toContain('href="/shop?cat=corporate-gifts"');
+    expect(html).toContain('href="/shop/casio-watches-kenya"');
+    expect(html).toContain('href="/shop/corporate-gifts"');
     expect(html.match(/<div[^>]*hidden=""[^>]*>/g) ?? []).toHaveLength(2);
   });
 
   it("keeps the row in the order the menu gives, with a menu button between the links either side of it", () => {
     const at = (needle: string) => html.indexOf(needle);
-    const order = ["Watch Brands", 'href="/shop?cat=customizable-gifts"', 'href="/shop?cat=valentines-gifts"', 'href="/shop?cat=gents-watches"', 'href="/shop?cat=ladies-watches"', ">More<", 'href="/shop"'];
+    const order = ["Watch Brands", 'href="/shop/customizable-gifts"', 'href="/shop/valentines-gifts"', 'href="/shop/gents-watches"', 'href="/shop/ladies-watches"', ">More<", 'href="/shop"'];
     const places = order.map(at);
     expect(places.every((p) => p > -1)).toBe(true);
     expect(places).toEqual([...places].sort((x, y) => x - y));
   });
 
   it("shows a seasonal page as a gold highlighted link", () => {
-    const link = html.match(/<a[^>]*href="\/shop\?cat=valentines-gifts"[^>]*>/)?.[0] ?? "";
+    const link = html.match(/<a[^>]*href="\/shop\/valentines-gifts"[^>]*>/)?.[0] ?? "";
     expect(link).toContain("bg-brand-gold");
   });
 
@@ -94,19 +94,19 @@ describe("CategoryRow", () => {
   });
 
   it("gives the plain-text links no white background class, which the dark theme would turn into a grey box behind each word", () => {
-    const link = html.match(/<a[^>]*href="\/shop\?cat=gents-watches"[^>]*>/)?.[0] ?? "";
+    const link = html.match(/<a[^>]*href="\/shop\/gents-watches"[^>]*>/)?.[0] ?? "";
     expect(link).not.toMatch(/(^|\s|")bg-white(\s|")/);
     expect(link).toContain("max-md:bg-[var(--surface)]");
   });
 
   it("makes the phone pills at least 44 px tall to tap", () => {
-    for (const tag of [html.match(/<a[^>]*href="\/shop\?cat=gents-watches"[^>]*>/)?.[0] ?? "", html.match(/<button[^>]*>/)?.[0] ?? ""]) {
+    for (const tag of [html.match(/<a[^>]*href="\/shop\/gents-watches"[^>]*>/)?.[0] ?? "", html.match(/<button[^>]*>/)?.[0] ?? ""]) {
       expect(tag).toContain("min-h-11");
     }
   });
 
   it("keeps the phone pills as small as they can be while still easy to read and tap, so more of the row shows", () => {
-    const tags = [html.match(/<a[^>]*href="\/shop\?cat=gents-watches"[^>]*>/)?.[0] ?? "", html.match(/<button[^>]*>/)?.[0] ?? "", html.match(/<a[^>]*href="\/shop\?cat=valentines-gifts"[^>]*>/)?.[0] ?? ""];
+    const tags = [html.match(/<a[^>]*href="\/shop\/gents-watches"[^>]*>/)?.[0] ?? "", html.match(/<button[^>]*>/)?.[0] ?? "", html.match(/<a[^>]*href="\/shop\/valentines-gifts"[^>]*>/)?.[0] ?? ""];
     for (const tag of tags) {
       const classes = tag.match(/class="([^"]*)"/)?.[1].split(" ") ?? [];
       expect(classes).toContain("px-2.5");
@@ -126,19 +126,19 @@ describe("CategoryRow", () => {
 
   it("lists Men and Women, indented, right under Casio in the brands menu, each a link to its own page", () => {
     const at = (needle: string) => html.indexOf(needle);
-    expect(html).toContain('href="/shop?cat=casio-men"');
-    expect(html).toContain('href="/shop?cat=casio-women"');
-    expect(at('href="/shop?cat=casio-watches-kenya"')).toBeLessThan(at('href="/shop?cat=casio-men"'));
-    expect(at('href="/shop?cat=casio-women"')).toBeLessThan(at('href="/shop?cat=naviforce-watches-kenya"'));
-    const men = html.match(/<a[^>]*href="\/shop\?cat=casio-men"[^>]*>/)?.[0] ?? "";
+    expect(html).toContain('href="/shop/casio-men"');
+    expect(html).toContain('href="/shop/casio-women"');
+    expect(at('href="/shop/casio-watches-kenya"')).toBeLessThan(at('href="/shop/casio-men"'));
+    expect(at('href="/shop/casio-women"')).toBeLessThan(at('href="/shop/naviforce-watches-kenya"'));
+    const men = html.match(/<a[^>]*href="\/shop\/casio-men"[^>]*>/)?.[0] ?? "";
     expect(men).toMatch(/class="[^"]*\bpl-6\b/);
     expect(html).toMatch(/<ul[^>]*aria-label="Casio"/);
   });
 
   it("puts the Men and Women list inside Casio's own row, not beside it", () => {
-    const row = html.match(/<li><a[^>]*href="\/shop\?cat=casio-watches-kenya"[\s\S]*?<\/ul><\/li>/)?.[0] ?? "";
-    expect(row).toContain('href="/shop?cat=casio-men"');
-    expect(row).toContain('href="/shop?cat=casio-women"');
+    const row = html.match(/<li><a[^>]*href="\/shop\/casio-watches-kenya"[\s\S]*?<\/ul><\/li>/)?.[0] ?? "";
+    expect(row).toContain('href="/shop/casio-men"');
+    expect(row).toContain('href="/shop/casio-women"');
     expect(row).not.toContain("naviforce");
   });
 

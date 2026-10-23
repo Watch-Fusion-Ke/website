@@ -13,14 +13,14 @@ describe("CategoryChips", () => {
     const out = html("");
     expect(out.indexOf(">All products<")).toBeLessThan(out.indexOf(">Ladies Watches<"));
     expect(out).toContain('href="/shop"');
-    expect(out).toContain('href="/shop?cat=ladies-watches"');
-    expect(out).toContain('href="/shop?cat=gents-watches"');
+    expect(out).toContain('href="/shop/ladies-watches"');
+    expect(out).toContain('href="/shop/gents-watches"');
   });
 
   it("marks exactly one pill as the page being viewed", () => {
     expect(html("gents-watches").match(/aria-current="page"/g)).toHaveLength(1);
     expect(html("").match(/aria-current="page"/g)).toHaveLength(1);
-    const tag = html("gents-watches").match(/<a [^>]*href="\/shop\?cat=gents-watches"[^>]*>/)?.[0] ?? "";
+    const tag = html("gents-watches").match(/<a [^>]*href="\/shop\/gents-watches"[^>]*>/)?.[0] ?? "";
     expect(tag).toContain('aria-current="page"');
   });
 

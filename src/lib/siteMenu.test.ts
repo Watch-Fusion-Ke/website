@@ -49,6 +49,36 @@ describe("the homepage category menu", () => {
     expect(menuOf(buildMenu([...today, cat("olevs-watches-kenya", "Olevs")]), "Watch Brands")?.items.map((c) => c.slug)).toContain("olevs-watches-kenya");
   });
 
+  it("shows Men and Women under Casio, in the brands menu, when the store shows those two pages", () => {
+    const menu = buildMenu([...today, cat("casio-men", "Casio Men"), cat("casio-women", "Casio Women")]);
+    const casio = menuOf(menu, "Watch Brands")?.items.find((c) => c.slug === "casio-watches-kenya");
+    expect(casio?.children?.map((c) => [c.name, c.slug])).toEqual([["Men", "casio-men"], ["Women", "casio-women"]]);
+  });
+
+  it("does not list Casio Men and Casio Women again as brands of their own, or under More", () => {
+    const menu = buildMenu([...today, cat("casio-men", "Casio Men"), cat("casio-women", "Casio Women")]);
+    expect(menuOf(menu, "Watch Brands")?.items.map((c) => c.slug)).toEqual(["casio-watches-kenya", "naviforce-watches-kenya"]);
+    expect(menuOf(menu, "More")).toBeUndefined();
+    expect(names(menu)).not.toContain("Casio Men");
+  });
+
+  it("shows only the Casio pages the store shows, and none when it shows neither", () => {
+    const one = buildMenu([...today, cat("casio-men", "Casio Men"), cat("casio-women", "Casio Women", false)]);
+    expect(menuOf(one, "Watch Brands")?.items[0].children?.map((c) => c.slug)).toEqual(["casio-men"]);
+    const none = buildMenu(today);
+    expect(menuOf(none, "Watch Brands")?.items[0].children).toBeUndefined();
+  });
+
+  it("gives no other brand a submenu", () => {
+    const menu = buildMenu([...today, cat("casio-men", "Casio Men"), cat("casio-women", "Casio Women")]);
+    expect(menuOf(menu, "Watch Brands")?.items.filter((c) => c.children).map((c) => c.slug)).toEqual(["casio-watches-kenya"]);
+  });
+
+  it("drops the brand's name from the start of a page's label, whatever the page is called", () => {
+    const menu = buildMenu([...today, cat("casio-men", "Casio Men's Watches"), cat("casio-women", "Women")]);
+    expect(menuOf(menu, "Watch Brands")?.items[0].children?.map((c) => c.name)).toEqual(["Men's Watches", "Women"]);
+  });
+
   it("never lists the Watch Brands page itself, because the menu is the entry for it", () => {
     expect(slugs(buildMenu(today))).not.toContain("brands");
   });

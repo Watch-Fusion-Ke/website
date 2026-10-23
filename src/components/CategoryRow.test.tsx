@@ -7,7 +7,7 @@ import type { SiteMenu } from "@/lib/siteMenu";
 const link = (name: string, slug: string, seasonal?: boolean) => ({ kind: "link" as const, category: { name, slug }, seasonal });
 const menu: SiteMenu = {
   row: [
-    { kind: "menu", group: { label: "Watch Brands", items: [{ name: "Casio", slug: "casio-watches-kenya" }, { name: "Naviforce", slug: "naviforce-watches-kenya" }] } },
+    { kind: "menu", group: { label: "Watch Brands", items: [{ name: "Casio", slug: "casio-watches-kenya", children: [{ name: "Men", slug: "casio-men" }, { name: "Women", slug: "casio-women" }] }, { name: "Naviforce", slug: "naviforce-watches-kenya" }] } },
     link("Customizable Gifts", "customizable-gifts"),
     link("Valentine's Gifts", "valentines-gifts", true),
     link("Gent's Watches", "gents-watches"),
@@ -122,6 +122,22 @@ describe("CategoryRow", () => {
   it("sits close under the header on a phone, with a smaller gap above and below than on a computer", () => {
     expect(html).toMatch(/<div class="py-3 md:py-8"/);
     expect(readFileSync("src/app/page.tsx", "utf8")).toMatch(/<div className="mt-0 md:mt-6">\s*<Suspense/);
+  });
+
+  it("lists Men and Women, indented, right under Casio in the brands menu, each a link to its own page", () => {
+    const at = (needle: string) => html.indexOf(needle);
+    expect(html).toContain('href="/shop?cat=casio-men"');
+    expect(html).toContain('href="/shop?cat=casio-women"');
+    expect(at('href="/shop?cat=casio-watches-kenya"')).toBeLessThan(at('href="/shop?cat=casio-men"'));
+    expect(at('href="/shop?cat=casio-women"')).toBeLessThan(at('href="/shop?cat=naviforce-watches-kenya"'));
+    const men = html.match(/<a[^>]*href="\/shop\?cat=casio-men"[^>]*>/)?.[0] ?? "";
+    expect(men).toMatch(/class="[^"]*\bpl-6\b/);
+    expect(html).toMatch(/<ul[^>]*aria-label="Casio"/);
+  });
+
+  it("gives a brand with no submenu no nested list", () => {
+    expect((html.match(/<ul[^>]*aria-label="Casio"/g) ?? []).length).toBe(1);
+    expect(html).not.toMatch(/<ul[^>]*aria-label="Naviforce"/);
   });
 
   it("renders nothing when there are no categories", () => {

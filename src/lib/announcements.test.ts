@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { WHATSAPP_NUMBER } from "@/lib/contact";
 import { ANNOUNCEMENTS, engravingUrl } from "@/lib/announcements";
+import { FREE_DELIVERY_FROM } from "@/lib/delivery";
 
 describe("the announcements", () => {
   it("say the shop offers custom engraving, and that deliveries can be the same day", () => {
@@ -9,8 +10,9 @@ describe("the announcements", () => {
     expect(texts).toContain("Same day deliveries");
   });
 
-  it("do not yet promise free delivery, which only goes in once the shop actually gives it", () => {
-    expect(ANNOUNCEMENTS.map((a) => a.text.toLowerCase()).join(" ")).not.toContain("free delivery");
+  it("promise free delivery from Ksh 10,000, the amount the cart gives it at", () => {
+    expect(ANNOUNCEMENTS.map((a) => a.text)).toContain("Free delivery on orders from Ksh 10,000");
+    expect(FREE_DELIVERY_FROM).toBe(10000);
   });
 
   it("send the engraving message to WhatsApp, with the shop's number and a ready message", () => {

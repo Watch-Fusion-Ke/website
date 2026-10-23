@@ -10,5 +10,6 @@ export const engravingUrl = () =>
 // A message with an address is a link; the rest are plain text.
 export const ANNOUNCEMENTS: Announcement[] = [
   { text: "We offer custom engraving", href: engravingUrl() },
+  { text: "Free delivery on orders from Ksh 10,000" },
   { text: "Same day deliveries" },
 ];

@@ -1,100 +1,36 @@
-import ProductList from "@/components/ProductList";
-import Filter from "@/components/Filter";
-import { wixClientServer } from "@/lib/wixClientServer";
-import { getPriceBounds } from "@/lib/storeProducts";
-import CategoryChips from "@/components/CategoryChips";
-import { Suspense } from "react";
+import type { Metadata } from "next";
+import { permanentRedirect } from "next/navigation";
+import ShopListing from "@/components/ShopListing";
+import { getCategoryPages } from "@/lib/categoryData";
+import { hasFilters, legacyCategoryTarget, type CategoryPage } from "@/lib/categoryPages";
 
-export const metadata = {
-    title: "Shop watches",
-    description: "Browse men's and ladies' watches and gifts from Watch Fusion Kenya, with delivery across Nairobi and Kenya.",
-    alternates: { canonical: "/shop" },
-};
+type Params = { [key: string]: string | string[] | undefined };
 
-// The store's own "All Products" category is the whole shop, which the first chip already is.
-const isAllProducts = (slug?: string) => slug === "all-products";
+export async function generateMetadata({ searchParams }: { searchParams: Promise<Params> }): Promise<Metadata> {
+    const params = await searchParams;
+    return {
+        title: "Shop watches",
+        description: "Browse men's and ladies' watches and gifts from Watch Fusion Kenya, with delivery across Nairobi and Kenya.",
+        alternates: { canonical: "/shop" },
+        // A search or a filtered list is not a page to rank: the plain shop is.
+        ...(hasFilters(params) ? { robots: { index: false, follow: true } } : {}),
+    };
+}
 
-export default async function ShopPage({
-    searchParams,
-}: {
-    searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
-}) {
-    const resolvedParams = await searchParams;
-    const catSlug = typeof resolvedParams.cat === "string" ? resolvedParams.cat : "";
-    const searched = typeof resolvedParams.name === "string" ? resolvedParams.name.trim() : "";
+export default async function ShopPage({ searchParams }: { searchParams: Promise<Params> }) {
+    const params = await searchParams;
 
-    const wixClient = await wixClientServer();
-    const bounds = await getPriceBounds((url, init) => wixClient.fetchWithAuth(url, init));
+    // The old address of a category, /shop?cat=<slug>, lives at /shop/<slug> now.
+    const moved = legacyCategoryTarget(params);
+    if (moved) permanentRedirect(moved);
 
-    let categoryId = "";
-    let categoryName = "";
-    let unknownCategory = false;
-    if (catSlug && !isAllProducts(catSlug)) {
-        try {
-            const cat = await wixClient.collections.getCollectionBySlug(catSlug);
-            categoryId = cat.collection?._id || "";
-            categoryName = cat.collection?.name || "";
-        } catch {
-            // Unknown category: show the whole shop and say so.
-        }
-        unknownCategory = categoryId === "";
-    }
-
-    // The chips come from the store's real categories, so none of them is a dead link.
-    let chips: { name: string; slug: string }[] = [];
+    let categories: CategoryPage[] = [];
     try {
-        const cats = await wixClient.collections.queryCollections().find();
-        chips = cats.items
-            .filter((c) => c.name && c.slug && !isAllProducts(c.slug))
-            .map((c) => ({ name: c.name as string, slug: c.slug as string }));
+        categories = await getCategoryPages();
     } catch (e) {
         console.error("ShopPage: category list failed", e);
     }
 
-    return (
-        <div className="px-4 md:px-8 lg:px-16 xl:px-32 2xl:px-64 relative">
-            <div className="pt-8 pb-6">
-                <h1 className="font-display text-4xl font-bold md:text-5xl mb-2">
-                    {searched ? `Results for “${searched}”` : categoryName || "Shop all products"}
-                </h1>
-                <p className="text-gray-600">
-                    {searched ? "Matching products from the whole shop" : categoryName ? `Browse our ${categoryName} collection` : "Browse our complete collection"}
-                </p>
-            </div>
-
-            {unknownCategory && (
-                <p role="status" className="mb-4 rounded-lg bg-brand-cream px-4 py-3 text-sm text-gray-700">
-                    We could not find that category, so here is everything.
-                </p>
-            )}
-
-            <CategoryChips chips={chips} activeSlug={searched ? null : categoryId !== "" ? catSlug : ""} />
-
-            <div className="mt-6 border-y border-gray-200 py-5">
-                <Suspense fallback={<div className="h-16" />}>
-                    <Filter bounds={bounds} />
-                </Suspense>
-            </div>
-
-            <div className="pb-8">
-                <Suspense fallback={<ProductListSkeleton />}>
-                    <ProductList categoryId={categoryId} searchParams={resolvedParams} />
-                </Suspense>
-            </div>
-        </div>
-    );
-}
-
-function ProductListSkeleton() {
-    return (
-        <div className="mt-6 grid grid-cols-2 gap-x-4 gap-y-12 lg:grid-cols-4">
-            {[...Array(4)].map((_, i) => (
-                <div key={i} className="flex flex-col gap-4">
-                    <div className="aspect-square w-full animate-pulse rounded-md bg-gray-200 lg:aspect-auto lg:h-80" />
-                    <div className="h-4 animate-pulse rounded bg-gray-200" />
-                    <div className="h-4 w-2/3 animate-pulse rounded bg-gray-200" />
-                </div>
-            ))}
-        </div>
-    );
+    // Called as a function, not used as a tag, so the page is one finished tree and a test can render it.
+    return ShopListing({ category: null, categories, searchParams: params });
 }

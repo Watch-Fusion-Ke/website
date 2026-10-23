@@ -1,4 +1,4 @@
-import { DELIVERY_PREFIX, areasFromRates, deliveryLineName, type DeliveryArea, type DeliveryRate } from "@/lib/delivery";
+import { DELIVERY_PREFIX, areasFromRates, deliveryLineName, isFreeDelivery, sumMoney, type DeliveryArea, type DeliveryRate } from "@/lib/delivery";
 
 // What the delivery route does, with the outside world passed in so it can be tested.
 // Docs: https://dev.wix.com/docs/api-reference/business-solutions/e-commerce/purchase-flow/cart-v2/add-line-items
@@ -31,7 +31,8 @@ export const withoutDetail = <T extends Record<string, unknown>>(body: T, produc
   return rest;
 };
 
-type CartLine = { id?: string; name?: { original?: string } };
+// A line of the cart as Cart V2 returns it: `pricing.totalPrice` is the line's final price after discounts (unit price times quantity).
+type CartLine = { id?: string; name?: { original?: string }; pricing?: { totalPrice?: { amount?: string } } };
 const lines = (cart: { lineItems?: CartLine[] } | undefined): CartLine[] => cart?.lineItems ?? [];
 const isDelivery = (line: CartLine) => (line.name?.original ?? "").startsWith(DELIVERY_PREFIX);
 
@@ -58,7 +59,8 @@ const readCart = async (deps: DeliveryDeps, cartId: string): Promise<CartRead> =
 };
 
 // Puts the chosen area's fee into the shopper's cart as one delivery line, replacing an earlier one.
-// The shopper sends only an area id. The price always comes from the shop's own table.
+// The shopper sends only an area id. The price always comes from the shop's own table, and is nothing when the goods in the cart,
+// as the shop reads them from Wix, reach the free-delivery amount.
 export const chooseDeliveryArea = async (deps: DeliveryDeps, areaId: unknown): Promise<Result> => {
   if (typeof areaId !== "string" || areaId.length === 0 || areaId.length > 100) {
     return { status: 400, body: { error: "Choose a delivery area." } };
@@ -76,10 +78,14 @@ export const chooseDeliveryArea = async (deps: DeliveryDeps, areaId: unknown): P
   const cartId = await deps.getCartId();
   if (!cartId) return { status: 409, body: { error: "Your cart is empty." } };
 
+  let free = false;
+  let fee = area.price;
   try {
     const read = await readCart(deps, cartId);
     if ("failed" in read) return { status: 502, body: { error: "We could not reach your cart.", unavailable: true, detail: read.failed } };
     const oldIds = read.lines.filter(isDelivery).map((l) => l.id).filter((id): id is string => Boolean(id));
+    free = isFreeDelivery(sumMoney(read.lines.filter((l) => !isDelivery(l)).map((l) => l.pricing?.totalPrice?.amount)));
+    fee = free ? 0 : area.price;
 
     const add = await deps.adminFetch(`/ecom/v2/carts/${cartId}/add-line-items`, {
       method: "POST",
@@ -88,13 +94,20 @@ export const chooseDeliveryArea = async (deps: DeliveryDeps, areaId: unknown): P
           {
             name: { original: deliveryLineName(area) },
             quantityInfo: { requestedQuantity: 1, fixedQuantity: true },
-            pricing: { price: { amount: `${area.price.toFixed(2)}` } },
+            pricing: { price: { amount: `${fee.toFixed(2)}` } },
             attributes: { itemType: { preset: "SERVICE" } },
           },
         ],
       }),
     });
-    if (!add.ok) return { status: 502, body: { error: "We could not add the delivery fee.", unavailable: true, detail: await refusal("add fee", add) } };
+    if (!add.ok) {
+      const detail = await refusal("add fee", add);
+      // A free line that Wix will not take must not leave the earlier paid fee in the cart for a basket that now qualifies, so that fee goes.
+      if (free && oldIds.length > 0) {
+        await deps.adminFetch(`/ecom/v2/carts/${cartId}/remove-line-items`, { method: "POST", body: JSON.stringify({ lineItemIds: oldIds }) }).catch(() => null);
+      }
+      return { status: 502, body: { error: "We could not add the delivery fee.", unavailable: true, detail } };
+    }
 
     // Keep exactly one delivery line: the one just added. Anything else, including a line from a request
     // that ran at the same moment, goes. If that fails the new line is taken back out too, so the cart never holds two fees.
@@ -127,7 +140,7 @@ export const chooseDeliveryArea = async (deps: DeliveryDeps, areaId: unknown): P
     return { status: 502, body: { error: "We could not add the delivery fee.", unavailable: true, detail } };
   }
 
-  return { status: 200, body: { areaId: area.id, label: `${area.place}${area.road ? `, ${area.road}` : ""}`, price: area.price } };
+  return { status: 200, body: { areaId: area.id, label: `${area.place}${area.road ? `, ${area.road}` : ""}`, price: fee, free } };
 };
 
 // Takes the delivery line out of the cart, for example when the last product is removed.

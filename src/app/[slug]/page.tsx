@@ -2,6 +2,7 @@ import Add from "@/components/Add";
 import CustomizeProducts from "@/components/CustomizeProducts";
 import ProductImages from "@/components/ProductImages";
 import OrderOnWhatsApp from "@/components/OrderOnWhatsApp";
+import ProductDescription from "@/components/ProductDescription";
 import { wixClientServer } from "@/lib/wixClientServer";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
@@ -149,14 +150,7 @@ const SinglePage = async ({ params }: Props) => {
 
                 <div className="h-[2px] bg-gray-100" />
 
-                {product.description && (
-                    <div
-                        className="text-gray-600 leading-relaxed"
-                        dangerouslySetInnerHTML={{
-                            __html: DOMPurify.sanitize(product.description),
-                        }}
-                    />
-                )}
+                {product.description && <ProductDescription html={product.description} />}
 
                 {/* Additional Info */}
                 {product.additionalInfoSections?.map((section: any) => (

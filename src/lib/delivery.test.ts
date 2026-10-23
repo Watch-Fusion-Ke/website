@@ -1,7 +1,12 @@
 import { describe, expect, it } from "vitest";
 import {
   DELIVERY_PREFIX,
+  FREE_DELIVERY_FROM,
   areasFromRates,
+  feeToRefresh,
+  goodsTotal,
+  isFreeDelivery,
+  sumMoney,
   deliveryLineName,
   formatKes,
   isDeliveryLine,
@@ -125,5 +130,72 @@ describe("needsDeliveryArea", () => {
     expect(needsDeliveryArea(true, [product, fee])).toBe(false);
     expect(needsDeliveryArea(false, [product])).toBe(false);
     expect(needsDeliveryArea(false, [product, fee])).toBe(false);
+  });
+});
+
+describe("free delivery", () => {
+  it("starts at Ksh 10,000 of goods: exactly 10,000 is free, and so is anything over", () => {
+    expect(FREE_DELIVERY_FROM).toBe(10000);
+    expect(isFreeDelivery(9999.99)).toBe(false);
+    expect(isFreeDelivery(10000)).toBe(true);
+    expect(isFreeDelivery(10000.01)).toBe(true);
+    expect(isFreeDelivery(13000)).toBe(true);
+  });
+
+  it("adds in whole cents, so a basket of exactly Ksh 10,000 in odd amounts is free and one cent less is not", () => {
+    expect(sumMoney(["4742.70", "4148.02", "1109.28"])).toBe(10000);
+    expect(isFreeDelivery(sumMoney(["4742.70", "4148.02", "1109.28"]))).toBe(true);
+    expect(isFreeDelivery(sumMoney(["4742.70", "4148.02", "1109.27"]))).toBe(false);
+    expect(sumMoney(["0.1", "0.2"])).toBe(0.3);
+  });
+
+  it("skips an amount it cannot read and treats an empty list as nothing", () => {
+    expect(sumMoney(["100", "x", null, undefined, ""])).toBe(100);
+    expect(sumMoney([])).toBe(0);
+  });
+
+  it("is never free when the total is not a real number", () => {
+    expect(isFreeDelivery(NaN)).toBe(false);
+    expect(isFreeDelivery(Infinity)).toBe(false);
+  });
+
+  it("adds up each product's price times its quantity, and skips a line it cannot read", () => {
+    expect(goodsTotal([{ price: { amount: "6500.00" }, quantity: 2 }, { price: { amount: "3000" }, quantity: 1 }])).toBe(16000);
+    expect(goodsTotal([{ price: { amount: "6500" }, quantity: 1 }, { price: { amount: "x" }, quantity: 3 }, { quantity: 2 }, { price: { amount: "100" } }])).toBe(6500);
+    expect(goodsTotal([])).toBe(0);
+  });
+});
+
+describe("feeToRefresh", () => {
+  const gigiri = areas.find((a) => a.place === "Gigiri")!;
+  const watch = (amount: string, quantity = 1) => ({ productName: { original: "Watch" }, price: { amount }, quantity });
+  const fee = (amount: string) => ({ productName: { original: deliveryLineName(gigiri) }, price: { amount }, quantity: 1 });
+
+  it("asks for a refresh when the basket has gone over the line but the fee is still charged", () => {
+    expect(feeToRefresh([watch("6500", 2), fee("450")], areas)).toEqual(gigiri);
+  });
+
+  it("asks for a refresh when the basket has dropped back but the delivery is still free", () => {
+    expect(feeToRefresh([watch("6500"), fee("0")], areas)).toEqual(gigiri);
+  });
+
+  it("leaves a fee that already matches the basket alone", () => {
+    expect(feeToRefresh([watch("6500", 2), fee("0")], areas)).toBeNull();
+    expect(feeToRefresh([watch("6500"), fee("450")], areas)).toBeNull();
+  });
+
+  it("does not count the delivery line itself as goods", () => {
+    expect(feeToRefresh([watch("6000"), fee("450")], areas)).toBeNull();
+    expect(feeToRefresh([watch("9900"), fee("450")], areas)).toBeNull();
+  });
+
+  it("does nothing without a delivery line, without products, or for an area the shop no longer lists", () => {
+    expect(feeToRefresh([watch("20000")], areas)).toBeNull();
+    expect(feeToRefresh([fee("450")], areas)).toBeNull();
+    expect(feeToRefresh([watch("20000"), { productName: { original: "Delivery: Mars, Red Road" }, price: { amount: "450" }, quantity: 1 }], areas)).toBeNull();
+  });
+
+  it("does nothing when the fee's price cannot be read", () => {
+    expect(feeToRefresh([watch("20000"), fee("n/a")], areas)).toBeNull();
   });
 });

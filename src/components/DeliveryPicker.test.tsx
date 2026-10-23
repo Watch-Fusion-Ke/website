@@ -18,7 +18,8 @@ const view = (extra: Partial<React.ComponentProps<typeof DeliveryPickerView>> = 
 describe("DeliveryPickerView", () => {
   it("asks for the area with a visible label, as a search box with a list of choices", () => {
     const html = view();
-    expect(html).toMatch(/<label[^>]*>Where should we deliver\?<\/label>/);
+    expect(html).toMatch(/<label[^>]*>What(?:&#x27;|')s your delivery address\?<\/label>/);
+    expect(html).not.toContain("Where should we deliver");
     expect(html).toContain('role="combobox"');
     expect(html).toContain('aria-autocomplete="list"');
   });
@@ -48,6 +49,28 @@ describe("DeliveryPickerView", () => {
     expect(html).toContain("KES 450");
     expect(html).toMatch(/>Change<\/button>/);
     expect(html).not.toContain('role="combobox"');
+  });
+
+  it("shows Free instead of a fee on every listed area when the basket qualifies", () => {
+    const html = view({ query: "gig", free: true });
+    expect(html).toMatch(/Free/);
+    expect(html).not.toContain("KES 450");
+  });
+
+  it("still shows the fee when the basket does not qualify", () => {
+    expect(view({ query: "gig" })).toContain("KES 450");
+  });
+
+  it("says the chosen area's delivery is free, in place of a fee of nothing", () => {
+    const html = view({ selectedLabel: "Gigiri, Limuru Road", selectedPrice: 0, free: true });
+    expect(html).toMatch(/Free delivery/);
+    expect(html).not.toContain("KES 0");
+  });
+
+  it("says Free for a chosen area only when the fee in the cart really is nothing, never when a fee is still charged", () => {
+    const html = view({ selectedLabel: "Gigiri, Limuru Road", selectedPrice: 450, free: true });
+    expect(html).not.toMatch(/Free delivery/);
+    expect(html).toContain("Delivery fee KES 450");
   });
 
   it("tells the shopper about an error and does not hide the search", () => {

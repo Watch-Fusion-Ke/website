@@ -1,6 +1,6 @@
 import type { DeliveryRate } from "@/lib/delivery";
 
-// The Wix content collection that holds the delivery table. Mercy edits it in the Wix dashboard.
+// The Wix content collection that holds the delivery table. The shop edits it in the Wix dashboard.
 // Fields: title (the places on a rate, separated by "/"), road, price (number), isActive (switch).
 export const DELIVERY_COLLECTION = "DeliveryRates";
 

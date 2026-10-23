@@ -8,10 +8,10 @@ import { clampLeft, closed, hoverIn, hoverOut, press, type MenuState, type SiteM
 // The pill background is the theme's surface colour, set only below the tablet width: a plain bg-white class would be turned into a
 // grey box behind each word by the dark theme's own bg-white rule, which beats the tablet override.
 const entry =
-  "inline-flex min-h-11 flex-shrink-0 items-center whitespace-nowrap rounded-full border border-gray-200 px-4 text-sm font-semibold text-gray-700 transition-colors duration-200 hover:border-black hover:bg-black hover:text-white max-md:bg-[var(--surface)] " +
+  "inline-flex min-h-11 flex-shrink-0 items-center whitespace-nowrap rounded-full border border-gray-200 px-2.5 text-xs font-semibold text-gray-700 transition-colors duration-200 hover:border-black hover:bg-black hover:text-white max-md:bg-[var(--surface)] " +
   "md:min-h-0 md:rounded-none md:border-0 md:px-0 md:py-1.5 md:text-xl md:leading-[25.5px] md:text-gray-800 md:underline-offset-4 md:decoration-2 md:decoration-brand-gold md:hover:bg-transparent md:hover:text-gray-800 md:hover:underline";
 const seasonalEntry =
-  "inline-flex min-h-11 flex-shrink-0 items-center whitespace-nowrap rounded-full bg-brand-gold px-4 text-sm font-semibold text-brand-navy transition-colors duration-200 hover:brightness-95 md:min-h-0 md:py-2 md:text-base";
+  "inline-flex min-h-11 flex-shrink-0 items-center whitespace-nowrap rounded-full bg-brand-gold px-2.5 text-xs font-semibold text-brand-navy transition-colors duration-200 hover:brightness-95 md:min-h-0 md:px-4 md:py-2 md:text-base";
 // The floating box under a menu button: light and flat, a thin border and a small shadow, in the page's own colour. The outer box has a
 // little transparent room at the top so the pointer can cross from the button to the links without the menu closing. These classes are
 // only on the outer box while it is open: a closed box carries no display class, because a display class would override the hidden
@@ -95,10 +95,11 @@ const CategoryRow = ({ menu }: { menu: SiteMenu }) => {
     };
   }, [open]);
 
-  if (menu.primary.length + menu.groups.length + menu.seasonal.length === 0) return null;
+  if (menu.row.length === 0) return null;
+  const groups = menu.row.flatMap((e) => (e.kind === "menu" ? [e.group] : []));
 
   return (
-    <div ref={root} className="py-4 md:py-8">
+    <div ref={root} className="py-3 md:py-8">
       <nav
         aria-label="Shop by category"
         className="relative"
@@ -111,51 +112,53 @@ const CategoryRow = ({ menu }: { menu: SiteMenu }) => {
         }}
       >
         <div className="relative">
-        <div className="flex gap-3 overflow-x-auto px-4 pr-10 scrollbar-hide md:items-center md:justify-center md:gap-12 md:pr-4 lg:gap-16">
-          {menu.primary.map((c) => (
-            <Link key={c.slug} href={shopHref(c.slug)} className={entry}>
-              {c.name}
-            </Link>
-          ))}
-          {menu.groups.map((g, i) => (
-            <button
-              key={g.label}
-              type="button"
-              aria-expanded={open === g.label}
-              aria-controls={`${id}-${i}`}
-              onPointerEnter={(e) => {
-                if (!hovering(e)) return;
-                cancelLeave();
-                byKeyboard.current = false;
-                place(e.currentTarget);
-                setState((s) => hoverIn(s, g.label));
-              }}
-              onClick={(e) => {
-                byKeyboard.current = e.detail === 0;
-                lastButton.current = e.currentTarget;
-                place(e.currentTarget);
-                setState((s) => press(s, g.label));
-              }}
-              className={entry}
-            >
-              {g.label}
-              <Chevron open={open === g.label} />
-            </button>
-          ))}
-          {menu.seasonal.map((c) => (
-            <Link key={c.slug} href={`/shop?cat=${c.slug}`} className={seasonalEntry}>
-              {c.name}
-            </Link>
-          ))}
+        <div className="flex gap-1.5 overflow-x-auto px-4 pr-8 scrollbar-hide md:items-center md:justify-center md:gap-12 md:pr-4 lg:gap-16">
+          {menu.row.map((e) => {
+            if (e.kind === "link") {
+              const c = e.category;
+              return (
+                <Link key={c.slug} href={shopHref(c.slug)} className={e.seasonal ? seasonalEntry : entry}>
+                  {c.name}
+                </Link>
+              );
+            }
+            const g = e.group;
+            const i = groups.indexOf(g);
+            return (
+              <button
+                key={g.label}
+                type="button"
+                aria-expanded={open === g.label}
+                aria-controls={`${id}-${i}`}
+                onPointerEnter={(ev) => {
+                  if (!hovering(ev)) return;
+                  cancelLeave();
+                  byKeyboard.current = false;
+                  place(ev.currentTarget);
+                  setState((s) => hoverIn(s, g.label));
+                }}
+                onClick={(ev) => {
+                  byKeyboard.current = ev.detail === 0;
+                  lastButton.current = ev.currentTarget;
+                  place(ev.currentTarget);
+                  setState((s) => press(s, g.label));
+                }}
+                className={entry}
+              >
+                {g.label}
+                <Chevron open={open === g.label} />
+              </button>
+            );
+          })}
         </div>
         {/* Right-edge fade + chevron: hints that the strip scrolls on a phone */}
-        <div className="pointer-events-none absolute inset-y-0 right-0 flex w-14 items-center justify-end bg-gradient-to-l from-white via-white/80 to-transparent dark:from-[#0a0a0a] dark:via-[#0a0a0a]/80 md:hidden">
+        <div className="pointer-events-none absolute inset-y-0 right-0 flex w-8 items-center justify-end bg-gradient-to-l from-white via-white/80 to-transparent dark:from-[#0a0a0a] dark:via-[#0a0a0a]/80 md:hidden">
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="mr-1 text-gray-400">
             <polyline points="9 18 15 12 9 6" />
           </svg>
         </div>
         </div>
-        {menu.groups.map((g, i) => (
+        {groups.map((g, i) => (
           <div key={g.label} id={`${id}-${i}`} data-menu={g.label} hidden={open !== g.label} className={open === g.label ? panelOuter : undefined}>
             <div className={panelInner}>
               <ul aria-label={g.label}>

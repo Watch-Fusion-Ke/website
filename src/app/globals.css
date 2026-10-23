@@ -209,3 +209,18 @@ html {
 @media (prefers-reduced-motion: reduce) {
   .menu-in { animation: none; }
 }
+
+/* The strip of announcements above the header slides left, stops while it is pointed at or tabbed into, and stays still (showing its first
+   run, centred) for people who ask for less motion. */
+@keyframes marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+.marquee-track { animation: marquee 48s linear infinite; }
+.marquee:hover .marquee-track,
+.marquee:focus-within .marquee-track { animation-play-state: paused; }
+@media (prefers-reduced-motion: reduce) {
+  .marquee-track { animation: none; width: 100%; justify-content: center; }
+  .marquee-track > div:nth-child(2),
+  .marquee-track > div:first-child > div:not(:first-child) { display: none; }
+}

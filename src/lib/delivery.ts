@@ -14,11 +14,11 @@ export const deliveryLineName = (area: Pick<DeliveryArea, "place" | "road">): st
 export const isDeliveryLine = (item: { productName?: { original?: string | null } | null }): boolean =>
   (item.productName?.original ?? "").startsWith(DELIVERY_PREFIX);
 
-// Delivery is free when the goods in the basket come to more than this many shillings (exactly this much still pays).
-export const FREE_DELIVERY_ABOVE = 10000;
+// Delivery is free when the goods in the basket come to this many shillings or more.
+export const FREE_DELIVERY_FROM = 10000;
 
-// Compared in whole cents, so a rounding crumb in a sum of odd amounts can never tip exactly Ksh 10,000 over the line.
-export const isFreeDelivery = (goods: number): boolean => Number.isFinite(goods) && Math.round(goods * 100) > FREE_DELIVERY_ABOVE * 100;
+// Compared in whole cents, so a rounding crumb in a sum of odd amounts cannot move a basket across the line.
+export const isFreeDelivery = (goods: number): boolean => Number.isFinite(goods) && Math.round(goods * 100) >= FREE_DELIVERY_FROM * 100;
 
 // Adds money in whole cents and gives shillings back. An amount that is missing or not a number is left out, so a fault
 // makes delivery cost money rather than giving it away.

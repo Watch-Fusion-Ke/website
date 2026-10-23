@@ -105,11 +105,14 @@ describe("chooseDeliveryArea", () => {
       expect(addBody(calls).customItems[0].pricing.price.amount).toBe("0.00");
     });
 
-    it("still charges the area's fee at exactly Ksh 10,000 and below", async () => {
+    it("is free at exactly Ksh 10,000, and still charges the area's fee below it", async () => {
       const exact = setup({ goods: [{ total: "10000", quantity: 2 }] });
       const r = await chooseDeliveryArea(exact.deps, gigiri.id);
-      expect(addBody(exact.calls).customItems[0].pricing.price.amount).toBe("450.00");
-      expect(r.body).toMatchObject({ price: 450, free: false });
+      expect(addBody(exact.calls).customItems[0].pricing.price.amount).toBe("0.00");
+      expect(r.body).toMatchObject({ price: 0, free: true });
+      const justUnder = setup({ goods: [{ total: "9999.99" }] });
+      await chooseDeliveryArea(justUnder.deps, gigiri.id);
+      expect(addBody(justUnder.calls).customItems[0].pricing.price.amount).toBe("450.00");
       const small = setup({ goods: [{ total: "6500" }] });
       await chooseDeliveryArea(small.deps, gigiri.id);
       expect(addBody(small.calls).customItems[0].pricing.price.amount).toBe("450.00");
@@ -133,10 +136,13 @@ describe("chooseDeliveryArea", () => {
       expect(addBody(calls).customItems[0].pricing.price.amount).toBe("0.00");
     });
 
-    it("sums to the cent: exactly Ksh 10,000 in odd amounts still pays", async () => {
-      const { deps, calls } = setup({ goods: [{ total: "4742.70" }, { total: "4148.02" }, { total: "1109.28" }] });
-      await chooseDeliveryArea(deps, gigiri.id);
-      expect(addBody(calls).customItems[0].pricing.price.amount).toBe("450.00");
+    it("sums to the cent: exactly Ksh 10,000 in odd amounts is free, one cent less pays", async () => {
+      const exact = setup({ goods: [{ total: "4742.70" }, { total: "4148.02" }, { total: "1109.28" }] });
+      await chooseDeliveryArea(exact.deps, gigiri.id);
+      expect(addBody(exact.calls).customItems[0].pricing.price.amount).toBe("0.00");
+      const under = setup({ goods: [{ total: "4742.70" }, { total: "4148.02" }, { total: "1109.27" }] });
+      await chooseDeliveryArea(under.deps, gigiri.id);
+      expect(addBody(under.calls).customItems[0].pricing.price.amount).toBe("450.00");
     });
 
     it("takes the earlier fee out when the free line is refused, so the shopper is not left paying a fee they no longer owe", async () => {

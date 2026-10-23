@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   DELIVERY_PREFIX,
-  FREE_DELIVERY_ABOVE,
+  FREE_DELIVERY_FROM,
   areasFromRates,
   feeToRefresh,
   goodsTotal,
@@ -134,18 +134,18 @@ describe("needsDeliveryArea", () => {
 });
 
 describe("free delivery", () => {
-  it("starts above Ksh 10,000 of goods: exactly 10,000 still pays, anything over is free", () => {
-    expect(FREE_DELIVERY_ABOVE).toBe(10000);
-    expect(isFreeDelivery(9999)).toBe(false);
-    expect(isFreeDelivery(10000)).toBe(false);
+  it("starts at Ksh 10,000 of goods: exactly 10,000 is free, and so is anything over", () => {
+    expect(FREE_DELIVERY_FROM).toBe(10000);
+    expect(isFreeDelivery(9999.99)).toBe(false);
+    expect(isFreeDelivery(10000)).toBe(true);
     expect(isFreeDelivery(10000.01)).toBe(true);
     expect(isFreeDelivery(13000)).toBe(true);
   });
 
-  it("adds in whole cents, so a basket of exactly Ksh 10,000 can never tip over by a rounding crumb", () => {
+  it("adds in whole cents, so a basket of exactly Ksh 10,000 in odd amounts is free and one cent less is not", () => {
     expect(sumMoney(["4742.70", "4148.02", "1109.28"])).toBe(10000);
-    expect(isFreeDelivery(sumMoney(["4742.70", "4148.02", "1109.28"]))).toBe(false);
-    expect(isFreeDelivery(sumMoney(["4742.70", "4148.02", "1109.29"]))).toBe(true);
+    expect(isFreeDelivery(sumMoney(["4742.70", "4148.02", "1109.28"]))).toBe(true);
+    expect(isFreeDelivery(sumMoney(["4742.70", "4148.02", "1109.27"]))).toBe(false);
     expect(sumMoney(["0.1", "0.2"])).toBe(0.3);
   });
 

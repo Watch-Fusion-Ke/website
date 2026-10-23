@@ -60,7 +60,7 @@ const readCart = async (deps: DeliveryDeps, cartId: string): Promise<CartRead> =
 
 // Puts the chosen area's fee into the shopper's cart as one delivery line, replacing an earlier one.
 // The shopper sends only an area id. The price always comes from the shop's own table, and is nothing when the goods in the cart,
-// as the shop reads them from Wix, come to more than the free-delivery amount.
+// as the shop reads them from Wix, reach the free-delivery amount.
 export const chooseDeliveryArea = async (deps: DeliveryDeps, areaId: unknown): Promise<Result> => {
   if (typeof areaId !== "string" || areaId.length === 0 || areaId.length > 100) {
     return { status: 400, body: { error: "Choose a delivery area." } };

@@ -50,6 +50,22 @@ describe("DeliveryPickerView", () => {
     expect(html).not.toContain('role="combobox"');
   });
 
+  it("shows Free instead of a fee on every listed area when the basket qualifies", () => {
+    const html = view({ query: "gig", free: true });
+    expect(html).toMatch(/Free/);
+    expect(html).not.toContain("KES 450");
+  });
+
+  it("still shows the fee when the basket does not qualify", () => {
+    expect(view({ query: "gig" })).toContain("KES 450");
+  });
+
+  it("says the chosen area's delivery is free, in place of a fee of nothing", () => {
+    const html = view({ selectedLabel: "Gigiri, Limuru Road", selectedPrice: 0, free: true });
+    expect(html).toMatch(/Free delivery/);
+    expect(html).not.toContain("KES 0");
+  });
+
   it("tells the shopper about an error and does not hide the search", () => {
     const html = view({ error: "We could not save that." });
     expect(html).toContain("We could not save that.");

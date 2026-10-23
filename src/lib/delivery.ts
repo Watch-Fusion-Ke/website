@@ -14,6 +14,22 @@ export const deliveryLineName = (area: Pick<DeliveryArea, "place" | "road">): st
 export const isDeliveryLine = (item: { productName?: { original?: string | null } | null }): boolean =>
   (item.productName?.original ?? "").startsWith(DELIVERY_PREFIX);
 
+// Delivery is free when the goods in the basket come to more than this many shillings (exactly this much still pays).
+export const FREE_DELIVERY_ABOVE = 10000;
+
+export const isFreeDelivery = (goods: number): boolean => Number.isFinite(goods) && goods > FREE_DELIVERY_ABOVE;
+
+type PricedLine = { price?: { amount?: string | null } | null; quantity?: number | null };
+
+// What the shopper is paying for the goods themselves: each product's price times its quantity. Pass products only, never the delivery line.
+// A line whose price or quantity cannot be read is left out, so a fault makes delivery cost money rather than giving it away.
+export const goodsTotal = (lines: PricedLine[]): number =>
+  lines.reduce((sum, line) => {
+    const price = Number(line.price?.amount);
+    const quantity = Number(line.quantity);
+    return Number.isFinite(price) && Number.isFinite(quantity) && line.price?.amount != null && line.quantity != null ? sum + price * quantity : sum;
+  }, 0);
+
 // With delivery fees on, a cart cannot go to checkout until it holds a delivery line.
 // If the shop could not add the fee (`unavailable`), checkout is let through so a fault never stops a sale.
 export const needsDeliveryArea = (
@@ -21,6 +37,22 @@ export const needsDeliveryArea = (
   lines: { productName?: { original?: string | null } | null }[],
   unavailable = false
 ): boolean => enabled && !unavailable && !lines.some(isDeliveryLine);
+
+// The delivery area to price again, when the fee in the cart no longer matches the basket: charged although the goods now qualify,
+// or free although they no longer do. Nothing when there is nothing to fix, or when the shop cannot tell which area the line is for.
+export const feeToRefresh = (
+  lines: (PricedLine & { productName?: { original?: string | null } | null })[],
+  areas: DeliveryArea[]
+): DeliveryArea | null => {
+  const line = lines.find(isDeliveryLine);
+  const products = lines.filter((l) => !isDeliveryLine(l));
+  if (!line || products.length === 0) return null;
+  const area = areas.find((a) => deliveryLineName(a) === line.productName?.original);
+  const charged = Number(line.price?.amount);
+  if (!area || line.price?.amount == null || !Number.isFinite(charged)) return null;
+  const expected = isFreeDelivery(goodsTotal(products)) ? 0 : area.price;
+  return charged !== expected ? area : null;
+};
 
 export const formatKes = (n: number): string => `KES ${n.toLocaleString("en-US", { maximumFractionDigits: 0 })}`;
 

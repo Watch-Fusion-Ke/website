@@ -15,6 +15,8 @@ type ViewProps = {
   error: string | null;
   selectedLabel?: string | null;
   selectedPrice?: number | null;
+  // Delivery is free for this basket: every area shows Free, and a chosen area says so.
+  free?: boolean;
   activeIndex?: number;
   onKeyDown?: (e: React.KeyboardEvent<HTMLInputElement>) => void;
   // Whether the list of matches is showing. It closes on Escape or a press outside, and opens again on typing.
@@ -33,6 +35,7 @@ export const DeliveryPickerView = ({
   error,
   selectedLabel,
   selectedPrice,
+  free = false,
   activeIndex = -1,
   onKeyDown,
   open = true,
@@ -49,7 +52,7 @@ export const DeliveryPickerView = ({
         <div>
           <p className="text-xs font-medium text-gray-500">Delivering to</p>
           <p className="font-semibold text-gray-900">{selectedLabel}</p>
-          {selectedPrice != null && <p className="text-sm text-gray-700">Delivery fee {formatKes(selectedPrice)}</p>}
+          {selectedPrice != null && (free || selectedPrice === 0 ? <p className="text-sm font-semibold text-gray-700">Free delivery</p> : <p className="text-sm text-gray-700">Delivery fee {formatKes(selectedPrice)}</p>)}
         </div>
         <button type="button" onClick={onChange} disabled={busy} className="py-1 text-sm font-medium text-gray-700 underline underline-offset-4 hover:text-gray-900 disabled:opacity-50">
           Change
@@ -97,7 +100,7 @@ export const DeliveryPickerView = ({
                 <span className="font-medium text-gray-900">{area.place}</span>
                 {area.road && <span className="block text-xs text-gray-500">{area.road}</span>}
               </span>
-              <span className="whitespace-nowrap font-semibold text-gray-900">{formatKes(area.price)}</span>
+              <span className="whitespace-nowrap font-semibold text-gray-900">{free ? "Free" : formatKes(area.price)}</span>
             </li>
           ))}
         </ul>
@@ -124,11 +127,12 @@ type Props = {
   areas: DeliveryArea[];
   selectedLabel: string | null;
   selectedPrice: number | null;
+  free?: boolean;
   // Saves the chosen area. Rejects with a message the shopper can read when it fails.
   onChosen: (area: DeliveryArea) => Promise<void>;
 };
 
-const DeliveryPicker = ({ areas, selectedLabel, selectedPrice, onChosen }: Props) => {
+const DeliveryPicker = ({ areas, selectedLabel, selectedPrice, free = false, onChosen }: Props) => {
   const [query, setQuery] = useState("");
   const [editing, setEditing] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -190,6 +194,7 @@ const DeliveryPicker = ({ areas, selectedLabel, selectedPrice, onChosen }: Props
       error={error}
       selectedLabel={editing ? null : selectedLabel}
       selectedPrice={selectedPrice}
+      free={free}
       activeIndex={active}
       onKeyDown={onKeyDown}
     />

@@ -10,10 +10,12 @@ const gigiri = areasFromRates(rates).find((a) => a.place === "Gigiri")!;
 
 type Call = { method: string; path: string; body?: unknown };
 
-const setup = (opts: { cartId?: string | null; existing?: { id: string; name: string }[]; ratesFail?: boolean; wixStatus?: Record<string, number> } = {}) => {
+const setup = (opts: { cartId?: string | null; existing?: { id: string; name: string; price?: string }[]; ratesFail?: boolean; wixStatus?: Record<string, number>; goods?: { price?: string; quantity?: number }[] } = {}) => {
   const calls: Call[] = [];
   const cartId = "cartId" in opts ? opts.cartId : "cart-1";
   const existing = opts.existing ?? [];
+  const goods = (opts.goods ?? [{}]).map((g, i) => ({ id: i === 0 ? "p1" : `p${i + 1}`, name: { original: "Watch" }, ...(g.price ? { price: { amount: g.price } } : {}), ...(g.quantity ? { quantity: g.quantity } : {}) }));
+  const lineOf = (e: { id: string; name: string; price?: string }) => ({ id: e.id, name: { original: e.name }, ...(e.price ? { price: { amount: e.price } } : {}), quantity: 1 });
   const deps: DeliveryDeps = {
     loadRates: async () => {
       if (opts.ratesFail) throw new Error("no collection");
@@ -27,10 +29,10 @@ const setup = (opts: { cartId?: string | null; existing?: { id: string; name: st
       const status = opts.wixStatus?.[`${method} ${path.split("/").slice(-1)[0]}`] ?? 200;
       if (status !== 200) return new Response(JSON.stringify({ message: "nope" }), { status });
       if (method === "GET") {
-        return new Response(JSON.stringify({ cart: { id: cartId, lineItems: [{ id: "p1", name: { original: "Watch" } }, ...existing.map((e) => ({ id: e.id, name: { original: e.name } }))] } }), { status: 200 });
+        return new Response(JSON.stringify({ cart: { id: cartId, lineItems: [...goods, ...existing.map(lineOf)] } }), { status: 200 });
       }
       if (path.endsWith("/add-line-items")) {
-        return new Response(JSON.stringify({ cart: { id: cartId, lineItems: [{ id: "p1", name: { original: "Watch" } }, ...existing.map((e) => ({ id: e.id, name: { original: e.name } })), { id: "new-1", name: { original: body.customItems[0].name.original } }] } }), { status: 200 });
+        return new Response(JSON.stringify({ cart: { id: cartId, lineItems: [...goods, ...existing.map(lineOf), { id: "new-1", name: { original: body.customItems[0].name.original } }] } }), { status: 200 });
       }
       return new Response(JSON.stringify({ cart: { id: cartId, lineItems: [] } }), { status: 200 });
     },
@@ -75,6 +77,54 @@ describe("chooseDeliveryArea", () => {
           attributes: { itemType: { preset: "SERVICE" } },
         },
       ],
+    });
+  });
+
+  describe("free delivery", () => {
+    const addBody = (calls: Call[]) => calls.find((c) => c.path.endsWith("/add-line-items"))!.body as { customItems: { name: { original: string }; pricing: { price: { amount: string } } }[] };
+
+    it("charges nothing when the products come to more than Ksh 10,000, and keeps the area's name on the line", async () => {
+      const { deps, calls } = setup({ goods: [{ price: "6500.00", quantity: 2 }] });
+      const r = await chooseDeliveryArea(deps, gigiri.id);
+      expect(r.status).toBe(200);
+      const item = addBody(calls).customItems[0];
+      expect(item.pricing.price.amount).toBe("0.00");
+      expect(item.name.original).toBe("Delivery: Gigiri, Limuru Road");
+      expect(r.body).toMatchObject({ areaId: gigiri.id, price: 0, free: true });
+    });
+
+    it("adds up several products, not just one", async () => {
+      const { deps, calls } = setup({ goods: [{ price: "6000", quantity: 1 }, { price: "4500", quantity: 1 }] });
+      await chooseDeliveryArea(deps, gigiri.id);
+      expect(addBody(calls).customItems[0].pricing.price.amount).toBe("0.00");
+    });
+
+    it("still charges the area's fee at exactly Ksh 10,000 and below", async () => {
+      const exact = setup({ goods: [{ price: "5000", quantity: 2 }] });
+      const r = await chooseDeliveryArea(exact.deps, gigiri.id);
+      expect(addBody(exact.calls).customItems[0].pricing.price.amount).toBe("450.00");
+      expect(r.body).toMatchObject({ price: 450, free: false });
+      const small = setup({ goods: [{ price: "6500", quantity: 1 }] });
+      await chooseDeliveryArea(small.deps, gigiri.id);
+      expect(addBody(small.calls).customItems[0].pricing.price.amount).toBe("450.00");
+    });
+
+    it("charges the fee when a product's price cannot be read, so a fault never gives delivery away", async () => {
+      const { deps, calls } = setup({ goods: [{}, {}] });
+      await chooseDeliveryArea(deps, gigiri.id);
+      expect(addBody(calls).customItems[0].pricing.price.amount).toBe("450.00");
+    });
+
+    it("does not count an earlier delivery line towards the goods", async () => {
+      const { deps, calls } = setup({ goods: [{ price: "6000", quantity: 1 }], existing: [{ id: "old-1", name: "Delivery: Kilimani, Ngong Road", price: "9000" }] });
+      await chooseDeliveryArea(deps, gigiri.id);
+      expect(addBody(calls).customItems[0].pricing.price.amount).toBe("450.00");
+    });
+
+    it("works out the fee from the cart on the server, never from anything the shopper sends", async () => {
+      const { deps, calls } = setup({ goods: [{ price: "100", quantity: 1 }] });
+      await chooseDeliveryArea(deps, gigiri.id);
+      expect(addBody(calls).customItems[0].pricing.price.amount).toBe("450.00");
     });
   });
 

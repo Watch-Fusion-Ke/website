@@ -14,6 +14,37 @@ export const deliveryLineName = (area: Pick<DeliveryArea, "place" | "road">): st
 export const isDeliveryLine = (item: { productName?: { original?: string | null } | null }): boolean =>
   (item.productName?.original ?? "").startsWith(DELIVERY_PREFIX);
 
+// Delivery is free when the goods in the basket come to more than this many shillings (exactly this much still pays).
+export const FREE_DELIVERY_ABOVE = 10000;
+
+// Compared in whole cents, so a rounding crumb in a sum of odd amounts can never tip exactly Ksh 10,000 over the line.
+export const isFreeDelivery = (goods: number): boolean => Number.isFinite(goods) && Math.round(goods * 100) > FREE_DELIVERY_ABOVE * 100;
+
+// Adds money in whole cents and gives shillings back. An amount that is missing or not a number is left out, so a fault
+// makes delivery cost money rather than giving it away.
+export const sumMoney = (amounts: (string | number | null | undefined)[]): number => {
+  const cents = amounts.reduce<number>((sum, value) => {
+    if (value == null || (typeof value === "string" && value.trim() === "")) return sum;
+    const n = Number(value);
+    return Number.isFinite(n) ? sum + Math.round(n * 100) : sum;
+  }, 0);
+  return cents / 100;
+};
+
+type PricedLine = { price?: { amount?: string | null } | null; quantity?: number | null };
+
+// What the shopper is paying for the goods themselves, from the cart as the site's own cart reads it (a price and a quantity per line).
+// Pass products only, never the delivery line. A line whose price or quantity cannot be read is left out.
+export const goodsTotal = (lines: PricedLine[]): number =>
+  sumMoney(
+    lines.map((line) => {
+      if (line.price?.amount == null || line.quantity == null) return null;
+      const price = Number(line.price.amount);
+      const quantity = Number(line.quantity);
+      return Number.isFinite(price) && Number.isFinite(quantity) ? price * quantity : null;
+    })
+  );
+
 // With delivery fees on, a cart cannot go to checkout until it holds a delivery line.
 // If the shop could not add the fee (`unavailable`), checkout is let through so a fault never stops a sale.
 export const needsDeliveryArea = (
@@ -21,6 +52,22 @@ export const needsDeliveryArea = (
   lines: { productName?: { original?: string | null } | null }[],
   unavailable = false
 ): boolean => enabled && !unavailable && !lines.some(isDeliveryLine);
+
+// The delivery area to price again, when the fee in the cart no longer matches the basket: charged although the goods now qualify,
+// or free although they no longer do. Nothing when there is nothing to fix, or when the shop cannot tell which area the line is for.
+export const feeToRefresh = (
+  lines: (PricedLine & { productName?: { original?: string | null } | null })[],
+  areas: DeliveryArea[]
+): DeliveryArea | null => {
+  const line = lines.find(isDeliveryLine);
+  const products = lines.filter((l) => !isDeliveryLine(l));
+  if (!line || products.length === 0) return null;
+  const area = areas.find((a) => deliveryLineName(a) === line.productName?.original);
+  const charged = Number(line.price?.amount);
+  if (!area || line.price?.amount == null || !Number.isFinite(charged)) return null;
+  const expected = isFreeDelivery(goodsTotal(products)) ? 0 : area.price;
+  return charged !== expected ? area : null;
+};
 
 export const formatKes = (n: number): string => `KES ${n.toLocaleString("en-US", { maximumFractionDigits: 0 })}`;
 

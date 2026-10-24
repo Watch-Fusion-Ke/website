@@ -98,6 +98,20 @@ describe("a category page", () => {
   });
 });
 
+describe("a category page's trail", () => {
+  const trail = (html: string) => {
+    const raw = html.match(/<script type="application\/ld\+json">([^<]*)<\/script>/)?.[1] ?? "";
+    return JSON.parse(raw.replace(/&quot;/g, '"'));
+  };
+
+  it("says where it is: Home, Shop, then the category, for search engines", async () => {
+    const ld = trail(await render("gift-packages"));
+    expect(ld["@type"]).toBe("BreadcrumbList");
+    expect(ld.itemListElement.map((i: { name: string }) => i.name)).toEqual(["Home", "Shop", "Gift Packages"]);
+    expect(ld.itemListElement[2].item).toBe("https://www.watchfusionkenya.com/shop/gift-packages");
+  });
+});
+
 describe("a category page's metadata", () => {
   const meta = (category: string, params: Record<string, string> = {}) => generateMetadata(props(category, params));
 
@@ -124,7 +138,7 @@ describe("a category page's metadata", () => {
     expect(m.openGraph).toMatchObject({
       type: "website",
       locale: "en_KE",
-      siteName: "WatchFusion Kenya",
+      siteName: "Watch Fusion Kenya",
       images: [{ url: "/share-image.png", width: 1200, height: 630 }],
     });
   });

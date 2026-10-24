@@ -17,10 +17,10 @@ export type CategoryPage = {
   seoDescription: string | null;
 };
 
-type SeoTag = { type?: string; children?: string; props?: { name?: string; content?: string }; disabled?: boolean };
+export type SeoTag = { type?: string; children?: string; props?: { name?: string; content?: string }; disabled?: boolean };
 type WixCategory = { id?: string; name?: string; slug?: string; description?: string; seoData?: { tags?: SeoTag[] } };
 
-const seoOf = (tags: SeoTag[] | undefined): { title: string | null; description: string | null } => {
+export const seoOf = (tags: SeoTag[] | undefined): { title: string | null; description: string | null } => {
   const live = (tags ?? []).filter((t) => !t.disabled);
   const title = live.find((t) => t.type === "title")?.children?.trim();
   const description = live.find((t) => t.type === "meta" && t.props?.name === "description")?.props?.content?.trim();

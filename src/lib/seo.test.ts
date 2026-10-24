@@ -5,6 +5,7 @@ import {
   organizationJsonLd,
   plainText,
   productJsonLd,
+  pageShare,
   productMetadata,
   summarise,
   websiteJsonLd,
@@ -35,6 +36,27 @@ describe("plainText", () => {
   it("is empty for nothing at all", () => {
     expect(plainText(null)).toBe("");
     expect(plainText("  <p> </p> ")).toBe("");
+  });
+
+  it("keeps a bare less-than or greater-than sign in the text instead of treating it as a tag", () => {
+    expect(plainText("Price < 5000 and > 3000, 5 < 6 > 4")).toBe("Price < 5000 and > 3000, 5 < 6 > 4");
+    expect(plainText("<p>Under <b>5</b> mm</p>")).toBe("Under 5 mm");
+  });
+
+  it("reads the typographic characters Wix editors write, as names or as numbers", () => {
+    expect(plainText("It&rsquo;s a &ldquo;dive&rdquo; watch &ndash; 50&deg; &#8217; &#x2019; &hellip;")).toBe("It’s a “dive” watch – 50° ’ ’ …");
+    expect(plainText("&#99999999; &bogus;")).toBe("&#99999999; &bogus;");
+  });
+
+  it("stays fast on a huge text full of less-than signs", () => {
+    const started = Date.now();
+    plainText("<".repeat(200000));
+    plainText("<a ".repeat(100000));
+    expect(Date.now() - started).toBeLessThan(1500);
+  });
+
+  it("drops comments and doctype-like tags", () => {
+    expect(plainText("a<!-- hidden -->b<!DOCTYPE html>c")).toBe("a b c");
   });
 
   it("leaves no tags behind, and no script text from a hostile description", () => {
@@ -129,6 +151,11 @@ describe("productJsonLd", () => {
     expect((productJsonLd({ ...p, inStock: false }) as Record<string, any>).offers.availability).toBe("https://schema.org/OutOfStock");
   });
 
+  it("leaves out the offer for a product with no price, which search engines would reject", () => {
+    expect(JSON.stringify(productJsonLd({ ...p, price: null }))).not.toContain('"offers"');
+    expect((productJsonLd({ ...p, price: 0 }) as Record<string, any>).offers.price).toBe(0);
+  });
+
   it("leaves out what the product does not have, instead of printing empty values", () => {
     const text = JSON.stringify(productJsonLd({ ...p, sku: null, brand: null, imageUrl: null, imageUrls: [] }));
     expect(text).not.toContain('"sku"');
@@ -169,7 +196,11 @@ describe("organizationJsonLd", () => {
   });
 
   it("lists the opening hours the contact page shows: Monday to Friday 8:30 to 19:00, Saturday 10:00 to 19:00, closed Sunday", () => {
-    expect(OPENING_HOURS.map((h) => h.days)).toEqual(["Mon to Fri", "Sat", "Sun"]);
+    expect(OPENING_HOURS).toEqual([
+      { days: "Mon to Fri", hours: "8:30am to 7pm" },
+      { days: "Sat", hours: "10am to 7pm" },
+      { days: "Sun", hours: "Closed" },
+    ]);
     expect(ld.openingHoursSpecification).toEqual([
       { "@type": "OpeningHoursSpecification", dayOfWeek: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"], opens: "08:30", closes: "19:00" },
       { "@type": "OpeningHoursSpecification", dayOfWeek: "Saturday", opens: "10:00", closes: "19:00" },
@@ -178,6 +209,18 @@ describe("organizationJsonLd", () => {
 
   it("still reads the address the contact page holds, so a change there is noticed here", () => {
     expect(ADDRESS_LINES).toEqual(["Stanbank House, 5th Floor, Wing B, Shop 46", "Moi Avenue, Nairobi"]);
+  });
+});
+
+describe("pageShare", () => {
+  it("gives a page its own address in link previews, with the shop's name and picture", () => {
+    expect(pageShare("/deals")).toEqual({
+      type: "website",
+      locale: "en_KE",
+      siteName: SITE_NAME,
+      url: `${SITE_URL}/deals`,
+      images: [{ url: "/share-image.png", width: 1200, height: 630, alt: `${SITE_NAME}: Wear the Moment, Own the Legacy` }],
+    });
   });
 });
 

@@ -6,14 +6,29 @@ import { SITE_NAME, SITE_URL } from "@/lib/site";
 // What search engines and link previews are told about a page. The shop's own wording from the store (the SEO title and description
 // it writes for a product or a category) comes first; anything it has not written is made here, once, the same way everywhere.
 
-const ENTITIES: Record<string, string> = { "&amp;": "&", "&lt;": "<", "&gt;": ">", "&quot;": '"', "&#39;": "'", "&#x27;": "'", "&apos;": "'", "&nbsp;": " " };
+// The named entities an editor is likely to produce. Numbers (&#8217; and &#x2019;) are read separately.
+const NAMED: Record<string, string> = {
+  amp: "&", lt: "<", gt: ">", quot: '"', apos: "'", nbsp: " ",
+  rsquo: "’", lsquo: "‘", rdquo: "”", ldquo: "“", ndash: "–", mdash: "—", hellip: "…",
+  deg: "°", pound: "£", times: "×", reg: "®", copy: "©", trade: "™",
+};
+
+const decodeEntities = (text: string): string =>
+  text.replace(/&(?:#(\d{1,6})|#x([0-9a-f]{1,6})|([a-z]{2,8}));/gi, (whole, dec, hex, name) => {
+    if (name) return NAMED[String(name).toLowerCase()] ?? whole;
+    const code = dec ? parseInt(dec, 10) : parseInt(hex, 16);
+    return code > 0 && code <= 0xffff && !(code >= 0xd800 && code <= 0xdfff) ? String.fromCharCode(code) : whole;
+  });
 
 // The words of a piece of HTML as one line of plain text. Paragraphs, list items and line breaks become spaces, so words never run together.
 export const plainText = (html: string | null | undefined): string =>
-  (html ?? "")
-    .replace(/<\/(p|li|ul|ol|div|h[1-6])>|<br\s*\/?>/gi, " ")
-    .replace(/<[^>]*>/g, " ")
-    .replace(/&(?:amp|lt|gt|quot|apos|nbsp|#39|#x27);/g, (entity) => ENTITIES[entity] ?? entity)
+  decodeEntities(
+    (html ?? "")
+      .replace(/<\/(p|li|ul|ol|div|h[1-6])>|<br\s*\/?>/gi, " ")
+      // A tag starts with "<" and a letter (or "/", "!", "?") and ends at the next ">" with no "<" between, so a bare "<" in a sentence
+      // stays text, and the scan can never run on past the next "<".
+      .replace(/<[/!?]?[a-zA-Z][^<>]*>|<![^<>]*>/g, " ")
+  )
     .replace(/\s+/g, " ")
     .trim();
 
@@ -74,15 +89,29 @@ export const productJsonLd = (p: ProductSeo): object => ({
   description: productDescription(p),
   sku: p.sku || undefined,
   brand: p.brand ? { "@type": "Brand", name: p.brand } : undefined,
-  offers: {
-    "@type": "Offer",
-    url: productUrl(p.slug),
-    price: p.price ?? undefined,
-    priceCurrency: "KES",
-    availability: p.inStock === false ? "https://schema.org/OutOfStock" : "https://schema.org/InStock",
-    itemCondition: "https://schema.org/NewCondition",
-    seller: { "@type": "Organization", name: SITE_NAME, url: SITE_URL },
-  },
+  // An offer with no price is rejected by search engines, so a product with no price has none.
+  offers:
+    p.price == null
+      ? undefined
+      : {
+          "@type": "Offer",
+          url: productUrl(p.slug),
+          price: p.price,
+          priceCurrency: "KES",
+          availability: p.inStock === false ? "https://schema.org/OutOfStock" : "https://schema.org/InStock",
+          itemCondition: "https://schema.org/NewCondition",
+          seller: { "@type": "Organization", name: SITE_NAME, url: SITE_URL },
+        },
+});
+
+// What a page tells link previews about itself: its own address, the shop's name and the share picture. The page's own title and
+// description are filled in by Next. (A page that sets this replaces the layout's, so each one asks for it.)
+export const pageShare = (path: string) => ({
+  type: "website" as const,
+  locale: "en_KE",
+  siteName: SITE_NAME,
+  url: `${SITE_URL}${path}`,
+  images: [{ url: "/share-image.png", width: 1200, height: 630, alt: `${SITE_NAME}: Wear the Moment, Own the Legacy` }],
 });
 
 export const breadcrumbJsonLd = (trail: { name: string; path: string }[]): object => ({
@@ -93,8 +122,8 @@ export const breadcrumbJsonLd = (trail: { name: string; path: string }[]): objec
 
 // The shop, from the same details the Contact page shows. The opening hours below are written out as the schema wants them; a test
 // holds them to the hours on the Contact page.
-const [street, place] = ADDRESS_LINES;
-const [road, city] = place.split(",").map((part) => part.trim());
+const [street = "", place = ""] = ADDRESS_LINES;
+const [road = "", city = "Nairobi"] = place.split(",").map((part) => part.trim());
 
 export const organizationJsonLd = (): object => ({
   "@context": "https://schema.org",

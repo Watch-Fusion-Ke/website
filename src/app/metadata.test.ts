@@ -92,6 +92,12 @@ describe("structured data", () => {
     expect(page).toContain("seoData");
   });
 
+  it("gives the Shop, Deals and Contact pages their own address in link previews, not the home page's", () => {
+    for (const [file, path] of [["src/app/shop/page.tsx", "/shop"], ["src/app/deals/page.tsx", "/deals"], ["src/app/contact/page.tsx", "/contact"]]) {
+      expect(read(file)).toContain(`pageShare("${path}")`);
+    }
+  });
+
   it("gives the product photo the product's name as its text", () => {
     expect(read("src/app/[slug]/page.tsx")).toMatch(/<ProductImages[^>]*name=\{product\.name/);
   });

@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { readFileSync, readdirSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
 const read = (path: string) => readFileSync(path, "utf8");
@@ -51,5 +51,48 @@ describe("the picture shown when a link to the shop is shared", () => {
 
   it("is a small file, so a chat app does not skip it", () => {
     expect(readFileSync("public/share-image.png").length).toBeLessThan(300_000);
+  });
+});
+
+describe("the shop's name", () => {
+  const files = (dir: string): string[] =>
+    readdirSync(dir, { withFileTypes: true }).flatMap((e) =>
+      e.isDirectory() ? files(`${dir}/${e.name}`) : /\.(ts|tsx)$/.test(e.name) && !/\.test\./.test(e.name) ? [`${dir}/${e.name}`] : []
+    );
+
+  it("is spelled Watch Fusion Kenya in every title, link preview and structured-data line the site makes", () => {
+    const wrong = files("src").filter((f) => /WatchFusion Kenya|WatchFusionKe/.test(readFileSync(f, "utf8")));
+    expect(wrong).toEqual([]);
+  });
+
+  it("is written in the page language of Kenya, and the layout leaves each page's own title and description to its link preview", () => {
+    const layout = read("src/app/layout.tsx");
+    expect(layout).toContain('<html lang="en-KE"');
+    const share = layout.slice(layout.indexOf("openGraph:"), layout.indexOf("robots:"));
+    expect(share).not.toMatch(/title:|description:/);
+    expect(share).toContain("siteName: SITE_NAME");
+  });
+});
+
+describe("structured data", () => {
+  it("tells search engines about the shop and its search from the home page, once", () => {
+    const home = read("src/app/page.tsx");
+    expect(home).toContain("organizationJsonLd");
+    expect(home).toContain("websiteJsonLd");
+    expect(home).toContain("jsonLdScript");
+  });
+
+  it("describes each product with a clean description, a trail of links and the shop's own wording from the store", () => {
+    const page = read("src/app/[slug]/page.tsx");
+    expect(page).toContain("productMetadata");
+    expect(page).toContain("productJsonLd");
+    expect(page).toContain("breadcrumbJsonLd");
+    expect(page).toContain("jsonLdScript");
+    expect(page).not.toMatch(/replace\(\/<\[\^>\]\*>\/g/);
+    expect(page).toContain("seoData");
+  });
+
+  it("gives the product photo the product's name as its text", () => {
+    expect(read("src/app/[slug]/page.tsx")).toMatch(/<ProductImages[^>]*name=\{product\.name/);
   });
 });

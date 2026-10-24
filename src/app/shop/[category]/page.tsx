@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { notFound, permanentRedirect } from "next/navigation";
+import { SITE_NAME } from "@/lib/site";
 import ShopListing from "@/components/ShopListing";
 import { getCategoryPages } from "@/lib/categoryData";
 import {
@@ -49,11 +50,11 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
     openGraph: {
       type: "website",
       locale: "en_KE",
-      siteName: "WatchFusion Kenya",
+      siteName: SITE_NAME,
       title: typeof title === "string" ? title : title.absolute,
       description,
       url: href,
-      images: [{ url: "/share-image.png", width: 1200, height: 630, alt: "WatchFusion Kenya: Wear the Moment, Own the Legacy" }],
+      images: [{ url: "/share-image.png", width: 1200, height: 630, alt: `${SITE_NAME}: Wear the Moment, Own the Legacy` }],
     },
     ...robots,
   };

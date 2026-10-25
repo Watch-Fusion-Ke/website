@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Suspense } from "react";
 import { Cormorant_Garamond, Jost } from "next/font/google";
 import "./globals.css";
-import { SITE_URL } from "@/lib/site";
+import { SITE_NAME, SITE_URL } from "@/lib/site";
 import AnnouncementBar from "@/components/AnnouncementBar";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -34,47 +34,41 @@ export const viewport: Viewport = {
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: "Watch Fusion Kenya | Premium Watches in Nairobi",
-    template: "%s | Watch Fusion Kenya",
+    default: `${SITE_NAME} | Premium Watches in Nairobi`,
+    template: `%s | ${SITE_NAME}`,
   },
   description:
-    "Shop premium watches in Kenya. WatchFusion Kenya offers luxury, sport & casual watches with fast delivery across Nairobi and Kenya. Wear the Moment, Own the Legacy.",
+    `Shop premium watches in Kenya. ${SITE_NAME} offers luxury, sport & casual watches with fast delivery across Nairobi and Kenya. Wear the Moment, Own the Legacy.`,
   keywords: [
     "watches Kenya",
     "buy watches Nairobi",
     "luxury watches Kenya",
     "affordable watches Nairobi",
-    "WatchFusion Kenya",
+    SITE_NAME,
     "online watch store Kenya",
     "men watches Kenya",
     "women watches Kenya",
     "sport watches Nairobi",
     "wrist watches Kenya",
   ],
-  authors: [{ name: "WatchFusion Kenya" }],
-  creator: "WatchFusion Kenya",
+  authors: [{ name: SITE_NAME }],
+  creator: SITE_NAME,
   openGraph: {
     type: "website",
     locale: "en_KE",
     url: SITE_URL,
-    siteName: "WatchFusion Kenya",
-    title: "WatchFusion Kenya | Premium Watches in Nairobi",
-    description:
-      "Shop premium watches in Kenya. Luxury, sport & casual watches with fast delivery across Nairobi and Kenya.",
+    siteName: SITE_NAME,
     images: [
       {
         url: "/share-image.png",
         width: 1200,
         height: 630,
-        alt: "WatchFusion Kenya: Wear the Moment, Own the Legacy",
+        alt: `${SITE_NAME}: Wear the Moment, Own the Legacy`,
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "WatchFusion Kenya | Premium Watches in Nairobi",
-    description:
-      "Shop premium watches in Kenya. Fast delivery across Nairobi and Kenya.",
     images: ["/share-image.png"],
   },
   robots: {
@@ -99,7 +93,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en-KE" suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
       </head>

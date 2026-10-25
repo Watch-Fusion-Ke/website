@@ -7,6 +7,19 @@ const photos = (n: number) =>
 
 const render = (n: number) => renderToStaticMarkup(<ProductImages items={photos(n)} />);
 
+describe("ProductImages photo text", () => {
+  it("gives the main photo the product's name as its text, so the picture can be found in image search", () => {
+    const html = renderToStaticMarkup(<ProductImages items={photos(3)} name="Casio MTP-V006L-1B" />);
+    expect(html.match(/<img[^>]*alt="Casio MTP-V006L-1B"[^>]*>/)).not.toBeNull();
+  });
+
+  it("leaves the text empty when no name is given, and on the small thumbnails, which only repeat the main photo", () => {
+    const withName = renderToStaticMarkup(<ProductImages items={photos(3)} name="Casio MTP" />);
+    expect((withName.match(/alt="Casio MTP"/g) ?? []).length).toBe(1);
+    expect(renderToStaticMarkup(<ProductImages items={photos(3)} />)).not.toContain('alt="Casio');
+  });
+});
+
 describe("ProductImages", () => {
   it("keeps the main photo short on a phone so the name and price show without scrolling", () => {
     const html = render(5);

@@ -8,98 +8,73 @@ import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import DOMPurify from "isomorphic-dompurify";
 import { Metadata } from "next";
+import { breadcrumbJsonLd, jsonLdScript, productJsonLd, productMetadata } from "@/lib/seo";
+import type { SeoTag } from "@/lib/categoryPages";
 import { SITE_URL } from "@/lib/site";
 
 type Props = {
     params: { slug: string };
 };
 
+// Everything a search engine or a link preview is told about a product comes from one place, src/lib/seo.ts: the title and description
+// the shop wrote for the product in the store when there are some, a clean one made from its own text when there are not.
+const seoOf = (product: Awaited<ReturnType<typeof findProduct>>, slug: string) => {
+    const photos = (product?.media?.items ?? []).flatMap((item) => (item?.image?.url ? [item.image.url] : []));
+    return {
+        name: product?.name ?? "",
+        slug,
+        description: product?.description,
+        seoTags: product?.seoData?.tags as SeoTag[] | undefined,
+        imageUrl: product?.media?.mainMedia?.image?.url ?? null,
+        imageUrls: photos,
+        sku: product?.sku,
+        brand: product?.brand,
+        price: product?.price?.discountedPrice || product?.price?.price || null,
+        inStock: Boolean(product?.stock?.inStock),
+    };
+};
+
+const findProduct = async (slug: string) => {
+    const wixClient = await wixClientServer();
+    const products = await wixClient.products.queryProducts().eq("slug", slug).find();
+    return products.items[0];
+};
+
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
     const { slug } = params;
-    const wixClient = await wixClientServer();
-    const products = await wixClient.products
-        .queryProducts()
-        .eq("slug", slug)
-        .find();
-
-    const product = products.items[0];
+    const product = await findProduct(slug);
     if (!product) return { title: "Product Not Found" };
-
-    const plainDescription = product.description
-        ? product.description.replace(/<[^>]*>/g, "").slice(0, 160)
-        : `Buy ${product.name} at WatchFusion Kenya. Premium watches with fast delivery across Nairobi and Kenya.`;
-
-    return {
-        title: product.name,
-        description: plainDescription,
-        openGraph: {
-            title: `${product.name} | WatchFusion Kenya`,
-            description: plainDescription,
-            url: `${SITE_URL}/${slug}`,
-            images: product.media?.mainMedia?.image?.url
-                ? [{ url: product.media.mainMedia.image.url, alt: product.name || "Watch" }]
-                : [],
-            type: "website",
-        },
-        twitter: {
-            card: "summary_large_image",
-            title: `${product.name} | WatchFusion Kenya`,
-            description: plainDescription,
-            images: product.media?.mainMedia?.image?.url
-                ? [product.media.mainMedia.image.url]
-                : [],
-        },
-        alternates: {
-            canonical: `${SITE_URL}/${slug}`,
-        },
-    };
+    return productMetadata(seoOf(product, slug));
 }
 
 const SinglePage = async ({ params }: Props) => {
     const { slug } = params;
 
-    const wixClient = await wixClientServer();
+    const product = await findProduct(slug);
 
-    const products = await wixClient.products
-        .queryProducts()
-        .eq("slug", slug)
-        .find();
-
-    if (!products.items[0]) {
+    if (!product) {
         return notFound();
     }
 
-    const product = products.items[0];
-
     return (
         <div className="px-4 md:px-8 lg:px-16 xl:px-32 2xl:px-64 relative flex flex-col lg:flex-row gap-6 lg:gap-16 py-4 lg:py-8">
-            {/* JSON-LD Structured Data */}
+            {/* What search engines are told about the product, and where it sits in the shop */}
+            <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdScript(productJsonLd(seoOf(product, slug))) }} />
             <script
                 type="application/ld+json"
                 dangerouslySetInnerHTML={{
-                    __html: JSON.stringify({
-                        "@context": "https://schema.org",
-                        "@type": "Product",
-                        name: product.name,
-                        image: product.media?.mainMedia?.image?.url,
-                        description: product.description
-                            ? product.description.replace(/<[^>]*>/g, "").slice(0, 300)
-                            : "",
-                        offers: {
-                            "@type": "Offer",
-                            price: product.price?.discountedPrice || product.price?.price,
-                            priceCurrency: "KES",
-                            availability: product.stock?.inStock
-                                ? "https://schema.org/InStock"
-                                : "https://schema.org/OutOfStock",
-                            url: `${SITE_URL}/${slug}`,
-                        },
-                    }),
+                    __html: jsonLdScript(
+                        breadcrumbJsonLd([
+                            { name: "Home", path: "/" },
+                            { name: "Shop", path: "/shop" },
+                            { name: product.name ?? "Product", path: `/${slug}` },
+                        ])
+                    ),
                 }}
             />
             {/* IMG */}
             <div className="w-full lg:w-1/2 lg:sticky lg:top-24 h-max min-w-0">
-                <ProductImages key={product._id} items={product.media?.items} />
+                <ProductImages key={product._id} items={product.media?.items} name={product.name ?? undefined} />
             </div>
 
             {/* TEXTS */}

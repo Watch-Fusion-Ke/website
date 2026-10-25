@@ -4,7 +4,8 @@ import Filter from "@/components/Filter";
 import CategoryChips from "@/components/CategoryChips";
 import { wixClientServer } from "@/lib/wixClientServer";
 import { getPriceBounds } from "@/lib/storeProducts";
-import { ALL_PRODUCTS_SLUG, type CategoryPage } from "@/lib/categoryPages";
+import { ALL_PRODUCTS_SLUG, categoryHref, type CategoryPage } from "@/lib/categoryPages";
+import { breadcrumbJsonLd, jsonLdScript } from "@/lib/seo";
 
 type Params = { [key: string]: string | string[] | undefined };
 
@@ -20,6 +21,18 @@ const ShopListing = async ({ category, categories, searchParams }: { category: C
 
   return (
     <div className="px-4 md:px-8 lg:px-16 xl:px-32 2xl:px-64 relative">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: jsonLdScript(
+            breadcrumbJsonLd([
+              { name: "Home", path: "/" },
+              { name: "Shop", path: "/shop" },
+              ...(category ? [{ name: category.name, path: categoryHref(category.slug) }] : []),
+            ])
+          ),
+        }}
+      />
       <div className="pt-8 pb-6">
         <h1 className="font-display text-4xl font-bold md:text-5xl mb-2">
           {searched ? `Results for “${searched}”` : category?.name || "Shop all products"}

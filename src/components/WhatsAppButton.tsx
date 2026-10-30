@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
 import { WHATSAPP_URL } from "@/lib/contact";
 import { hideWhileScrolling } from "@/lib/scrollHider";
 
@@ -29,7 +30,11 @@ export const WhatsAppButtonView = ({ hidden }: { hidden: boolean }) => {
 // Out of the way while the page scrolls, so it never covers a price or a button the shopper is reading.
 const WhatsAppButton = () => {
   const [hidden, setHidden] = useState(false);
-  useEffect(() => hideWhileScrolling(window, setHidden), []);
+  const pathname = usePathname();
+  useEffect(() => {
+    if (pathname !== "/gift-vouchers") return hideWhileScrolling(window, setHidden);
+  }, [pathname]);
+  if (pathname === "/gift-vouchers") return null;
   return <WhatsAppButtonView hidden={hidden} />;
 };
 

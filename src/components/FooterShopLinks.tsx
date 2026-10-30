@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import useCategories from "@/hooks/useCategories";
+import { categoryHref } from "@/lib/categoryPages";
 
 const link = "block py-1.5 text-sm text-gray-400 transition-colors hover:text-white";
 
@@ -14,7 +15,7 @@ const FooterShopLinks = () => {
       <li><Link href="/shop" className={link}>All products</Link></li>
       {categories.map((c) => (
         <li key={c.slug}>
-          <Link href={`/shop?cat=${c.slug}`} className={link}>{c.name}</Link>
+          <Link href={categoryHref(c.slug)} className={link}>{c.name}</Link>
         </li>
       ))}
     </ul>

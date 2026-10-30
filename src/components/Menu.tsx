@@ -1,5 +1,6 @@
 "use client";
 
+import { categoryHref } from "@/lib/categoryPages";
 import Image from "next/image";
 import Link from "next/link";
 import ThemeToggle from "./ThemeToggle";
@@ -124,7 +125,7 @@ const Menu = () => {
               {cats.map((cat) => (
                 <Link
                   key={cat._id}
-                  href={`/shop?cat=${cat.slug}`}
+                  href={cat.slug ? categoryHref(cat.slug) : "/shop"}
                   onClick={close}
                   className="block text-base font-medium text-gray-800 hover:text-black hover:bg-gray-50 px-3 py-3 rounded-lg transition-colors"
                 >

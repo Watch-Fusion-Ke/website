@@ -1,3 +1,4 @@
+import { pageShare } from "@/lib/seo";
 import ContactForm from "@/components/ContactForm";
 import { ChatIcon, ClockIcon, MailIcon, MapPinIcon, PhoneIcon } from "@/components/icons";
 import {
@@ -16,6 +17,7 @@ export const metadata = {
     title: "Contact",
     description: "Find Watch Fusion Kenya in Nairobi, see the opening hours, and chat with us on WhatsApp, by phone or by email.",
     alternates: { canonical: "/contact" },
+    openGraph: pageShare("/contact"),
 };
 
 const card = "rounded-xl bg-brand-cream p-6";

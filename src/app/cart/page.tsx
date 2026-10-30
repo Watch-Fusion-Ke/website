@@ -2,14 +2,15 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useCartStore } from "@/hooks/useCartStore";
 import { useWixClient } from "@/hooks/useWixClient";
 import { media as wixMedia } from "@wix/sdk";
 import { currentCart } from "@wix/ecom";
 import DeliveryPicker from "@/components/DeliveryPicker";
 import useDelivery from "@/hooks/useDelivery";
-import { DELIVERY_PREFIX, formatKes, isDeliveryLine, needsDeliveryArea } from "@/lib/delivery";
+import useDeliveryFeeSync from "@/hooks/useDeliveryFeeSync";
+import { DELIVERY_PREFIX, formatKes, goodsTotal, isDeliveryLine, isFreeDelivery, needsDeliveryArea } from "@/lib/delivery";
 import { SITE_URL } from "@/lib/site";
 
 const CartPage = () => {
@@ -29,8 +30,13 @@ const CartPage = () => {
   const deliveryLine = allLines.find(isDeliveryLine);
   const deliveryFee = deliveryLine ? Number(deliveryLine.price?.amount) : null;
   const total = Number(cart.subtotal?.amount);
+  const freeDelivery = isFreeDelivery(goodsTotal(products));
   const productsSubtotal =
     deliveryFee !== null && Number.isFinite(deliveryFee) && Number.isFinite(total) ? formatKes(total - deliveryFee) : null;
+
+  // Free delivery starts above a set amount of goods, so the fee is priced again when the basket crosses that line.
+  const reloadCart = useCallback(() => getCart(wixClient), [getCart, wixClient]);
+  useDeliveryFeeSync(allLines, delivery, reloadCart);
 
   // A delivery fee left behind after the last product is removed would charge for nothing, so it goes too.
   const { clear } = delivery;
@@ -198,7 +204,7 @@ const CartPage = () => {
                 <div className="flex justify-between text-gray-600">
                   <span>Delivery</span>
                   <span className="font-semibold text-gray-900">
-                    {deliveryLine ? (deliveryLine.price?.formattedAmount ?? formatKes(deliveryFee ?? 0)) : "Choose an area"}
+                    {deliveryLine ? (deliveryFee === 0 ? "Free" : (deliveryLine.price?.formattedAmount ?? formatKes(deliveryFee ?? 0))) : freeDelivery ? "Free once you choose an area" : "Choose an area"}
                   </span>
                 </div>
               ) : (
@@ -224,6 +230,7 @@ const CartPage = () => {
                   areas={delivery.areas}
                   selectedLabel={deliveryLine ? (deliveryLine.productName?.original ?? "").slice(DELIVERY_PREFIX.length) : null}
                   selectedPrice={deliveryFee !== null && Number.isFinite(deliveryFee) ? deliveryFee : null}
+                  free={freeDelivery}
                   onChosen={async (area) => {
                     await delivery.choose(area);
                     await getCart(wixClient);

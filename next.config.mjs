@@ -9,8 +9,8 @@ const nextConfig = {
     ],
   },
 
-  // The shop has one page for every category, /shop. The old /list address goes there for good, and the category or
-  // search in the address goes with it.
+  // The old /list address goes to /shop for good, and the category or search in the address goes with it. /shop then sends
+  // a ?cat= address on to the category's own page, /shop/<category>.
   async redirects() {
     return [{ source: "/list", destination: "/shop", permanent: true }];
   },

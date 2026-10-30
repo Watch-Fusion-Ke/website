@@ -1,10 +1,10 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const nav = vi.hoisted(() => ({ pathname: "/", cat: null as string | null }));
+const nav = vi.hoisted(() => ({ pathname: "/" }));
 vi.mock("next/navigation", () => ({
   usePathname: () => nav.pathname,
-  useSearchParams: () => new URLSearchParams(nav.cat ? { cat: nav.cat } : {}),
+  useSearchParams: () => new URLSearchParams(),
 }));
 
 import BottomTabBar, { TabBarView } from "@/components/BottomTabBar";
@@ -14,7 +14,6 @@ const render = () => renderToStaticMarkup(<BottomTabBar />);
 
 beforeEach(() => {
   nav.pathname = "/";
-  nav.cat = null;
 });
 
 describe("BottomTabBar", () => {
@@ -23,8 +22,8 @@ describe("BottomTabBar", () => {
     const order = ["Home", "Gents", "Ladies", "Cart"].map((l) => html.indexOf(`>${l}<`));
     expect(order.every((i) => i > -1)).toBe(true);
     expect([...order].sort((a, b) => a - b)).toEqual(order);
-    expect(html).toContain('href="/shop?cat=gents-watches"');
-    expect(html).toContain('href="/shop?cat=ladies-watches"');
+    expect(html).toContain('href="/shop/gents-watches"');
+    expect(html).toContain('href="/shop/ladies-watches"');
     expect(html).toContain('href="/cart"');
   });
 
@@ -41,11 +40,10 @@ describe("BottomTabBar", () => {
   });
 
   it("marks the current page for screen readers", () => {
-    nav.pathname = "/shop";
-    nav.cat = "ladies-watches";
+    nav.pathname = "/shop/ladies-watches";
     const html = render();
     expect(html.match(/aria-current="page"/g)).toHaveLength(1);
-    const ladiesTag = html.match(/<a [^>]*href="\/shop\?cat=ladies-watches"[^>]*>/)?.[0] ?? "";
+    const ladiesTag = html.match(/<a [^>]*href="\/shop\/ladies-watches"[^>]*>/)?.[0] ?? "";
     expect(ladiesTag).toContain('aria-current="page"');
   });
 
@@ -55,10 +53,10 @@ describe("BottomTabBar", () => {
   });
 
   it("shows the number of items in the cart, and nothing when it is empty", () => {
-    const empty = renderToStaticMarkup(<TabBarView pathname="/" cat={null} counter={0} />);
+    const empty = renderToStaticMarkup(<TabBarView pathname="/" counter={0} />);
     expect(empty).not.toContain("data-cart-count");
     expect(empty).not.toContain('aria-label="Cart');
-    const full = renderToStaticMarkup(<TabBarView pathname="/" cat={null} counter={3} />);
+    const full = renderToStaticMarkup(<TabBarView pathname="/" counter={3} />);
     expect(full).toContain('data-cart-count="3"');
     expect(full).toContain('aria-label="Cart, 3 items"');
   });
@@ -72,8 +70,8 @@ describe("BottomTabBar", () => {
 });
 
 describe("BottomTabBar look", () => {
-  const tabs = (path = "/", cat: string | null = null, counter = 0) =>
-    renderToStaticMarkup(<TabBarView pathname={path} cat={cat} counter={counter} />);
+  const tabs = (path = "/", counter = 0) =>
+    renderToStaticMarkup(<TabBarView pathname={path} counter={counter} />);
 
   it("draws finer icons, thinner than the rest of the site, one of its own for each tab", () => {
     const html = tabs();
@@ -123,13 +121,13 @@ describe("BottomTabBar look", () => {
   });
 
   it("marks the current tab in navy (gold in the dark theme) with a soft gold pill behind the icon", () => {
-    const current = tabs("/", null).match(/<a [^>]*aria-current="page"[^>]*>[\s\S]*?<\/a>/)?.[0] ?? "";
+    const current = tabs("/").match(/<a [^>]*aria-current="page"[^>]*>[\s\S]*?<\/a>/)?.[0] ?? "";
     expect(current).toContain("text-[#1E2235]");
     expect(current).toContain("dark:text-brand-gold");
     expect(current).toContain("bg-brand-gold/25");
     expect(current).toContain("dark:bg-brand-gold/15");
     expect(current).not.toMatch(/text-gray-600/);
-    const other = tabs("/", null).match(/<a [^>]*href="\/cart"[^>]*>[\s\S]*?<\/a>/)?.[0] ?? "";
+    const other = tabs("/").match(/<a [^>]*href="\/cart"[^>]*>[\s\S]*?<\/a>/)?.[0] ?? "";
     expect(other).not.toMatch(/bg-brand-gold/);
     expect(other).toContain("text-gray-600");
   });
@@ -154,7 +152,7 @@ describe("BottomTabBar look", () => {
 
   it("keeps every tab at least 56 px tall and keeps the cart count readable against the dock", () => {
     expect(tabs()).toMatch(/min-h-14/);
-    const full = tabs("/", null, 3);
+    const full = tabs("/", 3);
     expect(full).toContain('data-cart-count="3"');
     const badge = full.match(/<span data-cart-count[^>]*>/)?.[0] ?? "";
     expect(badge).toContain("bg-brand-gold");

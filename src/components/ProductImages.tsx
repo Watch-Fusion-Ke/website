@@ -117,7 +117,7 @@ export const ZoomView = ({
   );
 };
 
-const Gallery = ({ photos }: { photos: { id: string; url: string }[] }) => {
+const Gallery = ({ photos, name }: { photos: { id: string; url: string }[]; name?: string }) => {
   const [state, dispatch] = useReducer(galleryReducer, photos.length, initialGallery);
   const mainButton = useRef<HTMLButtonElement>(null);
   const swipeStart = useRef<number | null>(null);
@@ -193,7 +193,7 @@ const Gallery = ({ photos }: { photos: { id: string; url: string }[] }) => {
       >
         <Image
           src={current.url}
-          alt=""
+          alt={name ?? ""}
           fill
           priority
           sizes="(min-width: 1024px) 50vw, 100vw"
@@ -275,7 +275,8 @@ const Gallery = ({ photos }: { photos: { id: string; url: string }[] }) => {
   );
 };
 
-const ProductImages = ({ items }: { items?: Item[] | null }) => {
+// `name` is the product's name: the main photo carries it as its text, so the picture can be found in image search.
+const ProductImages = ({ items, name }: { items?: Item[] | null; name?: string }) => {
   const photos = useMemo(
     () =>
       (items ?? []).flatMap((item, i) =>
@@ -284,7 +285,7 @@ const ProductImages = ({ items }: { items?: Item[] | null }) => {
     [items]
   );
   if (photos.length === 0) return null;
-  return <Gallery photos={photos} />;
+  return <Gallery photos={photos} name={name} />;
 };
 
 export default ProductImages;

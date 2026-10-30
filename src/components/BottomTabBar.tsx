@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useSearchParams } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { useCartStore } from "@/hooks/useCartStore";
 import { TABS, activeTab, type TabKey } from "@/lib/tabs";
 import { TabBagIcon, TabGentsIcon, TabHomeIcon, TabLadiesIcon } from "@/components/icons";
@@ -19,14 +19,12 @@ const ICONS: Record<TabKey, (props: { className?: string }) => JSX.Element> = {
 // The colours are written out because the dark theme restyles the "bg-brand-navy" and "text-brand-navy" classes.
 export const TabBarView = ({
   pathname,
-  cat,
   counter,
 }: {
   pathname: string;
-  cat: string | null;
   counter: number;
 }) => {
-  const current = activeTab(pathname, cat);
+  const current = activeTab(pathname);
 
   return (
     <div className="pointer-events-none fixed inset-x-0 bottom-0 z-30 pb-[max(0.75rem,env(safe-area-inset-bottom))] pl-[max(0.75rem,env(safe-area-inset-left))] pr-[max(0.75rem,env(safe-area-inset-right))] md:hidden">
@@ -73,9 +71,8 @@ export const TabBarView = ({
 // Reads the current page and the cart count. The cart is loaded into the store by NavIcons on every page.
 const BottomTabBar = () => {
   const pathname = usePathname();
-  const cat = useSearchParams()?.get("cat") ?? null;
   const { counter } = useCartStore();
-  return <TabBarView pathname={pathname} cat={cat} counter={counter} />;
+  return <TabBarView pathname={pathname} counter={counter} />;
 };
 
 export default BottomTabBar;

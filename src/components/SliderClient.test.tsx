@@ -26,6 +26,17 @@ describe("SliderClient", () => {
     }
   });
 
+  it("has one main heading on the page, the first slide's headline; the other slides' headlines look the same but are not main headings", () => {
+    const html = render([slide(1), slide(2), slide(3)]);
+    expect(html.match(/<h1/g)).toHaveLength(1);
+    expect(html).toMatch(/<h1[^>]*>Headline 1<\/h1>/);
+    for (const n of [2, 3]) {
+      const tag = html.match(new RegExp(`<p class="([^"]*)"[^>]*>Headline ${n}</p>`))?.[1] ?? "";
+      expect(tag).toContain("text-white");
+      expect(tag).toContain("font-semibold");
+    }
+  });
+
   it("keeps the banner short: no description paragraph and no category tag on top of the photo", () => {
     const html = render([slide(1)]);
     expect(html).not.toContain("A long description of slide 1");

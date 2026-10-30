@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useId, useRef, useState } from "react";
 import ChristmasCategoryLink from "@/components/ChristmasCategoryLink";
+import { categoryHref } from "@/lib/categoryPages";
 import { clampLeft, closed, hoverIn, hoverOut, press, type MenuState, type SiteMenu } from "@/lib/siteMenu";
 
 // On a phone each entry is a pill in a strip that slides sideways; from a tablet up they are plain words with a gold underline on hover.
@@ -24,9 +25,6 @@ const panelLink =
 // Hover opens a menu at once; leaving closes it after a short grace, so a slight slip off the edge does not make it flicker.
 const LEAVE_GRACE_MS = 120;
 const PANEL_WIDTH = 208;
-
-// The store's All Products page is the whole shop, which is the plain shop address.
-const shopHref = (slug: string) => (slug === "all-products" ? "/shop" : `/shop?cat=${slug}`);
 
 const Chevron = ({ open }: { open: boolean }) => (
   <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className={`ml-1.5 inline-block transition-transform duration-200 motion-reduce:transition-none ${open ? "rotate-180" : ""}`}>
@@ -118,10 +116,10 @@ const CategoryRow = ({ menu }: { menu: SiteMenu }) => {
             if (e.kind === "link") {
               const c = e.category;
               if (c.slug === "christmas-gift-packages") {
-                return <ChristmasCategoryLink key={c.slug} name={c.name} href={shopHref(c.slug)} />;
+                return <ChristmasCategoryLink key={c.slug} name={c.name} href={categoryHref(c.slug)} />;
               }
               return (
-                <Link key={c.slug} href={shopHref(c.slug)} className={e.seasonal ? seasonalEntry : entry}>
+                <Link key={c.slug} href={categoryHref(c.slug)} className={e.seasonal ? seasonalEntry : entry}>
                   {c.name}
                 </Link>
               );
@@ -168,14 +166,14 @@ const CategoryRow = ({ menu }: { menu: SiteMenu }) => {
               <ul aria-label={g.label}>
                 {g.items.map((c) => (
                   <li key={c.slug}>
-                    <Link href={`/shop?cat=${c.slug}`} className={panelLink} onClick={() => setState(closed)}>
+                    <Link href={categoryHref(c.slug)} className={panelLink} onClick={() => setState(closed)}>
                       {c.name}
                     </Link>
                     {c.children && c.children.length > 0 && (
                       <ul aria-label={c.name}>
                         {c.children.map((child) => (
                           <li key={child.slug}>
-                            <Link href={`/shop?cat=${child.slug}`} className={`${panelLink} pl-6`} onClick={() => setState(closed)}>
+                            <Link href={categoryHref(child.slug)} className={`${panelLink} pl-6`} onClick={() => setState(closed)}>
                               {child.name}
                             </Link>
                           </li>

@@ -1,6 +1,10 @@
 import Link from "next/link";
+import { cookies } from "next/headers";
+import { members } from "@wix/members";
+import GiftVoucherIntro from "@/components/GiftVoucherIntro";
 import GiftVoucherRequestForm from "@/components/GiftVoucherRequestForm";
 import { pageShare } from "@/lib/seo";
+import { wixClientServer } from "@/lib/wixClientServer";
 
 export const metadata = {
   title: "Gift vouchers",
@@ -9,34 +13,53 @@ export const metadata = {
   openGraph: pageShare("/gift-vouchers"),
 };
 
-export default function GiftVouchersPage() {
+async function savedSenderPhone(): Promise<string> {
+  try {
+    const token = JSON.parse(cookies().get("refreshToken")?.value || "{}");
+    if (token.role !== "member") return "";
+    const wixClient = await wixClientServer();
+    const result = await wixClient.members.getCurrentMember({ fieldsets: [members.Set.FULL] });
+    return result.member?.contact?.phones?.[0] || "";
+  } catch {
+    return "";
+  }
+}
+
+export default async function GiftVouchersPage() {
+  const senderPhone = await savedSenderPhone();
+
   return (
     <main className="px-4 md:px-8 lg:px-16 xl:px-32 2xl:px-64">
-      <div className="mx-auto max-w-5xl py-10 md:py-16">
-        <p className="mb-3 text-sm font-semibold uppercase tracking-wider text-brand-navy dark:text-brand-gold">A gift they can choose</p>
-        <h1 className="max-w-3xl font-display text-4xl font-bold leading-tight md:text-5xl">Gift vouchers</h1>
-        <p className="mt-4 max-w-2xl text-lg text-gray-700">
-          Give someone the freedom to choose a watch they love. Tell us who it is for and the amount you have in mind.
-        </p>
+      <div className="mx-auto max-w-6xl py-6 md:py-8 lg:py-4">
+        <div className="lg:flex lg:items-end lg:justify-between lg:gap-8">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wider text-brand-navy dark:text-brand-gold">A gift they can choose</p>
+            <h1 className="mt-1 font-display text-4xl font-bold leading-tight md:text-5xl">Gift vouchers</h1>
+          </div>
+          <p className="mt-2 max-w-2xl text-base text-gray-700 lg:mt-0 lg:max-w-lg lg:text-right">
+            Give someone the freedom to choose a watch they love. Tell us who it is for and the amount you have in mind.
+          </p>
+        </div>
+        <GiftVoucherIntro />
 
-        <div className="mt-10 grid gap-10 lg:grid-cols-[minmax(0,1.35fr)_minmax(16rem,0.65fr)] lg:gap-14">
-          <section aria-labelledby="request-heading" className="rounded-xl bg-brand-cream p-5 sm:p-8">
-            <h2 id="request-heading" className="mb-2 font-display text-2xl font-bold">Request a voucher</h2>
-            <p className="mb-7 text-sm text-gray-600">We will confirm the amount and payment details with you before issuing it.</p>
-            <GiftVoucherRequestForm />
+        <div className="mt-3 grid gap-6 lg:grid-cols-[minmax(0,1.6fr)_minmax(15rem,0.7fr)] lg:gap-10">
+          <section aria-labelledby="request-heading" className="rounded-xl bg-brand-cream p-4 sm:p-5 lg:p-4">
+            <h2 id="request-heading" className="font-display text-2xl font-bold">Request a voucher</h2>
+            <p className="mb-3 mt-1 text-sm text-gray-600">Review the prepared WhatsApp message. We confirm payment before issuing.</p>
+            <GiftVoucherRequestForm senderPhone={senderPhone} />
           </section>
 
-          <aside aria-labelledby="how-heading" className="lg:pt-3">
+          <aside aria-labelledby="how-heading" className="hidden lg:block lg:pt-2">
             <h2 id="how-heading" className="font-display text-2xl font-bold">How it works</h2>
-            <ol className="mt-6 space-y-7">
-              <li><span className="font-semibold text-brand-gold-dark">01</span><p className="mt-1 font-semibold">Fill in the gift details</p><p className="mt-1 text-sm text-gray-600">Choose an amount and tell us who should receive it.</p></li>
-              <li><span className="font-semibold text-brand-gold-dark">02</span><p className="mt-1 font-semibold">Chat with our team</p><p className="mt-1 text-sm text-gray-600">Send the prepared WhatsApp message. We will explain how to pay and confirm your payment.</p></li>
-              <li><span className="font-semibold text-brand-gold-dark">03</span><p className="mt-1 font-semibold">We send the voucher</p><p className="mt-1 text-sm text-gray-600">After payment is confirmed, our team issues the code and emails it to the recipient.</p></li>
+            <ol className="mt-4 space-y-4">
+              <li><span className="font-semibold text-brand-gold-dark">01 · Fill in the details</span><p className="mt-1 text-sm text-gray-600">Choose an amount and add both people&apos;s contact details.</p></li>
+              <li><span className="font-semibold text-brand-gold-dark">02 · Chat with our team</span><p className="mt-1 text-sm text-gray-600">Send the WhatsApp request. We explain how to pay and confirm your payment.</p></li>
+              <li><span className="font-semibold text-brand-gold-dark">03 · We send the voucher</span><p className="mt-1 text-sm text-gray-600">After payment is verified, we issue the code and email the voucher to the recipient.</p></li>
             </ol>
-            <div className="mt-9 border-t border-gray-300 pt-7">
+            <div className="mt-5 border-t border-gray-300 pt-4">
               <h3 className="font-semibold">Using a voucher</h3>
-              <p className="mt-2 text-sm text-gray-600">Enter the code at checkout, or bring it to our shop and ask the team to redeem it for your order.</p>
-              <Link href="/shop" className="mt-3 inline-block text-sm font-semibold text-brand-navy underline underline-offset-4 decoration-brand-gold decoration-2 dark:text-brand-gold">Browse watches</Link>
+              <p className="mt-1 text-sm text-gray-600">Enter the code at checkout, or ask our shop team to redeem it for your order.</p>
+              <Link href="/shop" className="mt-2 inline-block text-sm font-semibold text-brand-navy underline underline-offset-4 decoration-brand-gold decoration-2 dark:text-brand-gold">Browse watches</Link>
             </div>
           </aside>
         </div>

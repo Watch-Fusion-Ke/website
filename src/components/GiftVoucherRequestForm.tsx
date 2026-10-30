@@ -8,11 +8,11 @@ import {
 } from "@/lib/giftVoucherRequest";
 
 const input =
-  "w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-base text-gray-900 placeholder:text-gray-400 focus:border-brand-navy focus:outline-none focus:ring-2 focus:ring-brand-gold";
-const label = "mb-1.5 block text-sm font-medium text-gray-700";
-const error = "mt-1.5 text-sm text-red-600";
+  "min-h-11 w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-base text-gray-900 placeholder:text-gray-400 focus:border-brand-navy focus:outline-none focus:ring-2 focus:ring-brand-gold";
+const label = "mb-1 block text-sm font-medium text-gray-700";
+const error = "mt-1 text-sm text-red-600";
 
-export default function GiftVoucherRequestForm() {
+export default function GiftVoucherRequestForm({ senderPhone = "" }: { senderPhone?: string }) {
   const [errors, setErrors] = useState<GiftVoucherErrors>({});
 
   const continueToWhatsApp = (event: React.FormEvent<HTMLFormElement>) => {
@@ -21,7 +21,7 @@ export default function GiftVoucherRequestForm() {
     const result = validateGiftVoucherRequest(data);
     if (!result.ok) {
       setErrors(result.errors);
-      const first = (["amount", "senderName", "recipientName", "recipientEmail", "message"] as const).find(
+      const first = (["amount", "senderName", "senderPhone", "recipientName", "recipientPhone", "recipientEmail", "message"] as const).find(
         (key) => result.errors[key]
       );
       if (first) document.getElementById(`voucher-${first}`)?.focus();
@@ -33,7 +33,7 @@ export default function GiftVoucherRequestForm() {
   };
 
   return (
-    <form onSubmit={continueToWhatsApp} noValidate className="space-y-5">
+    <form onSubmit={continueToWhatsApp} noValidate className="grid gap-x-4 gap-y-2.5 sm:grid-cols-2 lg:gap-y-2">
       <div>
         <label htmlFor="voucher-amount" className={label}>Gift amount (KES)</label>
         <input id="voucher-amount" name="amount" type="number" inputMode="numeric" min="1" step="1" required
@@ -42,21 +42,37 @@ export default function GiftVoucherRequestForm() {
         {errors.amount && <p id="voucher-amount-error" className={error}>{errors.amount}</p>}
       </div>
 
-      <div className="grid gap-5 sm:grid-cols-2">
-        <div>
-          <label htmlFor="voucher-senderName" className={label}>Your name</label>
-          <input id="voucher-senderName" name="senderName" type="text" autoComplete="name" maxLength={80} required
-            aria-invalid={Boolean(errors.senderName)} aria-describedby={errors.senderName ? "voucher-senderName-error" : undefined}
-            placeholder="Your name" className={input} />
-          {errors.senderName && <p id="voucher-senderName-error" className={error}>{errors.senderName}</p>}
-        </div>
-        <div>
-          <label htmlFor="voucher-recipientName" className={label}>Recipient&apos;s name</label>
-          <input id="voucher-recipientName" name="recipientName" type="text" maxLength={80} required
-            aria-invalid={Boolean(errors.recipientName)} aria-describedby={errors.recipientName ? "voucher-recipientName-error" : undefined}
-            placeholder="Who is the gift for?" className={input} />
-          {errors.recipientName && <p id="voucher-recipientName-error" className={error}>{errors.recipientName}</p>}
-        </div>
+      <div>
+        <label htmlFor="voucher-senderName" className={label}>Your name</label>
+        <input id="voucher-senderName" name="senderName" type="text" autoComplete="name" maxLength={80} required
+          aria-invalid={Boolean(errors.senderName)} aria-describedby={errors.senderName ? "voucher-senderName-error" : undefined}
+          placeholder="Your name" className={input} />
+        {errors.senderName && <p id="voucher-senderName-error" className={error}>{errors.senderName}</p>}
+      </div>
+
+      <div>
+        <label htmlFor="voucher-senderPhone" className={label}>Your phone</label>
+        <input id="voucher-senderPhone" name="senderPhone" type="tel" inputMode="tel" autoComplete="tel" maxLength={24} required
+          defaultValue={senderPhone}
+          aria-invalid={Boolean(errors.senderPhone)} aria-describedby={errors.senderPhone ? "voucher-senderPhone-error" : undefined}
+          placeholder="0712 345 678" className={input} />
+        {errors.senderPhone && <p id="voucher-senderPhone-error" className={error}>{errors.senderPhone}</p>}
+      </div>
+
+      <div>
+        <label htmlFor="voucher-recipientName" className={label}>Recipient&apos;s name</label>
+        <input id="voucher-recipientName" name="recipientName" type="text" maxLength={80} required
+          aria-invalid={Boolean(errors.recipientName)} aria-describedby={errors.recipientName ? "voucher-recipientName-error" : undefined}
+          placeholder="Who is the gift for?" className={input} />
+        {errors.recipientName && <p id="voucher-recipientName-error" className={error}>{errors.recipientName}</p>}
+      </div>
+
+      <div>
+        <label htmlFor="voucher-recipientPhone" className={label}>Recipient&apos;s phone</label>
+        <input id="voucher-recipientPhone" name="recipientPhone" type="tel" inputMode="tel" autoComplete="off" maxLength={24} required
+          aria-invalid={Boolean(errors.recipientPhone)} aria-describedby={errors.recipientPhone ? "voucher-recipientPhone-error" : undefined}
+          placeholder="0712 345 678" className={input} />
+        {errors.recipientPhone && <p id="voucher-recipientPhone-error" className={error}>{errors.recipientPhone}</p>}
       </div>
 
       <div>
@@ -68,19 +84,16 @@ export default function GiftVoucherRequestForm() {
         {errors.recipientEmail && <p id="voucher-recipientEmail-error" className={error}>{errors.recipientEmail}</p>}
       </div>
 
-      <div>
+      <div className="sm:col-span-2">
         <label htmlFor="voucher-message" className={label}>Personal message <span className="font-normal">(optional)</span></label>
-        <textarea id="voucher-message" name="message" rows={4} maxLength={500}
+        <textarea id="voucher-message" name="message" rows={2} maxLength={500}
           aria-invalid={Boolean(errors.message)} aria-describedby={errors.message ? "voucher-message-error" : undefined}
           placeholder="Write a note for the recipient" className={`${input} resize-y`} />
         {errors.message && <p id="voucher-message-error" className={error}>{errors.message}</p>}
       </div>
 
-      <p className="text-sm text-gray-600">
-        Your details will open in a WhatsApp message for you to review and send. No voucher is issued or paid for by this form.
-      </p>
       <button type="submit"
-        className="min-h-12 w-full rounded-lg bg-brand-navy px-6 py-3 text-base font-semibold text-white transition-colors hover:bg-brand-gold hover:text-brand-navy focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold">
+        className="min-h-12 w-full rounded-lg bg-brand-navy px-6 py-3 text-base font-semibold text-white transition-colors hover:bg-brand-gold hover:text-brand-navy focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold sm:col-span-2">
         Continue to WhatsApp
       </button>
     </form>

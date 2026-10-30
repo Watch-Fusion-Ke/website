@@ -3,12 +3,14 @@ import { WHATSAPP_NUMBER } from "@/lib/contact";
 export type GiftVoucherRequest = {
   amount: number;
   senderName: string;
+  senderPhone: string;
   recipientName: string;
+  recipientPhone: string;
   recipientEmail: string;
   message: string;
 };
 
-export type GiftVoucherErrors = Partial<Record<"amount" | "senderName" | "recipientName" | "recipientEmail" | "message", string>>;
+export type GiftVoucherErrors = Partial<Record<"amount" | "senderName" | "senderPhone" | "recipientName" | "recipientPhone" | "recipientEmail" | "message", string>>;
 
 const cleanName = (value: unknown): string =>
   (typeof value === "string" ? value : "")
@@ -22,12 +24,17 @@ const cleanMessage = (value: unknown): string =>
     .replace(/[\u0000-\u0008\u000b-\u001f\u007f]/g, "")
     .trim();
 
+const cleanPhone = (value: unknown): string =>
+  (typeof value === "string" ? value : "").replace(/[\s().-]/g, "").trim();
+
 export const validateGiftVoucherRequest = (
   raw: Record<string, unknown>
 ): { ok: true; values: GiftVoucherRequest } | { ok: false; errors: GiftVoucherErrors } => {
   const amountText = typeof raw.amount === "string" ? raw.amount.trim() : "";
   const senderName = cleanName(raw.senderName);
+  const senderPhone = cleanPhone(raw.senderPhone);
   const recipientName = cleanName(raw.recipientName);
+  const recipientPhone = cleanPhone(raw.recipientPhone);
   const recipientEmail = typeof raw.recipientEmail === "string" ? raw.recipientEmail.trim() : "";
   const message = cleanMessage(raw.message);
   const errors: GiftVoucherErrors = {};
@@ -35,7 +42,9 @@ export const validateGiftVoucherRequest = (
   // The amount is a request, not a price or a payment. Staff confirm it in WhatsApp.
   if (!/^[1-9]\d{0,8}$/.test(amountText)) errors.amount = "Enter a whole KES amount greater than zero.";
   if (senderName.length < 2 || senderName.length > 80) errors.senderName = "Enter your name (2 to 80 characters).";
+  if (!/^\+?\d{9,15}$/.test(senderPhone)) errors.senderPhone = "Enter a valid phone number (9 to 15 digits).";
   if (recipientName.length < 2 || recipientName.length > 80) errors.recipientName = "Enter the recipient's name (2 to 80 characters).";
+  if (!/^\+?\d{9,15}$/.test(recipientPhone)) errors.recipientPhone = "Enter a valid phone number (9 to 15 digits).";
   if (recipientEmail.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(recipientEmail)) {
     errors.recipientEmail = "Enter a valid recipient email address.";
   }
@@ -44,7 +53,7 @@ export const validateGiftVoucherRequest = (
   if (Object.keys(errors).length) return { ok: false, errors };
   return {
     ok: true,
-    values: { amount: Number(amountText), senderName, recipientName, recipientEmail, message },
+    values: { amount: Number(amountText), senderName, senderPhone, recipientName, recipientPhone, recipientEmail, message },
   };
 };
 
@@ -57,7 +66,9 @@ export const giftVoucherMessage = (request: GiftVoucherRequest): string =>
     "",
     `Amount requested: KES ${request.amount.toLocaleString("en-KE")}`,
     `From: ${request.senderName}`,
+    `Sender phone: ${request.senderPhone}`,
     `To: ${request.recipientName}`,
+    `Recipient phone: ${request.recipientPhone}`,
     `Recipient email: ${request.recipientEmail}`,
     ...(request.message ? ["", `Personal message: ${request.message}`] : []),
     "",

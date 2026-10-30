@@ -8,9 +8,9 @@ The Wix-hosted checkout remains the place for online code redemption. In-store s
 
 ## Site work
 
-1. Add a public `/gift-vouchers` page with a small form: amount in whole KES, sender name, recipient name, recipient email, and optional message.
+1. Add a public `/gift-vouchers` page with a small form: amount in whole KES, sender name and phone, recipient name, phone and email, and optional message. Prefill the sender phone from their Wix member profile when available; every field remains editable.
 2. Validate and normalise entries before building the WhatsApp message. Opening WhatsApp does not submit or pay for a voucher; the customer must send the prepared message.
-3. Link the page in the header, mobile menu, footer, and sitemap. Use the site's existing palette, typography, form fields, and focus treatment. No voucher artwork is used on this page yet.
+3. Link the page in the header, mobile menu, footer, and sitemap. Keep the desktop form and process explanation within a typical desktop viewport. On phones and tablets, show the process in an introductory dialog before the form, with a way to reopen it. No voucher artwork is used on this page yet.
 4. Test the validation and handoff, including line breaks, special characters, and the absence of any client-side issuance capability.
 
 ## Security and operating flow

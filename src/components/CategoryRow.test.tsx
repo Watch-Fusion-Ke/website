@@ -94,10 +94,15 @@ describe("CategoryRow", () => {
     expect(html.lastIndexOf('hidden=""')).toBeLessThan(html.indexOf("</nav>"));
   });
 
-  it("gives the plain-text links no white background class, which the dark theme would turn into a grey box behind each word", () => {
-    const link = html.match(/<a[^>]*href="\/shop\/gents-watches"[^>]*>/)?.[0] ?? "";
-    expect(link).not.toMatch(/(^|\s|")bg-white(\s|")/);
-    expect(link).toContain("max-md:bg-[var(--surface)]");
+  it("gives the phone links no box at all: no border, no rounded pill, and no background, which the dark theme would turn into a grey box", () => {
+    for (const tag of [html.match(/<a[^>]*href="\/shop\/gents-watches"[^>]*>/)?.[0] ?? "", html.match(/<button[^>]*>/)?.[0] ?? ""]) {
+      const classes = tag.match(/class="([^"]*)"/)?.[1].split(" ") ?? [];
+      expect(classes).not.toContain("border");
+      expect(classes.some((c) => c.startsWith("border-") && !c.startsWith("md:"))).toBe(false);
+      expect(classes).not.toContain("rounded-full");
+      expect(classes).not.toContain("bg-white");
+      expect(classes.some((c) => c.includes("bg-[var(--surface)]"))).toBe(false);
+    }
   });
 
   it("makes the phone pills at least 44 px tall to tap", () => {
@@ -106,22 +111,28 @@ describe("CategoryRow", () => {
     }
   });
 
-  it("keeps the phone pills as small as they can be while still easy to read and tap, so more of the row shows", () => {
-    const tags = [html.match(/<a[^>]*href="\/shop\/gents-watches"[^>]*>/)?.[0] ?? "", html.match(/<button[^>]*>/)?.[0] ?? "", html.match(/<a[^>]*href="\/shop\/valentines-gifts"[^>]*>/)?.[0] ?? ""];
-    for (const tag of tags) {
+  it("sets each phone link as plain 13 px text whose tap area is padding, not a drawn box, so the row is narrower and still 44 px to tap", () => {
+    for (const tag of [html.match(/<a[^>]*href="\/shop\/gents-watches"[^>]*>/)?.[0] ?? "", html.match(/<button[^>]*>/)?.[0] ?? ""]) {
       const classes = tag.match(/class="([^"]*)"/)?.[1].split(" ") ?? [];
-      expect(classes).toContain("px-2.5");
-      expect(classes).toContain("text-xs");
+      expect(classes).toContain("px-3");
+      expect(classes).toContain("text-[13px]");
       expect(classes).toContain("min-h-11");
-      expect(classes).not.toContain("px-4");
+      expect(classes).toContain("snap-center");
     }
+  });
+
+  it("slides the phone row with snapping, with room at both ends, and no extra gap or end padding eating the width", () => {
     const row = html.match(/<div class="([^"]*overflow-x-auto[^"]*)"/)?.[1].split(" ") ?? [];
-    expect(row).toContain("gap-1.5");
-    expect(row).toContain("pr-8");
+    expect(row).toContain("snap-x");
+    expect(row).toContain("snap-proximity");
+    expect(row).toContain("scroll-px-4");
+    expect(row).toContain("px-4");
+    expect(row).not.toContain("gap-1.5");
+    expect(row).not.toContain("pr-8");
   });
 
   it("sits close under the header on a phone, with a smaller gap above and below than on a computer", () => {
-    expect(html).toMatch(/<div class="py-3 md:py-8"/);
+    expect(html).toMatch(/<div class="py-1 md:py-8"/);
     expect(readFileSync("src/app/page.tsx", "utf8")).toMatch(/<div className="mt-0 md:mt-6">\s*<Suspense/);
   });
 
@@ -160,13 +171,19 @@ describe("CategoryRow", () => {
     expect(renamed).toContain("Presents</em>");
   });
 
-  it("puts the Christmas link first on a phone, where the row slides and its end is out of sight, and leaves it in its own place from a tablet up", () => {
+  it("keeps the Christmas link in the same place on a phone as on a computer, marked as the entry the phone row opens centred on", () => {
     const tag = html.match(/<a[^>]*href="\/shop\/christmas-gift-packages"[^>]*>/)?.[0] ?? "";
     const classes = tag.match(/class="([^"]*)"/)?.[1].split(" ") ?? [];
-    expect(classes).toContain("max-md:order-first");
-    expect(classes.filter((c) => /^(md|lg):order-/.test(c))).toEqual([]);
-    const other = html.match(/<a[^>]*href="\/shop\/customizable-gifts"[^>]*>/)?.[0] ?? "";
-    expect(other).not.toContain("order-first");
+    expect(classes.some((c) => c.includes("order-"))).toBe(false);
+    expect(tag).toContain("data-row-focus");
+    expect(classes).toContain("snap-center");
+    expect(html.match(/data-row-focus/g)).toHaveLength(1);
+  });
+
+  it("opens the phone row centred on the marked entry, so the row starts balanced like the computer's", () => {
+    const source = readFileSync("src/components/CategoryRow.tsx", "utf8");
+    expect(source).toContain("[data-row-focus]");
+    expect(source).toContain("centreScrollLeft");
   });
 
   it("hides every decoration from screen readers, so the link is read as just its name", () => {
@@ -210,7 +227,13 @@ describe("CategoryRow", () => {
     expect(renderToStaticMarkup(<CategoryRow menu={{ row: [] }} />)).toBe("");
   });
 
-  it("uses the site font, no main heading, and a fade at the right end of the phone strip in both themes", () => {
+  it("fades only the end of the phone row that has more beyond it: the right at the start, the left once scrolled", () => {
+    expect(html).toContain("bg-gradient-to-l");
+    expect(html).not.toContain("bg-gradient-to-r");
+    expect(readFileSync("src/components/CategoryRow.tsx", "utf8")).toContain("bg-gradient-to-r");
+  });
+
+  it("uses the site font, no main heading, and fades in both themes", () => {
     const source = readFileSync("src/components/CategoryRow.tsx", "utf8");
     expect(source).not.toMatch(/fontFamily|Futura/);
     expect(source).not.toMatch(/<h1[\s>]/);

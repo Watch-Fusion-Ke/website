@@ -4,16 +4,18 @@ import Link from "next/link";
 import { useEffect, useId, useRef, useState } from "react";
 import ChristmasCategoryLink from "@/components/ChristmasCategoryLink";
 import { categoryHref } from "@/lib/categoryPages";
-import { clampLeft, closed, hoverIn, hoverOut, press, type MenuState, type SiteMenu } from "@/lib/siteMenu";
+import { centreScrollLeft, clampLeft, closed, hoverIn, hoverOut, press, scrollEdges, type MenuState, type SiteMenu } from "@/lib/siteMenu";
 
-// On a phone each entry is a pill in a strip that slides sideways; from a tablet up they are plain words with a gold underline on hover.
-// The pill background is the theme's surface colour, set only below the tablet width: a plain bg-white class would be turned into a
-// grey box behind each word by the dark theme's own bg-white rule, which beats the tablet override.
+// Every entry is plain words, on a phone as on a computer, with a gold underline on hover or press. A drawn box round each word costs
+// about 20 px of width for nothing: the 44 px tap area is invisible padding (min-h-11 and px-3), which is what lets the whole row stay
+// narrow. On a phone the row slides sideways and snaps entry by entry; from a tablet up it is centred and does not slide.
+// No entry has a background class: the dark theme turns a plain bg-white into a grey box behind each word.
 const entry =
-  "inline-flex min-h-11 flex-shrink-0 items-center whitespace-nowrap rounded-full border border-gray-200 px-2.5 text-xs font-semibold text-gray-700 transition-colors duration-200 hover:border-black hover:bg-black hover:text-white max-md:bg-[var(--surface)] " +
-  "md:min-h-0 md:rounded-none md:border-0 md:px-0 md:py-1.5 md:text-xl md:leading-[25.5px] md:text-gray-800 md:underline-offset-4 md:decoration-2 md:decoration-brand-gold md:hover:bg-transparent md:hover:text-gray-800 md:hover:underline";
+  "inline-flex min-h-11 flex-shrink-0 snap-center items-center whitespace-nowrap px-3 text-[13px] font-semibold text-gray-700 underline-offset-[10px] decoration-2 decoration-brand-gold transition-colors duration-200 hover:text-black hover:underline active:underline " +
+  "md:min-h-0 md:px-0 md:py-1.5 md:text-xl md:leading-[25.5px] md:text-gray-800 md:underline-offset-4 md:hover:text-gray-800";
+// The one place a gold chip is kept: a seasonal page, so it stands out from the plain words.
 const seasonalEntry =
-  "inline-flex min-h-11 flex-shrink-0 items-center whitespace-nowrap rounded-full bg-brand-gold px-2.5 text-xs font-semibold text-brand-navy transition-colors duration-200 hover:brightness-95 md:min-h-0 md:px-4 md:py-2 md:text-base";
+  "inline-flex min-h-11 flex-shrink-0 snap-center items-center whitespace-nowrap rounded-full bg-brand-gold px-3 text-[13px] font-semibold text-brand-navy transition-colors duration-200 hover:brightness-95 md:min-h-0 md:px-4 md:py-2 md:text-base";
 // The floating box under a menu button: light and flat, a thin border and a small shadow, in the page's own colour. The outer box has a
 // little transparent room at the top so the pointer can cross from the button to the links without the menu closing. These classes are
 // only on the outer box while it is open: a closed box carries no display class, because a display class would override the hidden
@@ -40,6 +42,8 @@ const CategoryRow = ({ menu }: { menu: SiteMenu }) => {
   const open = state.open;
   const [left, setLeft] = useState(0);
   const root = useRef<HTMLDivElement>(null);
+  const strip = useRef<HTMLDivElement>(null);
+  const [edges, setEdges] = useState({ atStart: true, atEnd: false });
   const lastButton = useRef<HTMLElement | null>(null);
   const byKeyboard = useRef(false);
   const leaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -57,6 +61,22 @@ const CategoryRow = ({ menu }: { menu: SiteMenu }) => {
   const hovering = (e: React.PointerEvent) => e.pointerType === "mouse" || e.pointerType === "pen";
 
   useEffect(() => cancelLeave, []);
+
+  // The phone row opens centred on the marked entry (Christmas), as the computer's row is, with part of its neighbours showing on both
+  // sides to say that it slides. A row that fits, as on a computer, is left where it is.
+  useEffect(() => {
+    const row = strip.current;
+    if (!row) return;
+    const focus = row.querySelector<HTMLElement>("[data-row-focus]");
+    if (focus) row.scrollLeft = centreScrollLeft(focus.offsetLeft, focus.offsetWidth, row.clientWidth, row.scrollWidth);
+    setEdges(scrollEdges(row.scrollLeft, row.clientWidth, row.scrollWidth));
+  }, []);
+  const onRowScroll = () => {
+    const row = strip.current;
+    if (!row) return;
+    const next = scrollEdges(row.scrollLeft, row.clientWidth, row.scrollWidth);
+    setEdges((prev) => (prev.atStart === next.atStart && prev.atEnd === next.atEnd ? prev : next));
+  };
 
   // A menu opened from the keyboard puts the keyboard on its first link, so Tab does not have to cross the rest of the row first.
   useEffect(() => {
@@ -98,7 +118,7 @@ const CategoryRow = ({ menu }: { menu: SiteMenu }) => {
   const groups = menu.row.flatMap((e) => (e.kind === "menu" ? [e.group] : []));
 
   return (
-    <div ref={root} className="py-3 md:py-8">
+    <div ref={root} className="py-1 md:py-8">
       <nav
         aria-label="Shop by category"
         className="relative"
@@ -111,7 +131,7 @@ const CategoryRow = ({ menu }: { menu: SiteMenu }) => {
         }}
       >
         <div className="relative">
-        <div className="flex gap-1.5 overflow-x-auto px-4 pr-8 scrollbar-hide md:items-center md:justify-center md:gap-12 md:pr-4 lg:gap-16">
+        <div ref={strip} onScroll={onRowScroll} className="relative flex snap-x snap-proximity scroll-px-4 overflow-x-auto px-4 scrollbar-hide md:items-center md:justify-center md:gap-12 lg:gap-16">
           {menu.row.map((e) => {
             if (e.kind === "link") {
               const c = e.category;
@@ -153,12 +173,13 @@ const CategoryRow = ({ menu }: { menu: SiteMenu }) => {
             );
           })}
         </div>
-        {/* Right-edge fade + chevron: hints that the strip scrolls on a phone */}
-        <div className="pointer-events-none absolute inset-y-0 right-0 flex w-8 items-center justify-end bg-gradient-to-l from-white via-white/80 to-transparent dark:from-[#0a0a0a] dark:via-[#0a0a0a]/80 md:hidden">
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="mr-1 text-gray-400">
-            <polyline points="9 18 15 12 9 6" />
-          </svg>
-        </div>
+        {/* Fades the end of the phone row that has more beyond it, and only that end */}
+        {!edges.atStart && (
+          <div className="pointer-events-none absolute inset-y-0 left-0 w-8 bg-gradient-to-r from-white via-white/80 to-transparent dark:from-[#0a0a0a] dark:via-[#0a0a0a]/80 md:hidden" />
+        )}
+        {!edges.atEnd && (
+          <div className="pointer-events-none absolute inset-y-0 right-0 w-8 bg-gradient-to-l from-white via-white/80 to-transparent dark:from-[#0a0a0a] dark:via-[#0a0a0a]/80 md:hidden" />
+        )}
         </div>
         {groups.map((g, i) => (
           <div key={g.label} id={`${id}-${i}`} data-menu={g.label} hidden={open !== g.label} className={open === g.label ? panelOuter : undefined}>

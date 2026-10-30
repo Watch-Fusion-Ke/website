@@ -84,3 +84,17 @@ export const press = (state: MenuState, label: string): MenuState => (state.open
 // Where a dropdown starts so it lines up with its button but never runs past the right edge or off the left edge.
 export const clampLeft = (buttonLeft: number, panelWidth: number, containerWidth: number) =>
   Math.max(0, Math.min(buttonLeft, containerWidth - panelWidth));
+
+// Where to scroll a sliding row so one entry sits in the middle of what is visible. Never before the start or past the end, and a row that
+// already fits (a computer) is not moved. Anything that is not a real size gives no movement.
+export const centreScrollLeft = (itemLeft: number, itemWidth: number, viewWidth: number, contentWidth: number): number => {
+  const furthest = contentWidth - viewWidth;
+  if (![itemLeft, itemWidth, viewWidth, contentWidth].every(Number.isFinite) || furthest <= 0) return 0;
+  return Math.min(furthest, Math.max(0, itemLeft + itemWidth / 2 - viewWidth / 2));
+};
+
+// Which ends of the row have more beyond them, to fade only those. A pixel of rounding is allowed, as scroll positions are fractions.
+export const scrollEdges = (scrollLeft: number, viewWidth: number, contentWidth: number): { atStart: boolean; atEnd: boolean } => ({
+  atStart: scrollLeft <= 1,
+  atEnd: scrollLeft >= contentWidth - viewWidth - 1,
+});

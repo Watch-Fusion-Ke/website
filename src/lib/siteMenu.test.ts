@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildMenu, clampLeft, closed, hoverIn, hoverOut, press, type SiteMenu } from "@/lib/siteMenu";
+import { buildMenu, centreScrollLeft, clampLeft, closed, hoverIn, hoverOut, press, scrollEdges, type SiteMenu } from "@/lib/siteMenu";
 
 const cat = (slug: string, name = slug, visible?: boolean) => ({ slug, name, visible });
 const today = [
@@ -198,5 +198,49 @@ describe("placing a dropdown under its button", () => {
 
   it("never lets it start left of the page", () => {
     expect(clampLeft(-20, 208, 1200)).toBe(0);
+  });
+});
+
+describe("opening the phone row centred on one entry", () => {
+  // item left, item width, the row's visible width, the row's whole content width
+  it("puts the entry's middle in the middle of the visible row", () => {
+    expect(centreScrollLeft(300, 100, 390, 700)).toBe(155); // 300 + 50 - 195
+  });
+
+  it("never scrolls to before the start, for an entry near the left", () => {
+    expect(centreScrollLeft(10, 100, 390, 700)).toBe(0);
+  });
+
+  it("never scrolls past the end, for an entry near the right", () => {
+    expect(centreScrollLeft(620, 100, 390, 700)).toBe(310); // the most it can move: 700 - 390
+  });
+
+  it("does not move a row that already fits, as on a computer", () => {
+    expect(centreScrollLeft(300, 100, 1200, 900)).toBe(0);
+    expect(centreScrollLeft(300, 100, 900, 900)).toBe(0);
+  });
+
+  it("copes with sizes that are not whole numbers or not there", () => {
+    expect(centreScrollLeft(300.5, 99.5, 390, 700)).toBeCloseTo(155.25);
+    expect(centreScrollLeft(NaN, 100, 390, 700)).toBe(0);
+  });
+});
+
+describe("which ends of the phone row have more beyond them", () => {
+  it("has more to the right only, at the start", () => {
+    expect(scrollEdges(0, 390, 700)).toEqual({ atStart: true, atEnd: false });
+  });
+
+  it("has more on both sides in the middle", () => {
+    expect(scrollEdges(155, 390, 700)).toEqual({ atStart: false, atEnd: false });
+  });
+
+  it("has more to the left only, at the end, allowing a pixel of rounding", () => {
+    expect(scrollEdges(310, 390, 700)).toEqual({ atStart: false, atEnd: true });
+    expect(scrollEdges(309.4, 390, 700)).toEqual({ atStart: false, atEnd: true });
+  });
+
+  it("has nothing beyond either end when everything fits", () => {
+    expect(scrollEdges(0, 1200, 900)).toEqual({ atStart: true, atEnd: true });
   });
 });

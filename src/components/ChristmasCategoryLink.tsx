@@ -52,7 +52,8 @@ const ChristmasCategoryLink = ({ name, href }: { name: string; href: string }) =
   }, { scope: link });
 
   return (
-    <Link ref={link} href={href} className={`${styles.link} max-md:order-first`}>
+    // data-row-focus marks the entry the phone row opens centred on, so the row starts balanced the way the computer's is.
+    <Link ref={link} href={href} data-row-focus="" className={`${styles.link} snap-center`}>
       <span className={styles.giftHalo} data-christmas-halo aria-hidden="true" />
       <svg className={styles.gift} viewBox="0 0 32 34" aria-hidden="true">
         <rect className={styles.giftBox} x="3" y="13" width="26" height="18" rx="2" />

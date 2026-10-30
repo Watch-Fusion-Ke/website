@@ -1,18 +1,25 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useId, useRef, useState } from "react";
+import { useEffect, useId, useLayoutEffect, useRef, useState } from "react";
+import ChristmasCategoryLink from "@/components/ChristmasCategoryLink";
 import { categoryHref } from "@/lib/categoryPages";
-import { clampLeft, closed, hoverIn, hoverOut, press, type MenuState, type SiteMenu } from "@/lib/siteMenu";
+import { PHONE_FOCUS_SLUG, centreScrollLeft, clampLeft, closed, hoverIn, hoverOut, phoneOrder, press, scrollEdges, type MenuState, type SiteMenu } from "@/lib/siteMenu";
 
-// On a phone each entry is a pill in a strip that slides sideways; from a tablet up they are plain words with a gold underline on hover.
-// The pill background is the theme's surface colour, set only below the tablet width: a plain bg-white class would be turned into a
-// grey box behind each word by the dark theme's own bg-white rule, which beats the tablet override.
+// Every entry is plain words, on a phone as on a computer, with a gold underline on hover or press. A drawn box round each word costs
+// about 20 px of width for nothing: the 44 px tap area is invisible padding (min-h-11 and px-3), which is what lets the whole row stay
+// narrow. On a phone the row slides sideways and snaps entry by entry; from a tablet up it is centred and does not slide.
+// No entry has a background class: the dark theme turns a plain bg-white into a grey box behind each word.
 const entry =
-  "inline-flex min-h-11 flex-shrink-0 items-center whitespace-nowrap rounded-full border border-gray-200 px-2.5 text-xs font-semibold text-gray-700 transition-colors duration-200 hover:border-black hover:bg-black hover:text-white max-md:bg-[var(--surface)] " +
-  "md:min-h-0 md:rounded-none md:border-0 md:px-0 md:py-1.5 md:text-xl md:leading-[25.5px] md:text-gray-800 md:underline-offset-4 md:decoration-2 md:decoration-brand-gold md:hover:bg-transparent md:hover:text-gray-800 md:hover:underline";
+  // On a phone each entry's place comes from --phone-order (see phoneOrder), set on the entry itself; a computer ignores it.
+  "inline-flex min-h-11 flex-shrink-0 items-center whitespace-nowrap px-3 text-[13px] font-semibold text-gray-700 underline-offset-[10px] decoration-2 decoration-brand-gold transition-colors duration-200 max-md:snap-center max-md:[order:var(--phone-order)] active:underline " +
+  // Hover styles apply only to a pointer that really hovers, so a tap on a phone does not leave the last entry stuck underlined. The focus
+  // ring is drawn inside the entry because the row clips anything outside its 44 px height.
+  "[@media(hover:hover)]:hover:text-black [@media(hover:hover)]:hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-brand-gold " +
+  "md:min-h-0 md:px-0 md:py-1.5 md:text-lg lg:text-xl md:leading-[25.5px] md:text-gray-800 md:underline-offset-4 md:[@media(hover:hover)]:hover:text-gray-800";
+// The one place a gold chip is kept: a seasonal page, so it stands out from the plain words.
 const seasonalEntry =
-  "inline-flex min-h-11 flex-shrink-0 items-center whitespace-nowrap rounded-full bg-brand-gold px-2.5 text-xs font-semibold text-brand-navy transition-colors duration-200 hover:brightness-95 md:min-h-0 md:px-4 md:py-2 md:text-base";
+  "inline-flex min-h-11 flex-shrink-0 items-center whitespace-nowrap rounded-full bg-brand-gold px-3 text-[13px] font-semibold text-brand-navy transition-colors duration-200 hover:brightness-95 max-md:snap-center max-md:[order:var(--phone-order)] md:min-h-0 md:px-4 md:py-2 md:text-base";
 // The floating box under a menu button: light and flat, a thin border and a small shadow, in the page's own colour. The outer box has a
 // little transparent room at the top so the pointer can cross from the button to the links without the menu closing. These classes are
 // only on the outer box while it is open: a closed box carries no display class, because a display class would override the hidden
@@ -24,6 +31,8 @@ const panelLink =
 // Hover opens a menu at once; leaving closes it after a short grace, so a slight slip off the edge does not make it flicker.
 const LEAVE_GRACE_MS = 120;
 const PANEL_WIDTH = 208;
+// The row has 16 px of padding and each entry 12 px of its own, all empty: scrolling past just that hides no word, so no fade is needed.
+const EDGE_SLACK = 28;
 
 const Chevron = ({ open }: { open: boolean }) => (
   <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className={`ml-1.5 inline-block transition-transform duration-200 motion-reduce:transition-none ${open ? "rotate-180" : ""}`}>
@@ -39,6 +48,8 @@ const CategoryRow = ({ menu }: { menu: SiteMenu }) => {
   const open = state.open;
   const [left, setLeft] = useState(0);
   const root = useRef<HTMLDivElement>(null);
+  const strip = useRef<HTMLDivElement>(null);
+  const [edges, setEdges] = useState({ atStart: true, atEnd: false });
   const lastButton = useRef<HTMLElement | null>(null);
   const byKeyboard = useRef(false);
   const leaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -56,6 +67,43 @@ const CategoryRow = ({ menu }: { menu: SiteMenu }) => {
   const hovering = (e: React.PointerEvent) => e.pointerType === "mouse" || e.pointerType === "pen";
 
   useEffect(() => cancelLeave, []);
+
+  // The phone row opens centred on the marked entry (Christmas), as the computer's row is, with part of its neighbours showing on both
+  // sides to say that it slides. It is done before the first paint, so there is no second jump, and again when the width changes (the
+  // phone is turned). A row that fits, as on a computer, is left where it is.
+  const useBeforePaint = typeof window === "undefined" ? useEffect : useLayoutEffect;
+  useBeforePaint(() => {
+    const row = strip.current;
+    if (!row) return;
+    const centre = () => {
+      const focus = row.querySelector<HTMLElement>("[data-row-focus]");
+      if (focus) row.scrollLeft = centreScrollLeft(focus.offsetLeft, focus.offsetWidth, row.clientWidth, row.scrollWidth);
+      setEdges(scrollEdges(row.scrollLeft, row.clientWidth, row.scrollWidth, EDGE_SLACK));
+    };
+    centre();
+    if (typeof ResizeObserver === "undefined") return;
+    let width = row.clientWidth;
+    const observer = new ResizeObserver(() => {
+      if (row.clientWidth === width) return; // a height change, such as the phone's address bar, is not a turn
+      width = row.clientWidth;
+      centre();
+    });
+    observer.observe(row);
+    return () => observer.disconnect();
+  }, []);
+  const onRowScroll = () => {
+    const row = strip.current;
+    if (!row) return;
+    const next = scrollEdges(row.scrollLeft, row.clientWidth, row.scrollWidth, EDGE_SLACK);
+    setEdges((prev) => (prev.atStart === next.atStart && prev.atEnd === next.atEnd ? prev : next));
+    // An open menu was placed under its button, which has just moved: shut it rather than leave its box where the button was.
+    setState((s) => (s.open === null ? s : closed));
+  };
+  // Keyboard focus on an entry that is partly under a fade brings the whole entry into view. A tap does not, only the keyboard.
+  const onRowFocus = (e: React.FocusEvent<HTMLDivElement>) => {
+    const target = e.target as HTMLElement;
+    if (target.matches?.(":focus-visible")) target.scrollIntoView?.({ inline: "center", block: "nearest" });
+  };
 
   // A menu opened from the keyboard puts the keyboard on its first link, so Tab does not have to cross the rest of the row first.
   useEffect(() => {
@@ -95,9 +143,11 @@ const CategoryRow = ({ menu }: { menu: SiteMenu }) => {
 
   if (menu.row.length === 0) return null;
   const groups = menu.row.flatMap((e) => (e.kind === "menu" ? [e.group] : []));
+  const phone = phoneOrder(menu.row);
+  const orderStyle = (index: number) => ({ "--phone-order": phone[index] }) as React.CSSProperties;
 
   return (
-    <div ref={root} className="py-3 md:py-8">
+    <div ref={root} className="py-1 md:py-8">
       <nav
         aria-label="Shop by category"
         className="relative"
@@ -110,12 +160,15 @@ const CategoryRow = ({ menu }: { menu: SiteMenu }) => {
         }}
       >
         <div className="relative">
-        <div className="flex gap-1.5 overflow-x-auto px-4 pr-8 scrollbar-hide md:items-center md:justify-center md:gap-12 md:pr-4 lg:gap-16">
-          {menu.row.map((e) => {
+        <div ref={strip} onScroll={onRowScroll} onFocus={onRowFocus} className="relative flex scroll-px-4 overflow-x-auto px-4 scrollbar-hide max-md:snap-x max-md:snap-proximity md:items-center md:gap-6 md:[&>:first-child]:ml-auto md:[&>:last-child]:mr-auto lg:gap-8 xl:gap-16">
+          {menu.row.map((e, index) => {
             if (e.kind === "link") {
               const c = e.category;
+              if (c.slug === PHONE_FOCUS_SLUG) {
+                return <ChristmasCategoryLink key={c.slug} name={c.name} href={categoryHref(c.slug)} style={orderStyle(index)} />;
+              }
               return (
-                <Link key={c.slug} href={categoryHref(c.slug)} className={e.seasonal ? seasonalEntry : entry}>
+                <Link key={c.slug} href={categoryHref(c.slug)} style={orderStyle(index)} className={e.seasonal ? seasonalEntry : entry}>
                   {c.name}
                 </Link>
               );
@@ -128,6 +181,7 @@ const CategoryRow = ({ menu }: { menu: SiteMenu }) => {
                 type="button"
                 aria-expanded={open === g.label}
                 aria-controls={`${id}-${i}`}
+                style={orderStyle(index)}
                 onPointerEnter={(ev) => {
                   if (!hovering(ev)) return;
                   cancelLeave();
@@ -149,12 +203,13 @@ const CategoryRow = ({ menu }: { menu: SiteMenu }) => {
             );
           })}
         </div>
-        {/* Right-edge fade + chevron: hints that the strip scrolls on a phone */}
-        <div className="pointer-events-none absolute inset-y-0 right-0 flex w-8 items-center justify-end bg-gradient-to-l from-white via-white/80 to-transparent dark:from-[#0a0a0a] dark:via-[#0a0a0a]/80 md:hidden">
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="mr-1 text-gray-400">
-            <polyline points="9 18 15 12 9 6" />
-          </svg>
-        </div>
+        {/* Fades the end of the phone row that has more beyond it, and only that end */}
+        {!edges.atStart && (
+          <div className="pointer-events-none absolute inset-y-0 left-0 w-8 bg-gradient-to-r from-white via-white/80 to-transparent dark:from-[#0a0a0a] dark:via-[#0a0a0a]/80 lg:hidden" />
+        )}
+        {!edges.atEnd && (
+          <div className="pointer-events-none absolute inset-y-0 right-0 w-8 bg-gradient-to-l from-white via-white/80 to-transparent dark:from-[#0a0a0a] dark:via-[#0a0a0a]/80 lg:hidden" />
+        )}
         </div>
         {groups.map((g, i) => (
           <div key={g.label} id={`${id}-${i}`} data-menu={g.label} hidden={open !== g.label} className={open === g.label ? panelOuter : undefined}>

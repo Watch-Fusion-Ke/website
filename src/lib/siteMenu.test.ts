@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildMenu, clampLeft, closed, hoverIn, hoverOut, press, type SiteMenu } from "@/lib/siteMenu";
+import { PHONE_FOCUS_SLUG, buildMenu, centreScrollLeft, clampLeft, closed, hoverIn, hoverOut, phoneOrder, press, scrollEdges, type SiteMenu } from "@/lib/siteMenu";
 
 const cat = (slug: string, name = slug, visible?: boolean) => ({ slug, name, visible });
 const today = [
@@ -198,5 +198,100 @@ describe("placing a dropdown under its button", () => {
 
   it("never lets it start left of the page", () => {
     expect(clampLeft(-20, 208, 1200)).toBe(0);
+  });
+});
+
+describe("opening the phone row centred on one entry", () => {
+  // item left, item width, the row's visible width, the row's whole content width
+  it("puts the entry's middle in the middle of the visible row", () => {
+    expect(centreScrollLeft(300, 100, 390, 700)).toBe(155); // 300 + 50 - 195
+  });
+
+  it("never scrolls to before the start, for an entry near the left", () => {
+    expect(centreScrollLeft(10, 100, 390, 700)).toBe(0);
+  });
+
+  it("never scrolls past the end, for an entry near the right", () => {
+    expect(centreScrollLeft(620, 100, 390, 700)).toBe(310); // the most it can move: 700 - 390
+  });
+
+  it("does not move a row that already fits, as on a computer", () => {
+    expect(centreScrollLeft(300, 100, 1200, 900)).toBe(0);
+    expect(centreScrollLeft(300, 100, 900, 900)).toBe(0);
+  });
+
+  it("copes with sizes that are not whole numbers or not there", () => {
+    expect(centreScrollLeft(300.5, 99.5, 390, 700)).toBeCloseTo(155.25);
+    expect(centreScrollLeft(NaN, 100, 390, 700)).toBe(0);
+  });
+});
+
+describe("which ends of the phone row have more beyond them", () => {
+  it("has more to the right only, at the start", () => {
+    expect(scrollEdges(0, 390, 700)).toEqual({ atStart: true, atEnd: false });
+  });
+
+  it("has more on both sides in the middle", () => {
+    expect(scrollEdges(155, 390, 700)).toEqual({ atStart: false, atEnd: false });
+  });
+
+  it("has more to the left only, at the end, allowing a pixel of rounding", () => {
+    expect(scrollEdges(310, 390, 700)).toEqual({ atStart: false, atEnd: true });
+    expect(scrollEdges(309.4, 390, 700)).toEqual({ atStart: false, atEnd: true });
+  });
+
+  it("has nothing beyond either end when everything fits", () => {
+    expect(scrollEdges(0, 1200, 900)).toEqual({ atStart: true, atEnd: true });
+  });
+});
+
+describe("the order of the phone row", () => {
+  const link = (slug: string) => ({ kind: "link" as const, category: { name: slug, slug } });
+  const menu = (label: string) => ({ kind: "menu" as const, group: { label, items: [{ name: "x", slug: "x" }, { name: "y", slug: "y" }] } });
+
+  it("is named after the Christmas page, the entry the phone row is built around", () => {
+    expect(PHONE_FOCUS_SLUG).toBe("christmas-gift-packages");
+  });
+
+  it("starts with the first entry and puts Christmas right after it, then the rest in their usual order", () => {
+    const row = [menu("Watch Brands"), link("customizable-gifts"), link(PHONE_FOCUS_SLUG), link("gents-watches"), link("ladies-watches"), link("all-products")];
+    // each entry's place on a phone: Watch Brands 0, Customizable 2, Christmas 1, Gent's 3, Ladies 4, All 5
+    expect(phoneOrder(row)).toEqual([0, 2, 1, 3, 4, 5]);
+  });
+
+  it("leaves the order alone when there is no Christmas entry", () => {
+    expect(phoneOrder([menu("Watch Brands"), link("gents-watches"), link("ladies-watches")])).toEqual([0, 1, 2]);
+  });
+
+  it("leaves the order alone when Christmas is already second or first", () => {
+    expect(phoneOrder([menu("Watch Brands"), link(PHONE_FOCUS_SLUG), link("gents-watches")])).toEqual([0, 1, 2]);
+    expect(phoneOrder([link(PHONE_FOCUS_SLUG), menu("Watch Brands"), link("gents-watches")])).toEqual([0, 1, 2]);
+  });
+
+  it("copes with a row of one, or none", () => {
+    expect(phoneOrder([link(PHONE_FOCUS_SLUG)])).toEqual([0]);
+    expect(phoneOrder([])).toEqual([]);
+  });
+
+  it("moves Christmas to second place wherever it sits further along", () => {
+    const row = [link("a"), link("b"), link("c"), link("d"), link(PHONE_FOCUS_SLUG)];
+    expect(phoneOrder(row)).toEqual([0, 2, 3, 4, 1]);
+  });
+});
+
+describe("fading only when real content is hidden", () => {
+  // The row's padding and each entry's own tap padding are empty space, so scrolling past only that hides no words.
+  it("counts a row scrolled past only empty padding as being at its start or end", () => {
+    expect(scrollEdges(24, 360, 642, 28)).toEqual({ atStart: true, atEnd: false });
+    expect(scrollEdges(258, 360, 642, 28)).toEqual({ atStart: false, atEnd: true });
+  });
+
+  it("fades as soon as a word is hidden", () => {
+    expect(scrollEdges(40, 360, 642, 28)).toEqual({ atStart: false, atEnd: false });
+    expect(scrollEdges(250, 360, 642, 28)).toEqual({ atStart: false, atEnd: false });
+  });
+
+  it("allows only a pixel of rounding when no padding allowance is given", () => {
+    expect(scrollEdges(24, 360, 642)).toEqual({ atStart: false, atEnd: false });
   });
 });

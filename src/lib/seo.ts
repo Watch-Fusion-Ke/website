@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { ADDRESS_LINES, EMAIL, INSTAGRAM_URL, TIKTOK_URL, WHATSAPP_NUMBER } from "@/lib/contact";
 import { seoOf, type SeoTag } from "@/lib/categoryPages";
-import { SITE_NAME, SITE_URL } from "@/lib/site";
+import { SITE_ALTERNATE_NAMES, SITE_NAME, SITE_URL } from "@/lib/site";
 
 // What search engines and link previews are told about a page. The shop's own wording from the store (the SEO title and description
 // it writes for a product or a category) comes first; anything it has not written is made here, once, the same way everywhere.
@@ -130,6 +130,7 @@ export const organizationJsonLd = (): object => ({
   "@type": "Store",
   "@id": `${SITE_URL}/#store`,
   name: SITE_NAME,
+  alternateName: SITE_ALTERNATE_NAMES,
   url: SITE_URL,
   image: `${SITE_URL}/share-image.png`,
   logo: `${SITE_URL}/apple-icon.png`,
@@ -150,6 +151,7 @@ export const websiteJsonLd = (): object => ({
   "@type": "WebSite",
   "@id": `${SITE_URL}/#website`,
   name: SITE_NAME,
+  alternateName: SITE_ALTERNATE_NAMES,
   url: SITE_URL,
   potentialAction: {
     "@type": "SearchAction",

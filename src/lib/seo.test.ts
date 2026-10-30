@@ -184,6 +184,10 @@ describe("breadcrumbJsonLd", () => {
 describe("organizationJsonLd", () => {
   const ld = organizationJsonLd() as Record<string, any>;
 
+  it("is also known by the other ways people write the name, so searches for them find the shop", () => {
+    expect(ld.alternateName).toEqual(["WatchFusion Kenya", "WatchFusionKe", "Watch Fusion Ke", "Watch Fusion"]);
+  });
+
   it("is the shop, with its name, address, phone, email and pages, from the same details the contact page shows", () => {
     expect(ld["@type"]).toBe("Store");
     expect(ld.name).toBe(SITE_NAME);
@@ -229,6 +233,7 @@ describe("websiteJsonLd", () => {
     const ld = websiteJsonLd() as Record<string, any>;
     expect(ld["@type"]).toBe("WebSite");
     expect(ld.url).toBe(SITE_URL);
+    expect(ld.alternateName).toEqual(["WatchFusion Kenya", "WatchFusionKe", "Watch Fusion Ke", "Watch Fusion"]);
     expect(ld.potentialAction).toMatchObject({ "@type": "SearchAction", target: { urlTemplate: `${SITE_URL}/shop?name={search_term_string}` }, "query-input": "required name=search_term_string" });
   });
 });

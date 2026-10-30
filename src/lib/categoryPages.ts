@@ -59,6 +59,17 @@ export const categoryTitle = (category: CategoryPage): string | { absolute: stri
 export const categoryDescription = (category: CategoryPage): string =>
   category.seoDescription || category.description || `Shop ${category.name} at Watch Fusion Kenya, with delivery across Nairobi and Kenya.`;
 
+// Categories the shop has taken down, and where an old link to each now goes. Google still lists some of these pages, so a visitor who
+// follows one lands somewhere useful, not on "not found". A category the store shows again is shown, not redirected.
+const RETIRED_CATEGORIES: Record<string, string> = {
+  featured: "/",
+  gifts: "/shop/customizable-gifts",
+  "gift-packages": "/shop/customizable-gifts",
+};
+
+export const retiredCategoryTarget = (slug: string): string | null =>
+  Object.prototype.hasOwnProperty.call(RETIRED_CATEGORIES, slug) ? RETIRED_CATEGORIES[slug] : null;
+
 type Query = Record<string, string | string[] | undefined>;
 
 // The old address of a category page, /shop?cat=<slug>, and where it now lives. Every other option the shopper had comes along.

@@ -11,6 +11,7 @@ import {
   findCategory,
   hasFilters,
   legacyCategoryTarget,
+  retiredCategoryTarget,
   type CategoryPage,
 } from "@/lib/categoryPages";
 
@@ -70,7 +71,11 @@ export default async function CategoryPageRoute({ params, searchParams }: Props)
   // If the store cannot be read this throws, so the page fails instead of claiming the category does not exist.
   const categories = await getCategoryPages();
   const category = findCategory(categories, slug);
-  if (!category) notFound();
+  if (!category) {
+    const moved = retiredCategoryTarget(slug);
+    if (moved) permanentRedirect(moved);
+    notFound();
+  }
 
   // Called as a function, not used as a tag, so the page is one finished tree and a test can render it.
   return ShopListing({ category, categories, searchParams: query });

@@ -23,6 +23,7 @@ describe("gift voucher request handoff", () => {
     expect(url.searchParams.get("text")).toContain("Amount requested: KES 5,000");
     expect(url.searchParams.get("text")).toContain("Recipient details:\nName: Amina\nPhone: 0712345679\nEmail: amina@example.com");
     expect(url.searchParams.get("text")).not.toMatch(/sender phone/i);
+    expect(url.searchParams.get("text")).toContain("Please confirm my voucher request and share the payment instructions so I can pay.");
     expect(url.searchParams.get("text")).toContain("issued only after payment is confirmed");
   });
 

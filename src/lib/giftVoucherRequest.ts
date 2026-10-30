@@ -69,7 +69,7 @@ export const giftVoucherMessage = (request: GiftVoucherRequest): string =>
     `Email: ${request.recipientEmail}`,
     ...(request.message ? ["", `Personal message: ${request.message}`] : []),
     "",
-    "Please confirm the payment details. I understand the voucher will be issued only after payment is confirmed.",
+    "Please confirm my voucher request and share the payment instructions so I can pay. I understand the voucher will be issued only after payment is confirmed.",
   ].join("\n");
 
 export const giftVoucherWhatsAppUrl = (request: GiftVoucherRequest): string =>

@@ -49,6 +49,7 @@ const Menu = () => {
     { label: "Homepage", href: "/" },
     { label: "Shop", href: "/shop" },
     { label: "Deals", href: "/deals" },
+    { label: "Gift Vouchers", href: "/gift-vouchers" },
     { label: "Contact", href: "/contact" },
   ];
 

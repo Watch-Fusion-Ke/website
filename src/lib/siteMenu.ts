@@ -93,8 +93,22 @@ export const centreScrollLeft = (itemLeft: number, itemWidth: number, viewWidth:
   return Math.min(furthest, Math.max(0, itemLeft + itemWidth / 2 - viewWidth / 2));
 };
 
-// Which ends of the row have more beyond them, to fade only those. A pixel of rounding is allowed, as scroll positions are fractions.
-export const scrollEdges = (scrollLeft: number, viewWidth: number, contentWidth: number): { atStart: boolean; atEnd: boolean } => ({
-  atStart: scrollLeft <= 1,
-  atEnd: scrollLeft >= contentWidth - viewWidth - 1,
-});
+// Which ends of the row have more beyond them, to fade only those. `slack` is how far a row may be scrolled while hiding only empty
+// space (the row's padding and an entry's own tap padding), and is at least a pixel, as scroll positions are fractions.
+export const scrollEdges = (scrollLeft: number, viewWidth: number, contentWidth: number, slack = 1): { atStart: boolean; atEnd: boolean } => {
+  const room = Math.max(1, slack);
+  return { atStart: scrollLeft <= room, atEnd: scrollLeft >= contentWidth - viewWidth - room };
+};
+
+// The entry the phone row is built around: it opens centred in the row, and sits second, right after the first entry.
+export const PHONE_FOCUS_SLUG = "christmas-gift-packages";
+
+// Each entry's place in the phone row. The first entry stays first and the Christmas entry comes right after it, so a phone reads
+// Watch Brands, Christmas, Customizable Gifts, and the Christmas entry lands in the middle of the screen with its neighbours either side.
+// Everything else keeps its usual order. This sets only the order on screen: a computer's row, and the order in the page, are left alone.
+export const phoneOrder = (row: RowEntry[]): number[] => {
+  const places = row.map((_, i) => i);
+  const focus = row.findIndex((e) => e.kind === "link" && e.category.slug === PHONE_FOCUS_SLUG);
+  if (focus <= 1) return places;
+  return places.map((i) => (i === focus ? 1 : i > 0 && i < focus ? i + 1 : i));
+};

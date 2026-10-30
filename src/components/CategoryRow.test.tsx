@@ -193,13 +193,29 @@ describe("CategoryRow", () => {
     expect(renamed).toContain("Presents</em>");
   });
 
-  it("keeps the Christmas link in the same place on a phone as on a computer, marked as the entry the phone row opens centred on", () => {
+  it("marks the Christmas link as the entry the phone row opens centred on, and snaps to it", () => {
     const tag = html.match(/<a[^>]*href="\/shop\/christmas-gift-packages"[^>]*>/)?.[0] ?? "";
     const classes = tag.match(/class="([^"]*)"/)?.[1].split(" ") ?? [];
-    expect(classes.some((c) => c.includes("order-"))).toBe(false);
     expect(tag).toContain("data-row-focus");
     expect(classes).toContain("max-md:snap-center");
     expect(html.match(/data-row-focus/g)).toHaveLength(1);
+  });
+
+  it("puts the phone row in this order: Watch Brands, Christmas, Customizable Gifts, then the rest, and leaves a computer's order alone", () => {
+    const orderOf = (tag: string) => Number(tag.match(/--phone-order:(\d+)/)?.[1]);
+    const wb = html.match(/<button[^>]*>/)?.[0] ?? "";
+    const xmas = html.match(/<a[^>]*href="\/shop\/christmas-gift-packages"[^>]*>/)?.[0] ?? "";
+    const cust = html.match(/<a[^>]*href="\/shop\/customizable-gifts"[^>]*>/)?.[0] ?? "";
+    const gents = html.match(/<a[^>]*href="\/shop\/gents-watches"[^>]*>/)?.[0] ?? "";
+    expect([orderOf(wb), orderOf(xmas), orderOf(cust), orderOf(gents)]).toEqual([0, 1, 2, 4]);
+    // the order is set from a phone's width only, so nothing about the page's own order or a computer's changes
+    for (const tag of [wb, xmas, cust, gents]) {
+      const classes = tag.match(/class="([^"]*)"/)?.[1].split(" ") ?? [];
+      expect(classes).toContain("max-md:[order:var(--phone-order)]");
+      expect(classes.some((c) => /^(md|lg|xl):.*order/.test(c))).toBe(false);
+    }
+    // in the page itself, Customizable Gifts still comes before Christmas, as the computer shows them
+    expect(html.indexOf('href="/shop/customizable-gifts"')).toBeLessThan(html.indexOf('href="/shop/christmas-gift-packages"'));
   });
 
   it("opens the phone row centred on the marked entry, so the row starts balanced like the computer's", () => {
@@ -232,6 +248,12 @@ describe("CategoryRow", () => {
 
   it("centres the phone row again, and recounts which ends fade, when the screen turns or is resized", () => {
     expect(readFileSync("src/components/CategoryRow.tsx", "utf8")).toContain("ResizeObserver");
+  });
+
+  it("counts the empty padding of the row and its entries as not hiding anything, so a fade never washes out a word that is on screen", () => {
+    const source = readFileSync("src/components/CategoryRow.tsx", "utf8");
+    expect(source).toMatch(/EDGE_SLACK\s*=\s*28/);
+    expect(source).toMatch(/scrollEdges\([^)]*EDGE_SLACK\)/);
   });
 
   it("scrolls an entry fully into view when the keyboard focuses it, instead of leaving it half under a fade", () => {

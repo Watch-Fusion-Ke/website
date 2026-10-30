@@ -4,21 +4,22 @@ import Link from "next/link";
 import { useEffect, useId, useLayoutEffect, useRef, useState } from "react";
 import ChristmasCategoryLink from "@/components/ChristmasCategoryLink";
 import { categoryHref } from "@/lib/categoryPages";
-import { centreScrollLeft, clampLeft, closed, hoverIn, hoverOut, press, scrollEdges, type MenuState, type SiteMenu } from "@/lib/siteMenu";
+import { PHONE_FOCUS_SLUG, centreScrollLeft, clampLeft, closed, hoverIn, hoverOut, phoneOrder, press, scrollEdges, type MenuState, type SiteMenu } from "@/lib/siteMenu";
 
 // Every entry is plain words, on a phone as on a computer, with a gold underline on hover or press. A drawn box round each word costs
 // about 20 px of width for nothing: the 44 px tap area is invisible padding (min-h-11 and px-3), which is what lets the whole row stay
 // narrow. On a phone the row slides sideways and snaps entry by entry; from a tablet up it is centred and does not slide.
 // No entry has a background class: the dark theme turns a plain bg-white into a grey box behind each word.
 const entry =
-  "inline-flex min-h-11 flex-shrink-0 items-center whitespace-nowrap px-3 text-[13px] font-semibold text-gray-700 underline-offset-[10px] decoration-2 decoration-brand-gold transition-colors duration-200 max-md:snap-center active:underline " +
+  // On a phone each entry's place comes from --phone-order (see phoneOrder), set on the entry itself; a computer ignores it.
+  "inline-flex min-h-11 flex-shrink-0 items-center whitespace-nowrap px-3 text-[13px] font-semibold text-gray-700 underline-offset-[10px] decoration-2 decoration-brand-gold transition-colors duration-200 max-md:snap-center max-md:[order:var(--phone-order)] active:underline " +
   // Hover styles apply only to a pointer that really hovers, so a tap on a phone does not leave the last entry stuck underlined. The focus
   // ring is drawn inside the entry because the row clips anything outside its 44 px height.
   "[@media(hover:hover)]:hover:text-black [@media(hover:hover)]:hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-brand-gold " +
   "md:min-h-0 md:px-0 md:py-1.5 md:text-lg lg:text-xl md:leading-[25.5px] md:text-gray-800 md:underline-offset-4 md:[@media(hover:hover)]:hover:text-gray-800";
 // The one place a gold chip is kept: a seasonal page, so it stands out from the plain words.
 const seasonalEntry =
-  "inline-flex min-h-11 flex-shrink-0 items-center whitespace-nowrap rounded-full bg-brand-gold px-3 text-[13px] font-semibold text-brand-navy transition-colors duration-200 hover:brightness-95 max-md:snap-center md:min-h-0 md:px-4 md:py-2 md:text-base";
+  "inline-flex min-h-11 flex-shrink-0 items-center whitespace-nowrap rounded-full bg-brand-gold px-3 text-[13px] font-semibold text-brand-navy transition-colors duration-200 hover:brightness-95 max-md:snap-center max-md:[order:var(--phone-order)] md:min-h-0 md:px-4 md:py-2 md:text-base";
 // The floating box under a menu button: light and flat, a thin border and a small shadow, in the page's own colour. The outer box has a
 // little transparent room at the top so the pointer can cross from the button to the links without the menu closing. These classes are
 // only on the outer box while it is open: a closed box carries no display class, because a display class would override the hidden
@@ -30,6 +31,8 @@ const panelLink =
 // Hover opens a menu at once; leaving closes it after a short grace, so a slight slip off the edge does not make it flicker.
 const LEAVE_GRACE_MS = 120;
 const PANEL_WIDTH = 208;
+// The row has 16 px of padding and each entry 12 px of its own, all empty: scrolling past just that hides no word, so no fade is needed.
+const EDGE_SLACK = 28;
 
 const Chevron = ({ open }: { open: boolean }) => (
   <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className={`ml-1.5 inline-block transition-transform duration-200 motion-reduce:transition-none ${open ? "rotate-180" : ""}`}>
@@ -75,7 +78,7 @@ const CategoryRow = ({ menu }: { menu: SiteMenu }) => {
     const centre = () => {
       const focus = row.querySelector<HTMLElement>("[data-row-focus]");
       if (focus) row.scrollLeft = centreScrollLeft(focus.offsetLeft, focus.offsetWidth, row.clientWidth, row.scrollWidth);
-      setEdges(scrollEdges(row.scrollLeft, row.clientWidth, row.scrollWidth));
+      setEdges(scrollEdges(row.scrollLeft, row.clientWidth, row.scrollWidth, EDGE_SLACK));
     };
     centre();
     if (typeof ResizeObserver === "undefined") return;
@@ -91,7 +94,7 @@ const CategoryRow = ({ menu }: { menu: SiteMenu }) => {
   const onRowScroll = () => {
     const row = strip.current;
     if (!row) return;
-    const next = scrollEdges(row.scrollLeft, row.clientWidth, row.scrollWidth);
+    const next = scrollEdges(row.scrollLeft, row.clientWidth, row.scrollWidth, EDGE_SLACK);
     setEdges((prev) => (prev.atStart === next.atStart && prev.atEnd === next.atEnd ? prev : next));
     // An open menu was placed under its button, which has just moved: shut it rather than leave its box where the button was.
     setState((s) => (s.open === null ? s : closed));
@@ -140,6 +143,8 @@ const CategoryRow = ({ menu }: { menu: SiteMenu }) => {
 
   if (menu.row.length === 0) return null;
   const groups = menu.row.flatMap((e) => (e.kind === "menu" ? [e.group] : []));
+  const phone = phoneOrder(menu.row);
+  const orderStyle = (index: number) => ({ "--phone-order": phone[index] }) as React.CSSProperties;
 
   return (
     <div ref={root} className="py-1 md:py-8">
@@ -156,14 +161,14 @@ const CategoryRow = ({ menu }: { menu: SiteMenu }) => {
       >
         <div className="relative">
         <div ref={strip} onScroll={onRowScroll} onFocus={onRowFocus} className="relative flex scroll-px-4 overflow-x-auto px-4 scrollbar-hide max-md:snap-x max-md:snap-proximity md:items-center md:gap-6 md:[&>:first-child]:ml-auto md:[&>:last-child]:mr-auto lg:gap-8 xl:gap-16">
-          {menu.row.map((e) => {
+          {menu.row.map((e, index) => {
             if (e.kind === "link") {
               const c = e.category;
-              if (c.slug === "christmas-gift-packages") {
-                return <ChristmasCategoryLink key={c.slug} name={c.name} href={categoryHref(c.slug)} />;
+              if (c.slug === PHONE_FOCUS_SLUG) {
+                return <ChristmasCategoryLink key={c.slug} name={c.name} href={categoryHref(c.slug)} style={orderStyle(index)} />;
               }
               return (
-                <Link key={c.slug} href={categoryHref(c.slug)} className={e.seasonal ? seasonalEntry : entry}>
+                <Link key={c.slug} href={categoryHref(c.slug)} style={orderStyle(index)} className={e.seasonal ? seasonalEntry : entry}>
                   {c.name}
                 </Link>
               );
@@ -176,6 +181,7 @@ const CategoryRow = ({ menu }: { menu: SiteMenu }) => {
                 type="button"
                 aria-expanded={open === g.label}
                 aria-controls={`${id}-${i}`}
+                style={orderStyle(index)}
                 onPointerEnter={(ev) => {
                   if (!hovering(ev)) return;
                   cancelLeave();

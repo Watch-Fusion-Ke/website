@@ -88,6 +88,16 @@ describe("a category page", () => {
     await expect(render("gifts")).rejects.toThrow("NEXT_REDIRECT /shop/customizable-gifts");
   });
 
+  it("never redirects a taken-down category when the store cannot be read, which would hide an outage", async () => {
+    store.fail = true;
+    try {
+      await expect(render("gifts")).rejects.not.toThrow(/NEXT_REDIRECT|NEXT_NOT_FOUND/);
+      await expect(render("gifts")).rejects.toThrow();
+    } finally {
+      store.fail = false;
+    }
+  });
+
   it("shows such a category again if the shop brings it back, instead of redirecting it", async () => {
     // gift-packages is one of the retired names, and it is in the store's list here
     const html = await render("gift-packages");

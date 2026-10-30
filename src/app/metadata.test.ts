@@ -65,6 +65,7 @@ describe("the shop's name", () => {
     const wrong = files("src").filter((f) => f !== "src/lib/site.ts" && /WatchFusion Kenya|WatchFusionKe/.test(readFileSync(f, "utf8")));
     expect(wrong).toEqual([]);
     expect(read("src/lib/site.ts")).toContain("SITE_ALTERNATE_NAMES");
+    expect(read("src/lib/site.ts")).toContain('export const SITE_NAME = "Watch Fusion Kenya";');
   });
 
   it("is written in the page language of Kenya, and the layout leaves each page's own title and description to its link preview", () => {
@@ -123,9 +124,15 @@ describe("the home page's title and description", () => {
   it("list the words people search for: the shop's brands, gifts, engraving and delivery, with Nairobi and Kenya", () => {
     const layout = read("src/app/layout.tsx");
     const keywords = layout.slice(layout.indexOf("keywords: ["), layout.indexOf("authors:"));
-    for (const term of ["Casio watches Nairobi", "Naviforce watches Kenya", "gift packages Nairobi", "corporate gifts Nairobi", "custom engraved watch Kenya", "same day delivery Nairobi", "original watches Nairobi", "watch shop Nairobi"]) {
+    for (const term of ["Casio watches Nairobi", "Naviforce watches Kenya", "gift packages Nairobi", "custom engraved watch Kenya", "same day delivery Nairobi", "original watches Nairobi", "watch shop Nairobi"]) {
       expect(keywords).toContain(term);
     }
+  });
+
+  it("name only gift pages the shop has live, so it does not advertise ones that do not exist yet", () => {
+    const layout = read("src/app/layout.tsx");
+    const keywords = layout.slice(layout.indexOf("keywords: ["), layout.indexOf("authors:"));
+    for (const term of ["corporate gifts", "birthday gifts", "Valentine"]) expect(keywords).not.toContain(term);
   });
 
   it("promise the delivery the cart gives: free from Ksh 10,000, which the code states as 10,000", async () => {

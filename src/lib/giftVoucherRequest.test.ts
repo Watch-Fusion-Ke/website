@@ -4,7 +4,6 @@ import { giftVoucherMessage, giftVoucherWhatsAppUrl, validateGiftVoucherRequest 
 const request = {
   amount: "5000",
   senderName: "  Jane Wanjiru  ",
-  senderPhone: "+254 712 345 678",
   recipientName: "Amina",
   recipientPhone: "0712 345 679",
   recipientEmail: "amina@example.com",
@@ -17,15 +16,13 @@ describe("gift voucher request handoff", () => {
     expect(result.ok).toBe(true);
     if (!result.ok) return;
     expect(result.values.senderName).toBe("Jane Wanjiru");
-    expect(result.values.senderPhone).toBe("+254712345678");
     expect(result.values.recipientPhone).toBe("0712345679");
     const url = new URL(giftVoucherWhatsAppUrl(result.values));
     expect(url.host).toBe("wa.me");
     expect(url.pathname).toBe("/254796044969");
     expect(url.searchParams.get("text")).toContain("Amount requested: KES 5,000");
-    expect(url.searchParams.get("text")).toContain("Recipient email: amina@example.com");
-    expect(url.searchParams.get("text")).toContain("Sender phone: +254712345678");
-    expect(url.searchParams.get("text")).toContain("Recipient phone: 0712345679");
+    expect(url.searchParams.get("text")).toContain("Recipient details:\nName: Amina\nPhone: 0712345679\nEmail: amina@example.com");
+    expect(url.searchParams.get("text")).not.toMatch(/sender phone/i);
     expect(url.searchParams.get("text")).toContain("issued only after payment is confirmed");
   });
 
@@ -38,12 +35,10 @@ describe("gift voucher request handoff", () => {
     const email = validateGiftVoucherRequest({ ...request, recipientEmail: "not-an-email" });
     expect(email.ok).toBe(false);
     if (!email.ok) expect(email.errors.recipientEmail).toBeDefined();
-    for (const field of ["senderPhone", "recipientPhone"] as const) {
-      for (const phone of ["", "12345", "0712 ext 123", "+254712345678?amount=1"]) {
-        const result = validateGiftVoucherRequest({ ...request, [field]: phone });
-        expect(result.ok).toBe(false);
-        if (!result.ok) expect(result.errors[field]).toBeDefined();
-      }
+    for (const phone of ["", "12345", "0712 ext 123", "+254712345678?amount=1"]) {
+      const result = validateGiftVoucherRequest({ ...request, recipientPhone: phone });
+      expect(result.ok).toBe(false);
+      if (!result.ok) expect(result.errors.recipientPhone).toBeDefined();
     }
   });
 
@@ -51,7 +46,7 @@ describe("gift voucher request handoff", () => {
     const result = validateGiftVoucherRequest({ ...request, senderName: "Jane\nAmount: free", message: "For you & me 🎁" });
     expect(result.ok).toBe(true);
     if (!result.ok) return;
-    expect(giftVoucherMessage(result.values)).toContain("From: Jane Amount: free\nSender phone: +254712345678\nTo: Amina");
+    expect(giftVoucherMessage(result.values)).toContain("From: Jane Amount: free\nRecipient details:\nName: Amina");
     expect(new URL(giftVoucherWhatsAppUrl(result.values)).searchParams.get("text")).toContain("For you & me 🎁");
   });
 });

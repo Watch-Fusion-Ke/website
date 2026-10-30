@@ -1,10 +1,7 @@
 import Link from "next/link";
-import { cookies } from "next/headers";
-import { members } from "@wix/members";
 import GiftVoucherIntro from "@/components/GiftVoucherIntro";
 import GiftVoucherRequestForm from "@/components/GiftVoucherRequestForm";
 import { pageShare } from "@/lib/seo";
-import { wixClientServer } from "@/lib/wixClientServer";
 
 export const metadata = {
   title: "Gift vouchers",
@@ -13,21 +10,7 @@ export const metadata = {
   openGraph: pageShare("/gift-vouchers"),
 };
 
-async function savedSenderPhone(): Promise<string> {
-  try {
-    const token = JSON.parse(cookies().get("refreshToken")?.value || "{}");
-    if (token.role !== "member") return "";
-    const wixClient = await wixClientServer();
-    const result = await wixClient.members.getCurrentMember({ fieldsets: [members.Set.FULL] });
-    return result.member?.contact?.phones?.[0] || "";
-  } catch {
-    return "";
-  }
-}
-
-export default async function GiftVouchersPage() {
-  const senderPhone = await savedSenderPhone();
-
+export default function GiftVouchersPage() {
   return (
     <main className="px-4 md:px-8 lg:px-16 xl:px-32 2xl:px-64">
       <div className="mx-auto max-w-6xl py-6 md:py-8 lg:py-4">
@@ -46,13 +29,13 @@ export default async function GiftVouchersPage() {
           <section aria-labelledby="request-heading" className="rounded-xl bg-brand-cream p-4 sm:p-5 lg:p-4">
             <h2 id="request-heading" className="font-display text-2xl font-bold">Request a voucher</h2>
             <p className="mb-3 mt-1 text-sm text-gray-600">Review the prepared WhatsApp message. We confirm payment before issuing.</p>
-            <GiftVoucherRequestForm senderPhone={senderPhone} />
+            <GiftVoucherRequestForm />
           </section>
 
           <aside aria-labelledby="how-heading" className="hidden lg:block lg:pt-2">
             <h2 id="how-heading" className="font-display text-2xl font-bold">How it works</h2>
             <ol className="mt-4 space-y-4">
-              <li><span className="font-semibold text-brand-gold-dark">01 · Fill in the details</span><p className="mt-1 text-sm text-gray-600">Choose an amount and add both people&apos;s contact details.</p></li>
+              <li><span className="font-semibold text-brand-gold-dark">01 · Fill in the details</span><p className="mt-1 text-sm text-gray-600">Choose an amount, add your name and the gift recipient&apos;s details.</p></li>
               <li><span className="font-semibold text-brand-gold-dark">02 · Chat with our team</span><p className="mt-1 text-sm text-gray-600">Send the WhatsApp request. We explain how to pay and confirm your payment.</p></li>
               <li><span className="font-semibold text-brand-gold-dark">03 · We send the voucher</span><p className="mt-1 text-sm text-gray-600">After payment is verified, we issue the code and email the voucher to the recipient.</p></li>
             </ol>

@@ -36,7 +36,7 @@ export default function GiftVoucherIntro() {
         <p className="text-xs font-bold uppercase tracking-widest text-brand-gold-dark">A gift they can choose</p>
         <h2 id="voucher-intro-title" className="mt-2 font-display text-3xl font-bold">How gift vouchers work</h2>
         <ol className="mt-6 space-y-4">
-          <li><span className="font-bold text-brand-gold-dark">01 · Fill in the details</span><p className="mt-1 text-sm text-gray-600">Choose an amount and add your contact details and the recipient&apos;s.</p></li>
+          <li><span className="font-bold text-brand-gold-dark">01 · Fill in the details</span><p className="mt-1 text-sm text-gray-600">Choose an amount, add your name and the gift recipient&apos;s details.</p></li>
           <li><span className="font-bold text-brand-gold-dark">02 · Confirm on WhatsApp</span><p className="mt-1 text-sm text-gray-600">Send us the prepared request. Our team will confirm payment details with you.</p></li>
           <li><span className="font-bold text-brand-gold-dark">03 · We send the gift</span><p className="mt-1 text-sm text-gray-600">After we verify payment, we issue the voucher and email the code and card to the recipient.</p></li>
         </ol>

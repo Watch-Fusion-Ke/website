@@ -12,7 +12,7 @@ const input =
 const label = "mb-1 block text-sm font-medium text-gray-700";
 const error = "mt-1 text-sm text-red-600";
 
-export default function GiftVoucherRequestForm({ senderPhone = "" }: { senderPhone?: string }) {
+export default function GiftVoucherRequestForm() {
   const [errors, setErrors] = useState<GiftVoucherErrors>({});
 
   const continueToWhatsApp = (event: React.FormEvent<HTMLFormElement>) => {
@@ -21,7 +21,7 @@ export default function GiftVoucherRequestForm({ senderPhone = "" }: { senderPho
     const result = validateGiftVoucherRequest(data);
     if (!result.ok) {
       setErrors(result.errors);
-      const first = (["amount", "senderName", "senderPhone", "recipientName", "recipientPhone", "recipientEmail", "message"] as const).find(
+      const first = (["amount", "senderName", "recipientName", "recipientPhone", "recipientEmail", "message"] as const).find(
         (key) => result.errors[key]
       );
       if (first) document.getElementById(`voucher-${first}`)?.focus();
@@ -50,39 +50,33 @@ export default function GiftVoucherRequestForm({ senderPhone = "" }: { senderPho
         {errors.senderName && <p id="voucher-senderName-error" className={error}>{errors.senderName}</p>}
       </div>
 
-      <div>
-        <label htmlFor="voucher-senderPhone" className={label}>Your phone</label>
-        <input id="voucher-senderPhone" name="senderPhone" type="tel" inputMode="tel" autoComplete="tel" maxLength={24} required
-          defaultValue={senderPhone}
-          aria-invalid={Boolean(errors.senderPhone)} aria-describedby={errors.senderPhone ? "voucher-senderPhone-error" : undefined}
-          placeholder="0712 345 678" className={input} />
-        {errors.senderPhone && <p id="voucher-senderPhone-error" className={error}>{errors.senderPhone}</p>}
-      </div>
-
-      <div>
-        <label htmlFor="voucher-recipientName" className={label}>Recipient&apos;s name</label>
-        <input id="voucher-recipientName" name="recipientName" type="text" maxLength={80} required
-          aria-invalid={Boolean(errors.recipientName)} aria-describedby={errors.recipientName ? "voucher-recipientName-error" : undefined}
-          placeholder="Who is the gift for?" className={input} />
-        {errors.recipientName && <p id="voucher-recipientName-error" className={error}>{errors.recipientName}</p>}
-      </div>
-
-      <div>
-        <label htmlFor="voucher-recipientPhone" className={label}>Recipient&apos;s phone</label>
-        <input id="voucher-recipientPhone" name="recipientPhone" type="tel" inputMode="tel" autoComplete="off" maxLength={24} required
-          aria-invalid={Boolean(errors.recipientPhone)} aria-describedby={errors.recipientPhone ? "voucher-recipientPhone-error" : undefined}
-          placeholder="0712 345 678" className={input} />
-        {errors.recipientPhone && <p id="voucher-recipientPhone-error" className={error}>{errors.recipientPhone}</p>}
-      </div>
-
-      <div>
-        <label htmlFor="voucher-recipientEmail" className={label}>Recipient&apos;s email</label>
-        <input id="voucher-recipientEmail" name="recipientEmail" type="email" inputMode="email" autoCapitalize="none"
-          spellCheck={false} autoComplete="off" maxLength={254} required
-          aria-invalid={Boolean(errors.recipientEmail)} aria-describedby={errors.recipientEmail ? "voucher-recipientEmail-error" : undefined}
-          placeholder="recipient@example.com" className={input} />
-        {errors.recipientEmail && <p id="voucher-recipientEmail-error" className={error}>{errors.recipientEmail}</p>}
-      </div>
+      <fieldset className="rounded-lg border border-gray-200 bg-white/50 px-3 pb-3 pt-1 sm:col-span-2">
+        <legend className="px-1 text-sm font-semibold text-brand-navy">Recipient details</legend>
+        <div className="grid gap-3 sm:grid-cols-3">
+          <div>
+            <label htmlFor="voucher-recipientName" className={label}>Name</label>
+            <input id="voucher-recipientName" name="recipientName" type="text" maxLength={80} required
+              aria-invalid={Boolean(errors.recipientName)} aria-describedby={errors.recipientName ? "voucher-recipientName-error" : undefined}
+              placeholder="Their name" className={input} />
+            {errors.recipientName && <p id="voucher-recipientName-error" className={error}>{errors.recipientName}</p>}
+          </div>
+          <div>
+            <label htmlFor="voucher-recipientPhone" className={label}>Phone number</label>
+            <input id="voucher-recipientPhone" name="recipientPhone" type="tel" inputMode="tel" autoComplete="off" maxLength={24} required
+              aria-invalid={Boolean(errors.recipientPhone)} aria-describedby={errors.recipientPhone ? "voucher-recipientPhone-error" : undefined}
+              placeholder="0712 345 678" className={input} />
+            {errors.recipientPhone && <p id="voucher-recipientPhone-error" className={error}>{errors.recipientPhone}</p>}
+          </div>
+          <div>
+            <label htmlFor="voucher-recipientEmail" className={label}>Email address</label>
+            <input id="voucher-recipientEmail" name="recipientEmail" type="email" inputMode="email" autoCapitalize="none"
+              spellCheck={false} autoComplete="off" maxLength={254} required
+              aria-invalid={Boolean(errors.recipientEmail)} aria-describedby={errors.recipientEmail ? "voucher-recipientEmail-error" : undefined}
+              placeholder="their@email.com" className={input} />
+            {errors.recipientEmail && <p id="voucher-recipientEmail-error" className={error}>{errors.recipientEmail}</p>}
+          </div>
+        </div>
+      </fieldset>
 
       <div className="sm:col-span-2">
         <label htmlFor="voucher-message" className={label}>Personal message <span className="font-normal">(optional)</span></label>

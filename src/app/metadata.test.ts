@@ -102,3 +102,24 @@ describe("structured data", () => {
     expect(read("src/app/[slug]/page.tsx")).toMatch(/<ProductImages[^>]*name=\{product\.name/);
   });
 });
+
+describe("the home page's title and description", () => {
+  const layout = read("src/app/layout.tsx");
+
+  it("are the wording the shop asked for: authentic watches in Nairobi, free delivery on orders above Ksh 10,000", () => {
+    expect(layout).toContain("default: `Authentic Watches in Nairobi Kenya | Free Deliveries on Orders above Ksh 10,000`");
+    expect(layout).toContain(
+      "`Shop authentic watches and premium gift packages at ${SITE_NAME}. Personalize your gift with custom engraving and enjoy same-day delivery and FREE delivery on orders above KSh 10,000.`"
+    );
+  });
+
+  it("no longer use the old wording", () => {
+    expect(layout).not.toContain("Premium Watches in Nairobi");
+    expect(layout).not.toContain("Shop premium watches in Kenya");
+  });
+
+  it("promise the delivery the cart gives: free from Ksh 10,000, which the code states as 10,000", async () => {
+    const { FREE_DELIVERY_FROM } = await import("@/lib/delivery");
+    expect(FREE_DELIVERY_FROM).toBe(10000);
+  });
+});

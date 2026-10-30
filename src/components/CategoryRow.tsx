@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useId, useRef, useState } from "react";
+import { useEffect, useId, useLayoutEffect, useRef, useState } from "react";
 import ChristmasCategoryLink from "@/components/ChristmasCategoryLink";
 import { categoryHref } from "@/lib/categoryPages";
 import { centreScrollLeft, clampLeft, closed, hoverIn, hoverOut, press, scrollEdges, type MenuState, type SiteMenu } from "@/lib/siteMenu";
@@ -11,11 +11,14 @@ import { centreScrollLeft, clampLeft, closed, hoverIn, hoverOut, press, scrollEd
 // narrow. On a phone the row slides sideways and snaps entry by entry; from a tablet up it is centred and does not slide.
 // No entry has a background class: the dark theme turns a plain bg-white into a grey box behind each word.
 const entry =
-  "inline-flex min-h-11 flex-shrink-0 snap-center items-center whitespace-nowrap px-3 text-[13px] font-semibold text-gray-700 underline-offset-[10px] decoration-2 decoration-brand-gold transition-colors duration-200 hover:text-black hover:underline active:underline " +
-  "md:min-h-0 md:px-0 md:py-1.5 md:text-xl md:leading-[25.5px] md:text-gray-800 md:underline-offset-4 md:hover:text-gray-800";
+  "inline-flex min-h-11 flex-shrink-0 items-center whitespace-nowrap px-3 text-[13px] font-semibold text-gray-700 underline-offset-[10px] decoration-2 decoration-brand-gold transition-colors duration-200 max-md:snap-center active:underline " +
+  // Hover styles apply only to a pointer that really hovers, so a tap on a phone does not leave the last entry stuck underlined. The focus
+  // ring is drawn inside the entry because the row clips anything outside its 44 px height.
+  "[@media(hover:hover)]:hover:text-black [@media(hover:hover)]:hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-brand-gold " +
+  "md:min-h-0 md:px-0 md:py-1.5 md:text-lg lg:text-xl md:leading-[25.5px] md:text-gray-800 md:underline-offset-4 md:[@media(hover:hover)]:hover:text-gray-800";
 // The one place a gold chip is kept: a seasonal page, so it stands out from the plain words.
 const seasonalEntry =
-  "inline-flex min-h-11 flex-shrink-0 snap-center items-center whitespace-nowrap rounded-full bg-brand-gold px-3 text-[13px] font-semibold text-brand-navy transition-colors duration-200 hover:brightness-95 md:min-h-0 md:px-4 md:py-2 md:text-base";
+  "inline-flex min-h-11 flex-shrink-0 items-center whitespace-nowrap rounded-full bg-brand-gold px-3 text-[13px] font-semibold text-brand-navy transition-colors duration-200 hover:brightness-95 max-md:snap-center md:min-h-0 md:px-4 md:py-2 md:text-base";
 // The floating box under a menu button: light and flat, a thin border and a small shadow, in the page's own colour. The outer box has a
 // little transparent room at the top so the pointer can cross from the button to the links without the menu closing. These classes are
 // only on the outer box while it is open: a closed box carries no display class, because a display class would override the hidden
@@ -63,19 +66,40 @@ const CategoryRow = ({ menu }: { menu: SiteMenu }) => {
   useEffect(() => cancelLeave, []);
 
   // The phone row opens centred on the marked entry (Christmas), as the computer's row is, with part of its neighbours showing on both
-  // sides to say that it slides. A row that fits, as on a computer, is left where it is.
-  useEffect(() => {
+  // sides to say that it slides. It is done before the first paint, so there is no second jump, and again when the width changes (the
+  // phone is turned). A row that fits, as on a computer, is left where it is.
+  const useBeforePaint = typeof window === "undefined" ? useEffect : useLayoutEffect;
+  useBeforePaint(() => {
     const row = strip.current;
     if (!row) return;
-    const focus = row.querySelector<HTMLElement>("[data-row-focus]");
-    if (focus) row.scrollLeft = centreScrollLeft(focus.offsetLeft, focus.offsetWidth, row.clientWidth, row.scrollWidth);
-    setEdges(scrollEdges(row.scrollLeft, row.clientWidth, row.scrollWidth));
+    const centre = () => {
+      const focus = row.querySelector<HTMLElement>("[data-row-focus]");
+      if (focus) row.scrollLeft = centreScrollLeft(focus.offsetLeft, focus.offsetWidth, row.clientWidth, row.scrollWidth);
+      setEdges(scrollEdges(row.scrollLeft, row.clientWidth, row.scrollWidth));
+    };
+    centre();
+    if (typeof ResizeObserver === "undefined") return;
+    let width = row.clientWidth;
+    const observer = new ResizeObserver(() => {
+      if (row.clientWidth === width) return; // a height change, such as the phone's address bar, is not a turn
+      width = row.clientWidth;
+      centre();
+    });
+    observer.observe(row);
+    return () => observer.disconnect();
   }, []);
   const onRowScroll = () => {
     const row = strip.current;
     if (!row) return;
     const next = scrollEdges(row.scrollLeft, row.clientWidth, row.scrollWidth);
     setEdges((prev) => (prev.atStart === next.atStart && prev.atEnd === next.atEnd ? prev : next));
+    // An open menu was placed under its button, which has just moved: shut it rather than leave its box where the button was.
+    setState((s) => (s.open === null ? s : closed));
+  };
+  // Keyboard focus on an entry that is partly under a fade brings the whole entry into view. A tap does not, only the keyboard.
+  const onRowFocus = (e: React.FocusEvent<HTMLDivElement>) => {
+    const target = e.target as HTMLElement;
+    if (target.matches?.(":focus-visible")) target.scrollIntoView?.({ inline: "center", block: "nearest" });
   };
 
   // A menu opened from the keyboard puts the keyboard on its first link, so Tab does not have to cross the rest of the row first.
@@ -131,7 +155,7 @@ const CategoryRow = ({ menu }: { menu: SiteMenu }) => {
         }}
       >
         <div className="relative">
-        <div ref={strip} onScroll={onRowScroll} className="relative flex snap-x snap-proximity scroll-px-4 overflow-x-auto px-4 scrollbar-hide md:items-center md:justify-center md:gap-12 lg:gap-16">
+        <div ref={strip} onScroll={onRowScroll} onFocus={onRowFocus} className="relative flex scroll-px-4 overflow-x-auto px-4 scrollbar-hide max-md:snap-x max-md:snap-proximity md:items-center md:gap-6 md:[&>:first-child]:ml-auto md:[&>:last-child]:mr-auto lg:gap-8 xl:gap-16">
           {menu.row.map((e) => {
             if (e.kind === "link") {
               const c = e.category;
@@ -175,10 +199,10 @@ const CategoryRow = ({ menu }: { menu: SiteMenu }) => {
         </div>
         {/* Fades the end of the phone row that has more beyond it, and only that end */}
         {!edges.atStart && (
-          <div className="pointer-events-none absolute inset-y-0 left-0 w-8 bg-gradient-to-r from-white via-white/80 to-transparent dark:from-[#0a0a0a] dark:via-[#0a0a0a]/80 md:hidden" />
+          <div className="pointer-events-none absolute inset-y-0 left-0 w-8 bg-gradient-to-r from-white via-white/80 to-transparent dark:from-[#0a0a0a] dark:via-[#0a0a0a]/80 lg:hidden" />
         )}
         {!edges.atEnd && (
-          <div className="pointer-events-none absolute inset-y-0 right-0 w-8 bg-gradient-to-l from-white via-white/80 to-transparent dark:from-[#0a0a0a] dark:via-[#0a0a0a]/80 md:hidden" />
+          <div className="pointer-events-none absolute inset-y-0 right-0 w-8 bg-gradient-to-l from-white via-white/80 to-transparent dark:from-[#0a0a0a] dark:via-[#0a0a0a]/80 lg:hidden" />
         )}
         </div>
         {groups.map((g, i) => (

@@ -11,8 +11,8 @@
   border-radius: 0;
   background: transparent;
   color: #164d39;
-  font-size: 12px;
-  font-weight: 800;
+  font-size: 13px;
+  font-weight: 700;
   line-height: 1.2;
   text-decoration: none;
   white-space: nowrap;
@@ -20,7 +20,7 @@
 
 .link:focus-visible {
   outline: 2px solid #b77713;
-  outline-offset: 2px;
+  outline-offset: -2px;
 }
 
 .words {
@@ -124,7 +124,7 @@
 :global(.dark) .star { fill: #f7cf62; filter: drop-shadow(0 0 3px #f3b837) drop-shadow(0 0 5px #f7d873); }
 
 @media (min-width: 768px) {
-  .link { min-height: 44px; padding: 5px 30px 5px 36px; font-size: 19px; }
+  .link { min-height: 44px; padding: 5px 24px 5px 30px; font-size: 17px; }
   .giftHalo { top: 7px; left: 0; width: 30px; height: 30px; }
   .gift { top: 6px; left: 2px; width: 25px; height: 28px; }
   .cane { top: 6px; right: 4px; width: 18px; height: 30px; }
@@ -139,6 +139,10 @@
 
 @media (hover: hover) {
   .link:hover .words { text-decoration: underline; text-decoration-color: #d89b27; text-decoration-thickness: 2px; text-underline-offset: 5px; }
+}
+
+@media (min-width: 1024px) {
+  .link { padding: 5px 30px 5px 36px; font-size: 19px; }
 }
 
 @media (prefers-reduced-motion: reduce) {

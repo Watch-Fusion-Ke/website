@@ -117,15 +117,37 @@ describe("CategoryRow", () => {
       expect(classes).toContain("px-3");
       expect(classes).toContain("text-[13px]");
       expect(classes).toContain("min-h-11");
-      expect(classes).toContain("snap-center");
+      expect(classes).toContain("max-md:snap-center");
+      expect(classes).not.toContain("snap-center");
     }
+  });
+
+  it("underlines on hover only for a pointer that really hovers, so a tap on a phone does not leave the last entry stuck underlined", () => {
+    for (const tag of [html.match(/<a[^>]*href="\/shop\/gents-watches"[^>]*>/)?.[0] ?? "", html.match(/<button[^>]*>/)?.[0] ?? ""]) {
+      const classes = tag.match(/class="([^"]*)"/)?.[1].split(" ") ?? [];
+      expect(classes).toContain("[@media(hover:hover)]:hover:underline");
+      expect(classes).not.toContain("hover:underline");
+      expect(classes).not.toContain("hover:text-black");
+    }
+  });
+
+  it("draws the keyboard focus ring inside each entry, because the row clips anything outside its 44 px height", () => {
+    for (const tag of [html.match(/<a[^>]*href="\/shop\/gents-watches"[^>]*>/)?.[0] ?? "", html.match(/<button[^>]*>/)?.[0] ?? ""]) {
+      const classes = tag.match(/class="([^"]*)"/)?.[1].split(" ") ?? [];
+      expect(classes).toContain("focus-visible:outline");
+      expect(classes).toContain("focus-visible:outline-offset-[-2px]");
+    }
+    expect(readFileSync("src/components/ChristmasCategoryLink.module.css", "utf8")).toMatch(/\.link:focus-visible\s*\{[^}]*outline-offset:\s*-2px/);
   });
 
   it("slides the phone row with snapping, with room at both ends, and no extra gap or end padding eating the width", () => {
     const row = html.match(/<div class="([^"]*overflow-x-auto[^"]*)"/)?.[1].split(" ") ?? [];
-    expect(row).toContain("snap-x");
-    expect(row).toContain("snap-proximity");
+    expect(row).toContain("max-md:snap-x");
+    expect(row).toContain("max-md:snap-proximity");
     expect(row).toContain("scroll-px-4");
+    expect(row).toContain("relative"); // the entries' offsets are measured from the row, which is what centring relies on
+    expect(row).not.toContain("snap-x");
+    expect(row).not.toContain("snap-proximity");
     expect(row).toContain("px-4");
     expect(row).not.toContain("gap-1.5");
     expect(row).not.toContain("pr-8");
@@ -176,7 +198,7 @@ describe("CategoryRow", () => {
     const classes = tag.match(/class="([^"]*)"/)?.[1].split(" ") ?? [];
     expect(classes.some((c) => c.includes("order-"))).toBe(false);
     expect(tag).toContain("data-row-focus");
-    expect(classes).toContain("snap-center");
+    expect(classes).toContain("max-md:snap-center");
     expect(html.match(/data-row-focus/g)).toHaveLength(1);
   });
 
@@ -184,6 +206,47 @@ describe("CategoryRow", () => {
     const source = readFileSync("src/components/CategoryRow.tsx", "utf8");
     expect(source).toContain("[data-row-focus]");
     expect(source).toContain("centreScrollLeft");
+    expect(source).toContain("useLayoutEffect"); // before the first paint, so there is no second jump
+  });
+
+  it("centres the row on a tablet or computer without ever pushing its first entry out of reach when the row is too wide", () => {
+    // The page's HTML writes & and > as &amp; and &gt; inside the class names; the browser reads them back.
+    const row = (html.match(/<div class="([^"]*overflow-x-auto[^"]*)"/)?.[1] ?? "").replace(/&amp;/g, "&").replace(/&gt;/g, ">").split(" ");
+    // Auto margins at the two ends centre a row that fits and shrink to nothing when it does not, so the start stays reachable.
+    expect(row).toContain("md:[&>:first-child]:ml-auto");
+    expect(row).toContain("md:[&>:last-child]:mr-auto");
+    expect(row).not.toContain("md:justify-center");
+  });
+
+  it("steps the larger text and the gaps up with the screen, so the row fits a tablet and keeps its roomy look on a wide screen", () => {
+    const row = html.match(/<div class="([^"]*overflow-x-auto[^"]*)"/)?.[1].split(" ") ?? [];
+    expect(row).toEqual(expect.arrayContaining(["md:gap-6", "lg:gap-8", "xl:gap-16"]));
+    const tag = html.match(/<a[^>]*href="\/shop\/gents-watches"[^>]*>/)?.[0] ?? "";
+    const classes = tag.match(/class="([^"]*)"/)?.[1].split(" ") ?? [];
+    expect(classes).toContain("md:text-lg");
+    expect(classes).toContain("lg:text-xl");
+    expect(classes).not.toContain("md:text-xl");
+    const css = readFileSync("src/components/ChristmasCategoryLink.module.css", "utf8");
+    expect(css).toMatch(/@media \(min-width: 1024px\)\s*\{\s*\.link\s*\{[^}]*font-size:\s*19px/);
+  });
+
+  it("centres the phone row again, and recounts which ends fade, when the screen turns or is resized", () => {
+    expect(readFileSync("src/components/CategoryRow.tsx", "utf8")).toContain("ResizeObserver");
+  });
+
+  it("scrolls an entry fully into view when the keyboard focuses it, instead of leaving it half under a fade", () => {
+    const source = readFileSync("src/components/CategoryRow.tsx", "utf8");
+    expect(source).toContain("scrollIntoView");
+    expect(source).toContain(":focus-visible");
+  });
+
+  it("shuts an open menu when the row is scrolled, so its box never hangs where its button used to be", () => {
+    const source = readFileSync("src/components/CategoryRow.tsx", "utf8");
+    expect(source.slice(source.indexOf("const onRowScroll"))).toMatch(/setState\(closed\)/);
+  });
+
+  it("sets the Christmas link in the same 13 px text as the other phone entries", () => {
+    expect(readFileSync("src/components/ChristmasCategoryLink.module.css", "utf8")).toMatch(/\.link\s*\{[^}]*font-size:\s*13px/);
   });
 
   it("hides every decoration from screen readers, so the link is read as just its name", () => {
@@ -230,6 +293,9 @@ describe("CategoryRow", () => {
   it("fades only the end of the phone row that has more beyond it: the right at the start, the left once scrolled", () => {
     expect(html).toContain("bg-gradient-to-l");
     expect(html).not.toContain("bg-gradient-to-r");
+    // Hidden only from a laptop up, where the row fits: a tablet's row can still overflow and needs the hint.
+    expect(html.match(/<div class="([^"]*bg-gradient-to-l[^"]*)"/)?.[1].split(" ")).toContain("lg:hidden");
+    expect(html.match(/<div class="([^"]*bg-gradient-to-l[^"]*)"/)?.[1].split(" ")).not.toContain("md:hidden");
     expect(readFileSync("src/components/CategoryRow.tsx", "utf8")).toContain("bg-gradient-to-r");
   });
 

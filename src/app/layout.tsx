@@ -34,11 +34,11 @@ export const viewport: Viewport = {
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: `${SITE_NAME} | Premium Watches in Nairobi`,
+    default: `Authentic Watches in Nairobi Kenya | Free Deliveries on Orders above Ksh 10,000`,
     template: `%s | ${SITE_NAME}`,
   },
   description:
-    `Shop premium watches in Kenya. ${SITE_NAME} offers luxury, sport & casual watches with fast delivery across Nairobi and Kenya. Wear the Moment, Own the Legacy.`,
+    `Shop authentic watches and premium gift packages at ${SITE_NAME}. Personalize your gift with custom engraving and enjoy same-day delivery and FREE delivery on orders above KSh 10,000.`,
   keywords: [
     "watches Kenya",
     "buy watches Nairobi",

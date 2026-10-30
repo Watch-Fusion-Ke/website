@@ -83,6 +83,17 @@ describe("a category page", () => {
     await expect(render("no-such-category")).rejects.toThrow("NEXT_NOT_FOUND");
   });
 
+  it("sends an old link to a category the shop has taken down to the nearest live page, for good", async () => {
+    await expect(render("featured")).rejects.toThrow("NEXT_REDIRECT /");
+    await expect(render("gifts")).rejects.toThrow("NEXT_REDIRECT /shop/customizable-gifts");
+  });
+
+  it("shows such a category again if the shop brings it back, instead of redirecting it", async () => {
+    // gift-packages is one of the retired names, and it is in the store's list here
+    const html = await render("gift-packages");
+    expect(html).toContain("Gift Packages");
+  });
+
   it("sends the store's own All Products category to the plain shop", async () => {
     await expect(render("all-products")).rejects.toThrow("NEXT_REDIRECT /shop");
   });

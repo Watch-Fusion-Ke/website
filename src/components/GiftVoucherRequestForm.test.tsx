@@ -33,7 +33,19 @@ describe("the gift voucher request form", () => {
     const chips = html.indexOf('aria-label="Quick amounts"');
     expect(field).toBeGreaterThan(-1);
     expect(chips).toBeGreaterThan(field);
-    expect(html.indexOf('name="senderName"')).toBeGreaterThan(chips);
+    expect(html.indexOf('name="recipientName"')).toBeGreaterThan(chips);
+  });
+
+  it("gives the amount its own section first and the shopper's own details last", () => {
+    expect(html.indexOf("1</span> Amount")).toBeGreaterThan(-1);
+    expect(html.indexOf('name="amount"')).toBeLessThan(html.indexOf('name="recipientName"'));
+    expect(html.indexOf('name="recipientEmail"')).toBeLessThan(html.indexOf('name="senderName"'));
+    expect(html.indexOf('name="senderName"')).toBeLessThan(html.indexOf('name="message"'));
+  });
+
+  it("puts one plain line under the button, saying nothing is paid on this page", () => {
+    const button = html.indexOf("Continue to WhatsApp");
+    expect(html.slice(button)).toMatch(/pay on WhatsApp|paid on WhatsApp|not charged here|Nothing is charged/i);
   });
 
   it("tells a screen reader which quick amount is chosen", () => {
@@ -60,7 +72,13 @@ describe("the gift voucher introduction", () => {
   });
 
   it("promises the emailed code only, since the card artwork is not made yet", () => {
-    expect(source).toContain("email the code to the recipient");
-    expect(source).not.toMatch(/code and card/i);
+    const steps = readFileSync("src/lib/voucherSteps.ts", "utf8");
+    expect(steps).toContain("email the code to the recipient");
+    expect(steps).not.toMatch(/code and card/i);
+  });
+
+  it("reads its steps from the same list as the page, so the two never disagree", () => {
+    expect(source).toContain("VOUCHER_STEPS");
+    expect(source).not.toContain("Fill in the details");
   });
 });

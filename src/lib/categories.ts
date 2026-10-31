@@ -1,4 +1,4 @@
-export type Category = { _id?: string | null; name?: string | null; slug?: string | null };
+export type Category = { _id?: string | null; name?: string | null; slug?: string | null; visible?: boolean | null };
 export type CategoryLink = { name: string; slug: string };
 
 // The store's own "All Products" category is the whole shop, which the pages already link to by themselves.

@@ -1,5 +1,6 @@
 'use client'
 import Link from 'next/link'
+import { usePathname } from 'next/navigation'
 import React, { useEffect, useRef, useState } from 'react'
 import Image from 'next/image'
 import SearchBar from './SearchBar'
@@ -16,6 +17,8 @@ const Navbar = () => {
   const searchRow = useRef<HTMLDivElement>(null)
   const natural = useRef<HTMLDivElement>(null)
   const { elevated, searchHidden } = useHeaderScroll(frame)
+  // The home page carries its menu in the category row; every other page gets a menu button beside the logo instead.
+  const onHome = usePathname() === '/'
 
   // The sticky frame keeps the header's full height even while the search row is folded, so the page below never shifts
   // (a shift would move the scroll position, and that would unfold the row again). Only the panel inside it changes size.
@@ -101,7 +104,8 @@ const Navbar = () => {
       {/* Desktop Navbar */}
       <div data-testid="desktop-header" className='hidden md:flex items-center justify-between gap-8 h-full'>
         {/* Left Section */}
-        <div className='flex flex-shrink-0 items-center gap-4'>
+        <div className='flex flex-shrink-0 items-center gap-2'>
+          {!onHome && <Menu />}
           <Link href="/" aria-label="Watch Fusion Kenya, home" className="flex items-center flex-shrink-0">
             <span className='relative block h-14 aspect-[2209/823] overflow-hidden'>
               <Image

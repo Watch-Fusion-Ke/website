@@ -1,24 +1,26 @@
 "use client";
 
 import { categoryHref } from "@/lib/categoryPages";
-import { SITE_PAGES } from "@/lib/siteMenu";
+import { drawerMenu } from "@/lib/siteMenu";
 import Image from "next/image";
 import Link from "next/link";
 import ThemeToggle from "./ThemeToggle";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useAllCategories } from "@/hooks/useCategories";
 import { useRouter } from "next/navigation";
 import { useWixClient } from "@/hooks/useWixClient";
 import { useCartStore } from "@/hooks/useCartStore";
 import Cookies from "js-cookie";
 
-type Category = { _id?: string | null; name?: string | null; slug?: string | null };
-
 const Menu = () => {
   const [open, setOpen] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
   const allCats = useAllCategories();
-  const cats: Category[] = open ? allCats : [];
+  // The categories are asked for only once the menu is opened; the pages are there from the start.
+  const { sections, pages } = useMemo(
+    () => drawerMenu((open ? allCats : []).map((c) => ({ name: c.name ?? "", slug: c.slug ?? "", visible: c.visible }))),
+    [open, allCats]
+  );
 
   const router = useRouter();
   const wixClient = useWixClient();
@@ -46,7 +48,6 @@ const Menu = () => {
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [open]);
 
-  const navLinks = SITE_PAGES.map((page) => ({ label: page.name, href: page.href }));
 
   return (
     <div className="relative">
@@ -101,31 +102,50 @@ const Menu = () => {
 
         {/* Nav links */}
         <nav className="flex flex-col px-6 py-6 gap-1 flex-1 overflow-y-auto">
-          {navLinks.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              onClick={close}
-              className="text-base font-medium text-gray-800 hover:text-black hover:bg-gray-50 px-3 py-3 rounded-lg transition-colors"
-            >
-              {link.label}
-            </Link>
-          ))}
+          {/* Categories, in the same order as the row on the home page */}
+          {sections.length > 0 && (
+            <div>
+              <p className="px-3 pb-2 text-xs font-semibold uppercase tracking-wider text-gray-600">Shop by Category</p>
+              {sections.map((section, i) => {
+                const links = section.links.map((link) => (
+                  <Link
+                    key={link.slug}
+                    href={categoryHref(link.slug)}
+                    onClick={close}
+                    className={`block text-base font-medium text-gray-800 hover:text-black hover:bg-gray-50 py-3 rounded-lg transition-colors ${link.depth === 1 ? "pl-8 pr-3 text-sm" : "px-3"}`}
+                  >
+                    {link.name}
+                  </Link>
+                ));
+                // A group (Watch Brands) is folded away until tapped, as the row's dropdown is, so its many brands do not push the rest down.
+                return section.heading ? (
+                  <details key={section.heading} className="group">
+                    <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between rounded-lg px-3 py-3 text-base font-medium text-gray-800 transition-colors hover:bg-gray-50 hover:text-black [&::-webkit-details-marker]:hidden">
+                      {section.heading}
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className="transition-transform duration-200 group-open:rotate-180 motion-reduce:transition-none">
+                        <polyline points="6 9 12 15 18 9" />
+                      </svg>
+                    </summary>
+                    {links}
+                  </details>
+                ) : (
+                  <div key={`links-${i}`}>{links}</div>
+                );
+              })}
+            </div>
+          )}
 
-          {/* Categories */}
-          {cats.length > 0 && (
-            <div className="mt-4 pt-4 border-t border-gray-100">
-              <p className="px-3 pb-2 text-xs font-semibold uppercase tracking-wider text-gray-400">
-                Shop by Category
-              </p>
-              {cats.map((cat) => (
+          {/* The site's own pages, the same as the row's More menu */}
+          {pages.length > 0 && (
+            <div className={sections.length > 0 ? "mt-4 pt-4 border-t border-gray-100" : undefined}>
+              {pages.map((page) => (
                 <Link
-                  key={cat._id}
-                  href={cat.slug ? categoryHref(cat.slug) : "/shop"}
+                  key={page.href}
+                  href={page.href}
                   onClick={close}
                   className="block text-base font-medium text-gray-800 hover:text-black hover:bg-gray-50 px-3 py-3 rounded-lg transition-colors"
                 >
-                  {cat.name}
+                  {page.name}
                 </Link>
               ))}
             </div>

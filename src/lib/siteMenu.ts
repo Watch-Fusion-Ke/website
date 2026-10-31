@@ -140,3 +140,33 @@ export const lastVisibleRight = (boxes: { right: number; width: number }[], fall
   }
   return fallback;
 };
+
+// The phone's menu drawer lists the same things as the row, in the phone's order: brands grouped under their heading, a brand's own pages
+// one step in, then the plain links, then any other gift pages, with the site's pages kept apart for the end of the drawer.
+export type DrawerLink = { name: string; slug: string; depth: 0 | 1 };
+export type DrawerSection = { heading?: string; links: DrawerLink[] };
+export const drawerMenu = (categories: MenuCategory[]): { sections: DrawerSection[]; pages: MenuPage[] } => {
+  const menu = buildMenu(categories);
+  const place = phoneOrder(menu.row);
+  const entries = menu.row.map((entry, i) => ({ entry, at: place[i] })).sort((a, b) => a.at - b.at).map((x) => x.entry);
+  const sections: DrawerSection[] = [];
+  let pages: MenuPage[] = [];
+  entries.forEach((entry) => {
+    if (entry.kind === "link") {
+      const last = sections[sections.length - 1];
+      const link: DrawerLink = { name: entry.category.name, slug: entry.category.slug, depth: 0 };
+      if (last && !last.heading) last.links.push(link);
+      else sections.push({ links: [link] });
+      return;
+    }
+    pages = pages.concat(entry.group.pages ?? []);
+    if (entry.group.items.length === 0) return;
+    const links: DrawerLink[] = [];
+    entry.group.items.forEach((item) => {
+      links.push({ name: item.name, slug: item.slug, depth: 0 });
+      (item.children ?? []).forEach((child) => links.push({ name: child.name, slug: child.slug, depth: 1 }));
+    });
+    sections.push({ heading: entry.group.label, links });
+  });
+  return { sections, pages };
+};

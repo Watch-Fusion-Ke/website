@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { PHONE_FOCUS_SLUG, SITE_PAGES, buildMenu, lastVisibleRight, pagesOnly, centreScrollLeft, clampLeft, closed, hoverIn, hoverOut, phoneOrder, press, scrollEdges, type SiteMenu } from "@/lib/siteMenu";
+import { PHONE_FOCUS_SLUG, SITE_PAGES, buildMenu, drawerMenu, lastVisibleRight, pagesOnly, centreScrollLeft, clampLeft, closed, hoverIn, hoverOut, phoneOrder, press, scrollEdges, type SiteMenu } from "@/lib/siteMenu";
 
 const cat = (slug: string, name = slug, visible?: boolean) => ({ slug, name, visible });
 const today = [
@@ -354,5 +354,43 @@ describe("a menu that holds only the site's pages", () => {
     expect(pagesOnly({ label: "More", items: [{ name: "Gift Packages", slug: "gift-packages" }], pages: [{ name: "Deals", href: "/deals" }] })).toBe(false);
     expect(pagesOnly({ label: "Watch Brands", items: [{ name: "Casio", slug: "casio" }] })).toBe(false);
     expect(pagesOnly({ label: "More", items: [] })).toBe(false);
+  });
+});
+
+describe("the menu drawer, built from the same menu as the row", () => {
+  const withCasio = [...today, cat("casio-men", "Casio Men"), cat("casio-women", "Casio Women")];
+  const flat = (sections: ReturnType<typeof drawerMenu>["sections"]) => sections.map((s) => [s.heading ?? "", s.links.map((l) => `${l.depth}:${l.name}`)]);
+
+  it("lists the categories in the phone's order: Watch Brands, then Christmas, Customizable Gifts, Gent's, Ladies, All Products", () => {
+    expect(flat(drawerMenu(today).sections)).toEqual([
+      ["Watch Brands", ["0:Casio", "0:Naviforce"]],
+      ["", ["0:Christmas Gifts", "0:Customizable Gifts", "0:Gent's Watches", "0:Ladies Watches", "0:All Products"]],
+    ]);
+  });
+
+  it("shows Men and Women inside Casio, one step in, and never as categories of their own", () => {
+    const sections = drawerMenu(withCasio).sections;
+    expect(sections[0].links.map((l) => `${l.depth}:${l.name}`)).toEqual(["0:Casio", "1:Men", "1:Women", "0:Naviforce"]);
+    expect(sections.flatMap((s) => s.links).filter((l) => l.depth === 0).map((l) => l.name)).not.toContain("Casio Men");
+  });
+
+  it("lists only Deals and Gift Vouchers as pages, the same as the row's More menu, with no Homepage, Contact or second Shop link", () => {
+    expect(drawerMenu(today).pages.map((p) => p.href)).toEqual(["/deals", "/gift-vouchers"]);
+  });
+
+  it("lists Shop as a page when the store shows no All Products", () => {
+    expect(drawerMenu(today.filter((c) => c.slug !== "all-products")).pages.map((p) => p.href)).toEqual(["/shop", "/deals", "/gift-vouchers"]);
+  });
+
+  it("keeps the pages when the categories have not arrived yet, with Shop among them until All Products arrives", () => {
+    const empty = drawerMenu([]);
+    expect(empty.sections).toEqual([]);
+    expect(empty.pages.map((p) => p.href)).toEqual(["/shop", "/deals", "/gift-vouchers"]);
+  });
+
+  it("puts the other gift pages in a More section at the end, and skips a hidden category", () => {
+    const menu = drawerMenu([...today, cat("gift-packages", "Gift Packages"), cat("valentines-gifts", "Valentine's Gifts", false)]);
+    expect(flat(menu.sections).slice(-1)).toEqual([["More", ["0:Gift Packages"]]]);
+    expect(menu.sections.flatMap((s) => s.links.map((l) => l.name))).not.toContain("Valentine's Gifts");
   });
 });

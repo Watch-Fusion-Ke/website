@@ -36,18 +36,20 @@ describe("gift voucher request page", () => {
     expect(readable(html).split(" ").length).toBeLessThanOrEqual(130);
   });
 
-  it("lists the steps once on the page, as a short numbered row, each with a title and a few words", () => {
-    const steps = html.match(/<ol[^>]*data-voucher-steps[^>]*>[\s\S]*?<\/ol>/)?.[0] ?? "";
+  it("sets the short guide beside the form on a computer, as three numbered steps with a title and a few words each", () => {
+    const aside = html.match(/<aside[^>]*>[\s\S]*?<\/aside>/)?.[0] ?? "";
+    expect(aside).toMatch(/\bhidden\b[^"]*\blg:block\b/);
+    const steps = aside.match(/<ol[^>]*data-voucher-steps[^>]*>[\s\S]*?<\/ol>/)?.[0] ?? "";
     expect(steps.match(/<li\b/g)).toHaveLength(VOUCHER_STEPS.length);
     VOUCHER_STEPS.forEach((step) => {
       expect(steps).toContain(step.title);
       expect(step.detail.split(" ").length).toBeLessThanOrEqual(7);
     });
+    expect(html).toMatch(/lg:grid-cols-\[minmax\(0,1fr\)_\d+rem\]/);
   });
 
-  it("has no side column, so the eye follows one line from the heading to the button", () => {
-    expect(html).not.toContain("<aside");
-    expect(html).not.toMatch(/\b(?:sm|md|lg|xl):grid-cols-\[minmax\(0,1\.\d+fr\)_/);
+  it("puts the form before the guide, so on a phone, where the pop-up carries the guide, the form comes first", () => {
+    expect(html.indexOf("<form")).toBeLessThan(html.indexOf("<aside"));
   });
 
   it("ends with the form, with no notes after it", () => {

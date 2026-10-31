@@ -58,7 +58,7 @@ export default function GiftVoucherIntro() {
         <ol className="mt-5 space-y-4">
           {VOUCHER_STEPS.map((step, i) => (
             <li key={step.title} className="flex gap-3">
-              <span aria-hidden="true" className="font-sans text-xl font-bold leading-6 text-brand-navy">{i + 1}</span>
+              <span aria-hidden="true" className="w-4 shrink-0 font-sans text-xl font-bold leading-6 text-brand-navy">{i + 1}</span>
               <span>
                 <span className="block font-semibold text-brand-navy">{step.title}</span>
                 <span className="block text-sm text-gray-600">{step.detail}</span>

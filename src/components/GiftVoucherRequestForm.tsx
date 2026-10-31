@@ -13,7 +13,7 @@ const input =
 const label = "mb-1 block text-sm font-medium text-gray-700";
 const error = "mt-1 text-sm text-red-600";
 const section = "min-w-0 border-0 p-0";
-const legend = "mb-3 flex items-baseline gap-2 p-0 font-display text-xl font-bold text-brand-navy";
+const legend = "mb-2 flex items-baseline gap-2 p-0 font-display text-lg font-bold text-brand-navy";
 const step = "font-sans text-base font-semibold text-gray-600";
 
 export default function GiftVoucherRequestForm() {
@@ -38,32 +38,36 @@ export default function GiftVoucherRequestForm() {
   };
 
   return (
-    <form onSubmit={continueToWhatsApp} noValidate className="space-y-6">
+    <form onSubmit={continueToWhatsApp} noValidate className="space-y-3">
       <fieldset className={section}>
         <legend className={legend}><span aria-hidden="true" className={step}>1</span> Amount</legend>
-        <label htmlFor="voucher-amount" className={label}>Gift amount (KES)</label>
-        <input id="voucher-amount" name="amount" type="number" inputMode="numeric" min="1" step="1" required
-          aria-invalid={Boolean(errors.amount)} aria-describedby={errors.amount ? "voucher-amount-error" : undefined}
-          value={amount} onChange={(e) => setAmount(e.target.value)}
-          placeholder="5000" className={`${input} sm:max-w-xs`} />
-        <div role="group" aria-label="Quick amounts" className="mt-2 flex flex-nowrap gap-1.5 sm:max-w-md">
-          {VOUCHER_PRESET_AMOUNTS.map((preset) => (
-            <button key={preset} type="button" aria-pressed={amount === String(preset)} aria-label={`KES ${preset.toLocaleString("en-KE")}`}
-              onClick={() => {
-                setAmount(String(preset));
-                document.getElementById("voucher-amount")?.focus();
-              }}
-              className={`min-h-11 min-w-0 flex-1 rounded-full border px-2 text-sm font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold ${
-                amount === String(preset) ? "border-brand-navy bg-brand-navy text-white" : "border-gray-300 text-gray-700 hover:border-brand-navy"
-              }`}>
-              {preset.toLocaleString("en-KE")}
-            </button>
-          ))}
+        <div className="md:flex md:items-end md:gap-3">
+          <div className="md:w-44 md:shrink-0">
+            <label htmlFor="voucher-amount" className={label}>Gift amount (KES)</label>
+            <input id="voucher-amount" name="amount" type="number" inputMode="numeric" min="1" step="1" required
+              aria-invalid={Boolean(errors.amount)} aria-describedby={errors.amount ? "voucher-amount-error" : undefined}
+              value={amount} onChange={(e) => setAmount(e.target.value)}
+              placeholder="5000" className={input} />
+          </div>
+          <div role="group" aria-label="Quick amounts" className="mt-2 flex flex-nowrap gap-1.5 md:mt-0 md:flex-1">
+            {VOUCHER_PRESET_AMOUNTS.map((preset) => (
+              <button key={preset} type="button" aria-pressed={amount === String(preset)} aria-label={`KES ${preset.toLocaleString("en-KE")}`}
+                onClick={() => {
+                  setAmount(String(preset));
+                  document.getElementById("voucher-amount")?.focus();
+                }}
+                className={`min-h-11 min-w-0 flex-1 rounded-full border px-2 text-sm font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold ${
+                  amount === String(preset) ? "border-brand-navy bg-brand-navy text-white" : "border-gray-300 text-gray-700 hover:border-brand-navy"
+                }`}>
+                {preset.toLocaleString("en-KE")}
+              </button>
+            ))}
+          </div>
         </div>
         {errors.amount && <p id="voucher-amount-error" className={error}>{errors.amount}</p>}
       </fieldset>
 
-      <div className="border-t border-gray-300 pt-5">
+      <div className="border-t border-gray-300 pt-3">
         <fieldset className={section}>
           <legend className={legend}><span aria-hidden="true" className={step}>2</span> Who it is for</legend>
           <div className="grid gap-3 md:grid-cols-3">
@@ -93,7 +97,7 @@ export default function GiftVoucherRequestForm() {
         </fieldset>
       </div>
 
-      <div className="border-t border-gray-300 pt-5">
+      <div className="border-t border-gray-300 pt-3">
         <fieldset className={section}>
           <legend className={legend}><span aria-hidden="true" className={step}>3</span> From you</legend>
           <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]">

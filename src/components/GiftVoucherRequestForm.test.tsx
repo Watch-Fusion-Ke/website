@@ -52,9 +52,10 @@ describe("the gift voucher introduction", () => {
   });
 
   it("counts the introduction as seen when the shopper dismisses it, not when it opens, so the page never loses it by closing it for them", () => {
-    const effect = source.slice(source.indexOf("useEffect"), source.indexOf("const start"));
+    const effect = source.slice(source.indexOf("useEffect(() =>"), source.indexOf("}, []);"));
     expect(effect).not.toContain("markIntroSeen(");
-    expect(source).toMatch(/const start = [\s\S]*markIntroSeen\(/);
+    expect(source).toMatch(/const remember = [\s\S]*markIntroSeen\(/);
+    expect(source).toMatch(/const start = \(\) => \{\s*remember\(\)/);
     expect(source).toContain("onCancel");
   });
 

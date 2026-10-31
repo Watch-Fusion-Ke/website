@@ -83,6 +83,27 @@ describe("a category page", () => {
     await expect(render("no-such-category")).rejects.toThrow("NEXT_NOT_FOUND");
   });
 
+  it("sends an old link to a category the shop has taken down to the nearest live page, for good", async () => {
+    await expect(render("featured")).rejects.toThrow("NEXT_REDIRECT /");
+    await expect(render("gifts")).rejects.toThrow("NEXT_REDIRECT /shop/customizable-gifts");
+  });
+
+  it("never redirects a taken-down category when the store cannot be read, which would hide an outage", async () => {
+    store.fail = true;
+    try {
+      await expect(render("gifts")).rejects.not.toThrow(/NEXT_REDIRECT|NEXT_NOT_FOUND/);
+      await expect(render("gifts")).rejects.toThrow();
+    } finally {
+      store.fail = false;
+    }
+  });
+
+  it("shows such a category again if the shop brings it back, instead of redirecting it", async () => {
+    // gift-packages is one of the retired names, and it is in the store's list here
+    const html = await render("gift-packages");
+    expect(html).toContain("Gift Packages");
+  });
+
   it("sends the store's own All Products category to the plain shop", async () => {
     await expect(render("all-products")).rejects.toThrow("NEXT_REDIRECT /shop");
   });
@@ -95,6 +116,20 @@ describe("a category page", () => {
     } finally {
       store.fail = false;
     }
+  });
+});
+
+describe("a category page's trail", () => {
+  const trail = (html: string) => {
+    const raw = html.match(/<script type="application\/ld\+json">([^<]*)<\/script>/)?.[1] ?? "";
+    return JSON.parse(raw.replace(/&quot;/g, '"'));
+  };
+
+  it("says where it is: Home, Shop, then the category, for search engines", async () => {
+    const ld = trail(await render("gift-packages"));
+    expect(ld["@type"]).toBe("BreadcrumbList");
+    expect(ld.itemListElement.map((i: { name: string }) => i.name)).toEqual(["Home", "Shop", "Gift Packages"]);
+    expect(ld.itemListElement[2].item).toBe("https://www.watchfusionkenya.com/shop/gift-packages");
   });
 });
 
@@ -124,7 +159,7 @@ describe("a category page's metadata", () => {
     expect(m.openGraph).toMatchObject({
       type: "website",
       locale: "en_KE",
-      siteName: "WatchFusion Kenya",
+      siteName: "Watch Fusion Kenya",
       images: [{ url: "/share-image.png", width: 1200, height: 630 }],
     });
   });

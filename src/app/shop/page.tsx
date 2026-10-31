@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { permanentRedirect } from "next/navigation";
 import ShopListing from "@/components/ShopListing";
 import { getCategoryPages } from "@/lib/categoryData";
+import { pageShare } from "@/lib/seo";
 import { hasFilters, legacyCategoryTarget, type CategoryPage } from "@/lib/categoryPages";
 
 type Params = { [key: string]: string | string[] | undefined };
@@ -12,6 +13,7 @@ export async function generateMetadata({ searchParams }: { searchParams: Promise
         title: "Shop watches",
         description: "Browse men's and ladies' watches and gifts from Watch Fusion Kenya, with delivery across Nairobi and Kenya.",
         alternates: { canonical: "/shop" },
+        openGraph: pageShare("/shop"),
         // A search or a filtered list is not a page to rank: the plain shop is.
         ...(hasFilters(params) ? { robots: { index: false, follow: true } } : {}),
     };

@@ -1,3 +1,4 @@
+import { pageShare } from "@/lib/seo";
 import ProductList from "@/components/ProductList";
 import Link from "next/link";
 import { Suspense } from "react";
@@ -6,6 +7,7 @@ export const metadata = {
     title: "Deals",
     description: "Watches and gifts on offer at Watch Fusion Kenya right now, with the sale price shown beside the usual one.",
     alternates: { canonical: "/deals" },
+    openGraph: pageShare("/deals"),
 };
 
 // Lists the products that are really on sale: those with an old price set above the current price in Wix.

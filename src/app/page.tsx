@@ -4,6 +4,7 @@ import ProductList from "@/components/ProductList";
 import Skeleton from "@/components/Skeleton";
 import Slider from "@/components/Slider";
 import { Suspense } from "react";
+import { jsonLdScript, organizationJsonLd, websiteJsonLd } from "@/lib/seo";
 
 export const metadata = { alternates: { canonical: "/" } };
 
@@ -14,6 +15,9 @@ const HomePage = async () => {
 
   return (
     <div className="">
+      {/* Tells search engines who the shop is, where it is, and how its search works. */}
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdScript(organizationJsonLd()) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdScript(websiteJsonLd()) }} />
       <div className="mt-0 md:mt-6">
         <Suspense fallback={<Skeleton />}>
           <CategoryList />

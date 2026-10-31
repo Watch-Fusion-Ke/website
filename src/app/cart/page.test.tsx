@@ -1,4 +1,5 @@
 import { renderToStaticMarkup } from "react-dom/server";
+import { readFileSync } from "node:fs";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const store = vi.hoisted(() => ({
@@ -92,5 +93,19 @@ describe("Cart page when delivery fees are on", () => {
   it("treats a cart with only a delivery fee as empty", () => {
     store.cart = { lineItems: [delivery], subtotal: { amount: "450", formattedAmount: "KES 450" } };
     expect(render()).toContain("Your cart is empty");
+  });
+
+  it("gives an empty cart a main heading, so the page has one, and a hint that can be read against the white page", () => {
+    store.cart = { lineItems: [], subtotal: { amount: "0", formattedAmount: "KES 0" } };
+    const html = render();
+    expect(html).toMatch(/<h1[^>]*>Your cart is empty<\/h1>/);
+    const hint = html.match(/<p class="([^"]*)">Add some products and come back!<\/p>/)?.[1] ?? "";
+    expect(hint).not.toContain("text-gray-400");
+    expect(hint).toContain("text-gray-600");
+  });
+
+  it("looks at the delivery fee one last time before it opens checkout, in the cart page and in the pop-up", () => {
+    expect(readFileSync("src/app/cart/page.tsx", "utf8")).toContain("ensureFeeMatchesBasket");
+    expect(readFileSync("src/components/CartModal.tsx", "utf8")).toContain("ensureFeeMatchesBasket");
   });
 });

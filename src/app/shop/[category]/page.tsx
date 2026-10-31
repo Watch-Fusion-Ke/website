@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { notFound, permanentRedirect } from "next/navigation";
+import { SITE_NAME } from "@/lib/site";
 import ShopListing from "@/components/ShopListing";
 import { getCategoryPages } from "@/lib/categoryData";
 import {
@@ -10,6 +11,7 @@ import {
   findCategory,
   hasFilters,
   legacyCategoryTarget,
+  retiredCategoryTarget,
   type CategoryPage,
 } from "@/lib/categoryPages";
 
@@ -49,11 +51,11 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
     openGraph: {
       type: "website",
       locale: "en_KE",
-      siteName: "WatchFusion Kenya",
+      siteName: SITE_NAME,
       title: typeof title === "string" ? title : title.absolute,
       description,
       url: href,
-      images: [{ url: "/share-image.png", width: 1200, height: 630, alt: "WatchFusion Kenya: Wear the Moment, Own the Legacy" }],
+      images: [{ url: "/share-image.png", width: 1200, height: 630, alt: `${SITE_NAME}: Wear the Moment, Own the Legacy` }],
     },
     ...robots,
   };
@@ -69,7 +71,11 @@ export default async function CategoryPageRoute({ params, searchParams }: Props)
   // If the store cannot be read this throws, so the page fails instead of claiming the category does not exist.
   const categories = await getCategoryPages();
   const category = findCategory(categories, slug);
-  if (!category) notFound();
+  if (!category) {
+    const moved = retiredCategoryTarget(slug);
+    if (moved) permanentRedirect(moved);
+    notFound();
+  }
 
   // Called as a function, not used as a tag, so the page is one finished tree and a test can render it.
   return ShopListing({ category, categories, searchParams: query });

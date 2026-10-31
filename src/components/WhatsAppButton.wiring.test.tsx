@@ -2,7 +2,9 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const hideWhileScrolling = vi.hoisted(() => vi.fn(() => () => {}));
+const usePathname = vi.hoisted(() => vi.fn(() => "/"));
 vi.mock("@/lib/scrollHider", () => ({ hideWhileScrolling }));
+vi.mock("next/navigation", () => ({ usePathname }));
 // Run effects at once, since the server renderer never runs them.
 vi.mock("react", async (importOriginal) => ({
   ...(await importOriginal<typeof import("react")>()),
@@ -13,6 +15,7 @@ import WhatsAppButton from "@/components/WhatsAppButton";
 
 beforeEach(() => {
   hideWhileScrolling.mockClear();
+  usePathname.mockReturnValue("/");
   vi.stubGlobal("window", new EventTarget());
 });
 
@@ -22,5 +25,11 @@ describe("WhatsAppButton", () => {
     expect(hideWhileScrolling).toHaveBeenCalledTimes(1);
     expect(hideWhileScrolling).toHaveBeenCalledWith(globalThis.window, expect.any(Function));
     expect(html).toContain("opacity-100");
+  });
+
+  it("stays out of the voucher form's way", () => {
+    usePathname.mockReturnValue("/gift-vouchers");
+    expect(renderToStaticMarkup(<WhatsAppButton />)).toBe("");
+    expect(hideWhileScrolling).not.toHaveBeenCalled();
   });
 });

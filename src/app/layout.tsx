@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Suspense } from "react";
 import { Cormorant_Garamond, Jost } from "next/font/google";
 import "./globals.css";
-import { SITE_URL } from "@/lib/site";
+import { SITE_NAME, SITE_URL } from "@/lib/site";
 import AnnouncementBar from "@/components/AnnouncementBar";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -34,47 +34,55 @@ export const viewport: Viewport = {
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: "Watch Fusion Kenya | Premium Watches in Nairobi",
-    template: "%s | Watch Fusion Kenya",
+    default: `Authentic Watches in Nairobi Kenya | Free Deliveries on Orders above Ksh 10,000`,
+    template: `%s | ${SITE_NAME}`,
   },
   description:
-    "Shop premium watches in Kenya. WatchFusion Kenya offers luxury, sport & casual watches with fast delivery across Nairobi and Kenya. Wear the Moment, Own the Legacy.",
+    `Shop authentic watches and premium gift packages at ${SITE_NAME}. Personalize your gift with custom engraving and enjoy same-day delivery and FREE delivery on orders above KSh 10,000.`,
+  // Search engines give little weight to this list; the words that count are in each page's title, description and headings. It still
+  // names what the shop sells and where, in the ways people search for it.
   keywords: [
     "watches Kenya",
-    "buy watches Nairobi",
-    "luxury watches Kenya",
-    "affordable watches Nairobi",
-    "WatchFusion Kenya",
-    "online watch store Kenya",
-    "men watches Kenya",
-    "women watches Kenya",
-    "sport watches Nairobi",
-    "wrist watches Kenya",
+    "watch shop Nairobi",
+    "original watches Nairobi",
+    "authentic watches Kenya",
+    "buy watches online Kenya",
+    "men's watches Kenya",
+    "ladies watches Kenya",
+    "Casio watches Nairobi",
+    "Casio watches Kenya",
+    "Naviforce watches Kenya",
+    "Curren watches Kenya",
+    "Poedagar watches Kenya",
+    "Olevs watches Kenya",
+    "Hannah Martin watches Kenya",
+    "Reward watches Kenya",
+    "gift packages Nairobi",
+    "Christmas gifts Nairobi",
+    "custom engraved watch Kenya",
+    "personalised gifts Nairobi",
+    "same day delivery Nairobi",
+    "free delivery watches Kenya",
+    SITE_NAME,
   ],
-  authors: [{ name: "WatchFusion Kenya" }],
-  creator: "WatchFusion Kenya",
+  authors: [{ name: SITE_NAME }],
+  creator: SITE_NAME,
   openGraph: {
     type: "website",
     locale: "en_KE",
     url: SITE_URL,
-    siteName: "WatchFusion Kenya",
-    title: "WatchFusion Kenya | Premium Watches in Nairobi",
-    description:
-      "Shop premium watches in Kenya. Luxury, sport & casual watches with fast delivery across Nairobi and Kenya.",
+    siteName: SITE_NAME,
     images: [
       {
         url: "/share-image.png",
         width: 1200,
         height: 630,
-        alt: "WatchFusion Kenya: Wear the Moment, Own the Legacy",
+        alt: `${SITE_NAME}: Wear the Moment, Own the Legacy`,
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "WatchFusion Kenya | Premium Watches in Nairobi",
-    description:
-      "Shop premium watches in Kenya. Fast delivery across Nairobi and Kenya.",
     images: ["/share-image.png"],
   },
   robots: {
@@ -99,7 +107,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en-KE" suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
       </head>

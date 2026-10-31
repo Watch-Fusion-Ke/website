@@ -17,10 +17,10 @@ export type CategoryPage = {
   seoDescription: string | null;
 };
 
-type SeoTag = { type?: string; children?: string; props?: { name?: string; content?: string }; disabled?: boolean };
+export type SeoTag = { type?: string; children?: string; props?: { name?: string; content?: string }; disabled?: boolean };
 type WixCategory = { id?: string; name?: string; slug?: string; description?: string; seoData?: { tags?: SeoTag[] } };
 
-const seoOf = (tags: SeoTag[] | undefined): { title: string | null; description: string | null } => {
+export const seoOf = (tags: SeoTag[] | undefined): { title: string | null; description: string | null } => {
   const live = (tags ?? []).filter((t) => !t.disabled);
   const title = live.find((t) => t.type === "title")?.children?.trim();
   const description = live.find((t) => t.type === "meta" && t.props?.name === "description")?.props?.content?.trim();
@@ -58,6 +58,17 @@ export const categoryTitle = (category: CategoryPage): string | { absolute: stri
 
 export const categoryDescription = (category: CategoryPage): string =>
   category.seoDescription || category.description || `Shop ${category.name} at Watch Fusion Kenya, with delivery across Nairobi and Kenya.`;
+
+// Categories the shop has taken down, and where an old link to each now goes. Google still lists some of these pages, so a visitor who
+// follows one lands somewhere useful, not on "not found". A category the store shows again is shown, not redirected.
+const RETIRED_CATEGORIES: Record<string, string> = {
+  featured: "/",
+  gifts: "/shop/customizable-gifts",
+  "gift-packages": "/shop/customizable-gifts",
+};
+
+export const retiredCategoryTarget = (slug: string): string | null =>
+  Object.prototype.hasOwnProperty.call(RETIRED_CATEGORIES, slug) ? RETIRED_CATEGORIES[slug] : null;
 
 type Query = Record<string, string | string[] | undefined>;
 

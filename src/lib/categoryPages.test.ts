@@ -7,6 +7,7 @@ import {
   findCategory,
   hasFilters,
   legacyCategoryTarget,
+  retiredCategoryTarget,
   loadCategoryPages,
   type CategoryPage,
 } from "@/lib/categoryPages";
@@ -149,6 +150,22 @@ describe("the old ?cat= address", () => {
 
   it("gives up on an absurdly long option instead of building an address from it", () => {
     expect(legacyCategoryTarget({ cat: "a".repeat(300) })).toBe("/shop");
+  });
+});
+
+describe("categories the shop has taken down", () => {
+  it("send Editor's Picks to the home page, where the customer favourites are, and the gift pages to Customizable Gifts", () => {
+    expect(retiredCategoryTarget("featured")).toBe("/");
+    expect(retiredCategoryTarget("gifts")).toBe("/shop/customizable-gifts");
+    expect(retiredCategoryTarget("gift-packages")).toBe("/shop/customizable-gifts");
+  });
+
+  it("send nothing else: a made-up or a current category is not one of them", () => {
+    expect(retiredCategoryTarget("no-such-thing")).toBeNull();
+    expect(retiredCategoryTarget("casio-men")).toBeNull();
+    expect(retiredCategoryTarget("")).toBeNull();
+    expect(retiredCategoryTarget("constructor")).toBeNull();
+    expect(retiredCategoryTarget("__proto__")).toBeNull();
   });
 });
 

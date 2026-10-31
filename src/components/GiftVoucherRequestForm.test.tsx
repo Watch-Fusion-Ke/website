@@ -50,4 +50,16 @@ describe("the gift voucher introduction", () => {
     expect(source).toContain("How it works");
     expect(source.indexOf("introSeen")).toBeLessThan(source.indexOf("showModal"));
   });
+
+  it("counts the introduction as seen when the shopper dismisses it, not when it opens, so the page never loses it by closing it for them", () => {
+    const effect = source.slice(source.indexOf("useEffect"), source.indexOf("const start"));
+    expect(effect).not.toContain("markIntroSeen(");
+    expect(source).toMatch(/const start = [\s\S]*markIntroSeen\(/);
+    expect(source).toContain("onCancel");
+  });
+
+  it("promises the emailed code only, since the card artwork is not made yet", () => {
+    expect(source).toContain("email the code to the recipient");
+    expect(source).not.toMatch(/code and card/i);
+  });
 });

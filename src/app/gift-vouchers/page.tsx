@@ -37,7 +37,7 @@ export default function GiftVouchersPage() {
             <ol className="mt-4 space-y-4">
               <li><span className="font-semibold text-brand-navy">01 · Fill in the details</span><p className="mt-1 text-sm text-gray-600">Choose an amount, add your name and the gift recipient&apos;s details.</p></li>
               <li><span className="font-semibold text-brand-navy">02 · Chat with our team</span><p className="mt-1 text-sm text-gray-600">Send the WhatsApp request. We explain how to pay and confirm your payment.</p></li>
-              <li><span className="font-semibold text-brand-navy">03 · We send the voucher</span><p className="mt-1 text-sm text-gray-600">After payment is verified, we issue the code and email the voucher to the recipient.</p></li>
+              <li><span className="font-semibold text-brand-navy">03 · We send the voucher</span><p className="mt-1 text-sm text-gray-600">After payment is verified, we issue the code and email it to the recipient.</p></li>
             </ol>
             <div className="mt-5 border-t border-gray-300 pt-4">
               <h3 className="font-semibold">Using a voucher</h3>

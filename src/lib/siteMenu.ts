@@ -128,3 +128,15 @@ export const phoneOrder = (row: RowEntry[]): number[] => {
   if (focus <= 1) return places;
   return places.map((i) => (i === focus ? 1 : i > 0 && i < focus ? i + 1 : i));
 };
+
+// A menu that holds only the site's own pages, with no category: on a phone it is left out, because the phone's menu drawer has them.
+export const pagesOnly = (group: MenuGroup): boolean => group.items.length === 0 && Boolean(group.pages && group.pages.length > 0);
+
+// The right edge of the last entry of the row that is really shown. An entry that is not shown has no size, so it is skipped: measuring
+// a hidden one would give a dropdown a limit of zero. `fallback` is used when nothing is shown.
+export const lastVisibleRight = (boxes: { right: number; width: number }[], fallback: number): number => {
+  for (let i = boxes.length - 1; i >= 0; i--) {
+    if (boxes[i].width > 0) return boxes[i].right;
+  }
+  return fallback;
+};

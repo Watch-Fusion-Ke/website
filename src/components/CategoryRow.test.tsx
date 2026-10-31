@@ -234,12 +234,12 @@ describe("CategoryRow", () => {
     expect(row).not.toContain("md:justify-center");
   });
 
-  it("steps the larger text and the gaps up with the screen, so the row fits a tablet and keeps its roomy look on a wide screen", () => {
+  it("steps the larger text and the gaps up with the screen, so all seven entries fit a tablet and the row keeps its roomy look on a wide screen", () => {
     const row = html.match(/<div class="([^"]*overflow-x-auto[^"]*)"/)?.[1].split(" ") ?? [];
-    expect(row).toEqual(expect.arrayContaining(["md:gap-6", "lg:gap-8", "xl:gap-16"]));
+    expect(row).toEqual(expect.arrayContaining(["md:gap-4", "lg:gap-6", "xl:gap-16"]));
     const tag = html.match(/<a[^>]*href="\/shop\/gents-watches"[^>]*>/)?.[0] ?? "";
     const classes = tag.match(/class="([^"]*)"/)?.[1].split(" ") ?? [];
-    expect(classes).toContain("md:text-lg");
+    expect(classes).toContain("md:text-[15px]");
     expect(classes).toContain("lg:text-xl");
     expect(classes).not.toContain("md:text-xl");
     const css = readFileSync("src/components/ChristmasCategoryLink.module.css", "utf8");
@@ -348,7 +348,9 @@ describe("CategoryRow's More menu of pages", () => {
   });
 
   it("keeps those links in the page, hidden until the menu is opened", () => {
-    expect(out).toMatch(/<div[^>]*hidden=""[^>]*>[\s\S]*href="\/deals"/);
+    const panel = out.match(/<div[^>]*data-menu="More"[^>]*hidden=""[^>]*>[\s\S]*?<\/ul>/)?.[0] ?? "";
+    expect(panel).toContain('href="/deals"');
+    expect(panel).toContain('href="/gift-vouchers"');
   });
 
   it("names the pages list after the menu when it is the only list", () => {
@@ -361,16 +363,39 @@ describe("CategoryRow's More menu of pages", () => {
   });
 
   it("keeps a More menu that holds categories visible on a phone, and puts the pages under them in a second list", () => {
-    const both = renderToStaticMarkup(<CategoryRow menu={menu.row.length ? { row: [{ kind: "menu", group: { label: "More", items: [{ name: "Corporate Gifts", slug: "corporate-gifts" }], pages: [{ name: "Deals", href: "/deals" }] } }] } : menu} />);
+    const both = renderToStaticMarkup(<CategoryRow menu={{ row: [{ kind: "menu", group: { label: "More", items: [{ name: "Corporate Gifts", slug: "corporate-gifts" }], pages: [{ name: "Deals", href: "/deals" }] } }] }} />);
     expect(both.match(/<button[^>]*>/)?.[0]).not.toContain("max-md:hidden");
     expect(both).toMatch(/<ul[^>]*aria-label="More"[\s\S]*corporate-gifts[\s\S]*<ul[^>]*aria-label="Pages"[\s\S]*href="\/deals"/);
   });
 });
 
 describe("where a dropdown opens", () => {
-  it("never runs past the row's last entry, so on a wide screen the last menu sits under its button and not at the edge of the window", () => {
-    const source = readFileSync("src/components/CategoryRow.tsx", "utf8");
-    expect(source).toContain("lastElementChild");
-    expect(source).toMatch(/Math\.min\(navBox\.width, lastRight/);
+  it("is measured against the last entry that is really shown, so a hidden More on a phone does not drag every dropdown to the left edge", () => {
+    expect(readFileSync("src/components/CategoryRow.tsx", "utf8")).toContain("lastVisibleRight(");
+  });
+});
+
+describe("a row with nothing to show on a phone", () => {
+  const onlyPages: SiteMenu = { row: [{ kind: "menu", group: { label: "More", items: [], pages: [{ name: "Deals", href: "/deals" }] } }] };
+
+  it("is hidden on a phone, so no empty strip is left under the header, and still shown from a tablet up", () => {
+    const root = renderToStaticMarkup(<CategoryRow menu={onlyPages} />).match(/^<div class="([^"]*)"/)?.[1].split(" ") ?? [];
+    expect(root).toContain("max-md:hidden");
+    expect(root).not.toContain("md:hidden");
+  });
+
+  it("is shown on a phone as soon as it holds one category", () => {
+    const root = renderToStaticMarkup(<CategoryRow menu={{ row: [link("Gent's Watches", "gents-watches"), ...onlyPages.row] }} />).match(/^<div class="([^"]*)"/)?.[1].split(" ") ?? [];
+    expect(root).not.toContain("max-md:hidden");
+  });
+});
+
+describe("the row's size from a tablet up", () => {
+  const source = readFileSync("src/components/CategoryRow.tsx", "utf8");
+
+  it("sets its words smaller and closer on a tablet, so all seven entries, More included, fit without sliding", () => {
+    expect(source).toContain("md:text-[15px]");
+    expect(source).not.toContain("md:text-lg");
+    expect(source).toContain("md:gap-4");
   });
 });

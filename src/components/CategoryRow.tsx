@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useId, useLayoutEffect, useRef, useState } from "react";
 import ChristmasCategoryLink from "@/components/ChristmasCategoryLink";
 import { categoryHref } from "@/lib/categoryPages";
-import { PHONE_FOCUS_SLUG, centreScrollLeft, clampLeft, closed, hoverIn, hoverOut, phoneOrder, press, scrollEdges, type MenuState, type SiteMenu } from "@/lib/siteMenu";
+import { PHONE_FOCUS_SLUG, centreScrollLeft, clampLeft, closed, hoverIn, hoverOut, lastVisibleRight, pagesOnly, phoneOrder, press, scrollEdges, type MenuState, type SiteMenu } from "@/lib/siteMenu";
 
 // Every entry is plain words, on a phone as on a computer, with a gold underline on hover or press. A drawn box round each word costs
 // about 20 px of width for nothing: the 44 px tap area is invisible padding (min-h-11 and px-3), which is what lets the whole row stay
@@ -16,7 +16,7 @@ const entry =
   // Hover styles apply only to a pointer that really hovers, so a tap on a phone does not leave the last entry stuck underlined. The focus
   // ring is drawn inside the entry because the row clips anything outside its 44 px height.
   "[@media(hover:hover)]:hover:text-black [@media(hover:hover)]:hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-brand-gold " +
-  "md:min-h-0 md:px-0 md:py-1.5 md:text-lg lg:text-xl md:leading-[25.5px] md:text-gray-800 md:underline-offset-4 md:[@media(hover:hover)]:hover:text-gray-800";
+  "md:min-h-0 md:px-0 md:py-1.5 md:text-[15px] lg:text-xl md:leading-[25.5px] md:text-gray-800 md:underline-offset-4 md:[@media(hover:hover)]:hover:text-gray-800";
 // The one place a gold chip is kept: a seasonal page, so it stands out from the plain words.
 const seasonalEntry =
   "inline-flex min-h-11 flex-shrink-0 items-center whitespace-nowrap rounded-full bg-brand-gold px-3 text-[13px] font-semibold text-brand-navy transition-colors duration-200 hover:brightness-95 max-md:snap-center max-md:[order:var(--phone-order)] md:min-h-0 md:px-4 md:py-2 md:text-base";
@@ -60,7 +60,8 @@ const CategoryRow = ({ menu }: { menu: SiteMenu }) => {
     if (!nav) return;
     // A box may reach no further right than the row's last entry, so on a wide window the last menu sits under its button.
     const navBox = nav.getBoundingClientRect();
-    const lastRight = strip.current?.lastElementChild?.getBoundingClientRect().right ?? navBox.right;
+    const boxes = Array.prototype.slice.call(strip.current?.children ?? []).map((child: Element) => child.getBoundingClientRect());
+    const lastRight = lastVisibleRight(boxes, navBox.right);
     setLeft(clampLeft(button.getBoundingClientRect().left - navBox.left, PANEL_WIDTH, Math.min(navBox.width, lastRight - navBox.left)));
   };
   const cancelLeave = () => {
@@ -150,8 +151,10 @@ const CategoryRow = ({ menu }: { menu: SiteMenu }) => {
   const phone = phoneOrder(menu.row);
   const orderStyle = (index: number) => ({ "--phone-order": phone[index] }) as React.CSSProperties;
 
+  // On a phone the row is left out altogether when its only entry is hidden there, so no empty strip is left under the header.
+  const phoneEmpty = menu.row.every((e) => e.kind === "menu" && pagesOnly(e.group));
   return (
-    <div ref={root} className="py-1 md:py-8">
+    <div ref={root} className={`py-1 md:py-8${phoneEmpty ? " max-md:hidden" : ""}`}>
       <nav
         aria-label="Shop by category"
         className="relative"
@@ -164,7 +167,7 @@ const CategoryRow = ({ menu }: { menu: SiteMenu }) => {
         }}
       >
         <div className="relative">
-        <div ref={strip} onScroll={onRowScroll} onFocus={onRowFocus} className="relative flex scroll-px-4 overflow-x-auto px-4 scrollbar-hide max-md:snap-x max-md:snap-proximity md:items-center md:gap-6 md:[&>:first-child]:ml-auto md:[&>:last-child]:mr-auto lg:gap-8 xl:gap-16">
+        <div ref={strip} onScroll={onRowScroll} onFocus={onRowFocus} className="relative flex scroll-px-4 overflow-x-auto px-4 scrollbar-hide max-md:snap-x max-md:snap-proximity md:items-center md:gap-4 md:[&>:first-child]:ml-auto md:[&>:last-child]:mr-auto lg:gap-6 xl:gap-16">
           {menu.row.map((e, index) => {
             if (e.kind === "link") {
               const c = e.category;
@@ -200,7 +203,7 @@ const CategoryRow = ({ menu }: { menu: SiteMenu }) => {
                   setState((s) => press(s, g.label));
                 }}
                 // A menu that holds only the site's pages is left out on a phone: the phone has its own menu drawer with them.
-                className={g.items.length === 0 && g.pages ? `${entry} max-md:hidden` : entry}
+                className={pagesOnly(g) ? `${entry} max-md:hidden` : entry}
               >
                 {g.label}
                 <Chevron open={open === g.label} />

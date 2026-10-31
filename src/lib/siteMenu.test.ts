@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { PHONE_FOCUS_SLUG, SITE_PAGES, buildMenu, centreScrollLeft, clampLeft, closed, hoverIn, hoverOut, phoneOrder, press, scrollEdges, type SiteMenu } from "@/lib/siteMenu";
+import { PHONE_FOCUS_SLUG, SITE_PAGES, buildMenu, lastVisibleRight, pagesOnly, centreScrollLeft, clampLeft, closed, hoverIn, hoverOut, phoneOrder, press, scrollEdges, type SiteMenu } from "@/lib/siteMenu";
 
 const cat = (slug: string, name = slug, visible?: boolean) => ({ slug, name, visible });
 const today = [
@@ -317,7 +317,7 @@ describe("the More menu, which replaces the page links that used to sit in the h
     expect(pagesOf(buildMenu(today))?.map(([name]) => name)).not.toContain("Shop");
   });
 
-  it("is still there when the store sends no categories at all, so a store outage leaves the pages reachable", () => {
+  it("is still there when the store sends an empty list or hides every category, so the pages stay reachable", () => {
     expect(names(buildMenu([]))).toEqual(["[More]"]);
   });
 
@@ -330,5 +330,29 @@ describe("the More menu, which replaces the page links that used to sit in the h
 
   it("keeps the whole list of pages for the phone's menu drawer, which still shows Homepage and Contact", () => {
     expect(SITE_PAGES.map((p) => p.href)).toEqual(["/", "/shop", "/deals", "/gift-vouchers", "/contact"]);
+  });
+});
+
+describe("which entry of the row is the last one on screen", () => {
+  it("is the last entry that has a size", () => {
+    expect(lastVisibleRight([{ right: 100, width: 80 }, { right: 300, width: 90 }], 999)).toBe(300);
+  });
+
+  it("skips an entry that is not shown (it has no size, as a hidden More on a phone), so a dropdown is not placed against a zero", () => {
+    expect(lastVisibleRight([{ right: 100, width: 80 }, { right: 300, width: 90 }, { right: 0, width: 0 }], 999)).toBe(300);
+  });
+
+  it("falls back to the given edge when nothing is shown", () => {
+    expect(lastVisibleRight([], 500)).toBe(500);
+    expect(lastVisibleRight([{ right: 0, width: 0 }], 500)).toBe(500);
+  });
+});
+
+describe("a menu that holds only the site's pages", () => {
+  it("is told apart from one that holds categories", () => {
+    expect(pagesOnly({ label: "More", items: [], pages: [{ name: "Deals", href: "/deals" }] })).toBe(true);
+    expect(pagesOnly({ label: "More", items: [{ name: "Gift Packages", slug: "gift-packages" }], pages: [{ name: "Deals", href: "/deals" }] })).toBe(false);
+    expect(pagesOnly({ label: "Watch Brands", items: [{ name: "Casio", slug: "casio" }] })).toBe(false);
+    expect(pagesOnly({ label: "More", items: [] })).toBe(false);
   });
 });

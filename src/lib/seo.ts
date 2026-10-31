@@ -59,6 +59,19 @@ export type ProductSeo = {
   inStock?: boolean;
 };
 
+// The brands the shop sells. Many products have no brand entered in the store, but their names start with it.
+const BRANDS = ["Casio", "Naviforce", "Curren", "Poedagar", "Olevs", "Hannah Martin", "Reward", "Crrju"];
+
+export const brandOf = (name: string, brand?: string | null): string | undefined => {
+  const entered = brand?.trim();
+  if (entered) return entered;
+  const start = name.trim().toLowerCase();
+  return BRANDS.find((b) => {
+    const lower = b.toLowerCase();
+    return start === lower || start.startsWith(`${lower} `);
+  });
+};
+
 const productUrl = (slug: string) => `${SITE_URL}/${slug}`;
 
 const productDescription = (p: ProductSeo): string => {
@@ -80,29 +93,32 @@ export const productMetadata = (p: ProductSeo): Metadata => {
   };
 };
 
-export const productJsonLd = (p: ProductSeo): object => ({
-  "@context": "https://schema.org",
-  "@type": "Product",
-  name: p.name,
-  url: productUrl(p.slug),
-  image: p.imageUrls && p.imageUrls.length > 0 ? p.imageUrls : p.imageUrl ? [p.imageUrl] : undefined,
-  description: productDescription(p),
-  sku: p.sku || undefined,
-  brand: p.brand ? { "@type": "Brand", name: p.brand } : undefined,
-  // An offer with no price is rejected by search engines, so a product with no price has none.
-  offers:
-    p.price == null
-      ? undefined
-      : {
-          "@type": "Offer",
-          url: productUrl(p.slug),
-          price: p.price,
-          priceCurrency: "KES",
-          availability: p.inStock === false ? "https://schema.org/OutOfStock" : "https://schema.org/InStock",
-          itemCondition: "https://schema.org/NewCondition",
-          seller: { "@type": "Organization", name: SITE_NAME, url: SITE_URL },
-        },
-});
+export const productJsonLd = (p: ProductSeo): object => {
+  const brand = brandOf(p.name, p.brand);
+  return {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    name: p.name,
+    url: productUrl(p.slug),
+    image: p.imageUrls && p.imageUrls.length > 0 ? p.imageUrls : p.imageUrl ? [p.imageUrl] : undefined,
+    description: productDescription(p),
+    sku: p.sku || undefined,
+    brand: brand ? { "@type": "Brand", name: brand } : undefined,
+    // An offer with no price is rejected by search engines, so a product with no price has none.
+    offers:
+      p.price == null
+        ? undefined
+        : {
+            "@type": "Offer",
+            url: productUrl(p.slug),
+            price: p.price,
+            priceCurrency: "KES",
+            availability: p.inStock === false ? "https://schema.org/OutOfStock" : "https://schema.org/InStock",
+            itemCondition: "https://schema.org/NewCondition",
+            seller: { "@type": "Organization", name: SITE_NAME, url: SITE_URL },
+          },
+  };
+};
 
 // What a page tells link previews about itself: its own address, the shop's name and the share picture. The page's own title and
 // description are filled in by Next. (A page that sets this replaces the layout's, so each one asks for it.)

@@ -115,13 +115,10 @@ export default function GiftVoucherRequestForm() {
         </fieldset>
       </div>
 
-      <div>
-        <button type="submit"
-          className="min-h-12 w-full rounded-lg bg-brand-navy px-6 py-3 text-base font-semibold text-white transition-colors hover:bg-brand-gold hover:text-brand-navy focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold">
-          Continue to WhatsApp
-        </button>
-        <p className="mt-2 text-sm text-gray-600">Nothing is charged here. We confirm payment on WhatsApp.</p>
-      </div>
+      <button type="submit"
+        className="min-h-12 w-full rounded-lg bg-brand-navy px-6 py-3 text-base font-semibold text-white transition-colors hover:bg-brand-gold hover:text-brand-navy focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold">
+        Continue to WhatsApp
+      </button>
     </form>
   );
 }

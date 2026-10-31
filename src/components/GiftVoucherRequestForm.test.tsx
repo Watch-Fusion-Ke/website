@@ -43,9 +43,8 @@ describe("the gift voucher request form", () => {
     expect(html.indexOf('name="senderName"')).toBeLessThan(html.indexOf('name="message"'));
   });
 
-  it("puts one plain line under the button, saying nothing is paid on this page", () => {
-    const button = html.indexOf("Continue to WhatsApp");
-    expect(html.slice(button)).toContain("Nothing is charged here. We confirm payment on WhatsApp.");
+  it("ends with the button, with no note under it", () => {
+    expect(html.slice(html.indexOf("Continue to WhatsApp"))).not.toContain("<p");
   });
 
   it("moves focus to the first field with an error in the order the fields appear on the page", () => {

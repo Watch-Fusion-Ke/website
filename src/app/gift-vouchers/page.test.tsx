@@ -32,8 +32,8 @@ describe("gift voucher request page", () => {
     expect(recipient).toMatch(/>Name<\/label>[\s\S]*>Phone number<\/label>[\s\S]*>Email address<\/label>/);
   });
 
-  it("is easy to read at a glance: a short intro, three one-line steps and a form, in about 150 words in all", () => {
-    expect(readable(html).split(" ").length).toBeLessThanOrEqual(150);
+  it("is easy to read at a glance: a short intro, three one-line steps and a form, in about 130 words in all", () => {
+    expect(readable(html).split(" ").length).toBeLessThanOrEqual(130);
   });
 
   it("lists the steps once on the page, as a short numbered row, each with a title and a few words", () => {
@@ -50,9 +50,9 @@ describe("gift voucher request page", () => {
     expect(html).not.toMatch(/\b(?:sm|md|lg|xl):grid-cols-\[minmax\(0,1\.\d+fr\)_/);
   });
 
-  it("keeps a single line that a voucher is a unique code and a screenshot alone is not honoured", () => {
-    expect(html).toMatch(/unique code/i);
-    expect(html).toMatch(/screenshot/i);
+  it("ends with the form, with no notes after it", () => {
+    const form = html.indexOf("</form>");
+    expect(readable(html.slice(form))).not.toMatch(/unique code|screenshot|Nothing is charged/i);
   });
 
   it("does not promise a way to redeem the code that has not been tried on the live checkout", () => {

@@ -33,7 +33,6 @@ export default function GiftVouchersPage() {
         <section aria-label="Request a voucher" className="mt-6 rounded-xl bg-brand-cream p-4 sm:p-6">
           <GiftVoucherRequestForm />
         </section>
-        <p className="mt-4 text-sm text-gray-600">Every voucher is a unique code with its own balance. A screenshot alone can&apos;t be used.</p>
       </div>
     </main>
   );

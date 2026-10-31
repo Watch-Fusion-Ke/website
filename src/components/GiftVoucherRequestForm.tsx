@@ -26,7 +26,7 @@ export default function GiftVoucherRequestForm() {
     const result = validateGiftVoucherRequest(data);
     if (!result.ok) {
       setErrors(result.errors);
-      const first = (["amount", "senderName", "recipientName", "recipientPhone", "recipientEmail", "message"] as const).find(
+      const first = (["amount", "recipientName", "recipientPhone", "recipientEmail", "senderName", "message"] as const).find(
         (key) => result.errors[key]
       );
       if (first) document.getElementById(`voucher-${first}`)?.focus();

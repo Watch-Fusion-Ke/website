@@ -45,7 +45,14 @@ describe("the gift voucher request form", () => {
 
   it("puts one plain line under the button, saying nothing is paid on this page", () => {
     const button = html.indexOf("Continue to WhatsApp");
-    expect(html.slice(button)).toMatch(/pay on WhatsApp|paid on WhatsApp|not charged here|Nothing is charged/i);
+    expect(html.slice(button)).toContain("Nothing is charged here. We confirm payment on WhatsApp.");
+  });
+
+  it("moves focus to the first field with an error in the order the fields appear on the page", () => {
+    const source = readFileSync("src/components/GiftVoucherRequestForm.tsx", "utf8");
+    const order = source.match(/\(\[([^\]]*)\] as const\)\.find/)?.[1].match(/"(\w+)"/g)?.map((key) => key.slice(1, -1)) ?? [];
+    const onPage = (html.match(/<(?:input|textarea)[^>]*\bname="(\w+)"/g) ?? []).map((tag) => tag.match(/name="(\w+)"/)?.[1]);
+    expect(order).toEqual(onPage);
   });
 
   it("tells a screen reader which quick amount is chosen", () => {

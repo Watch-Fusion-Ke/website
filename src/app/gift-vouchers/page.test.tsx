@@ -47,7 +47,7 @@ describe("gift voucher request page", () => {
 
   it("has no side column, so the eye follows one line from the heading to the button", () => {
     expect(html).not.toContain("<aside");
-    expect(html).not.toMatch(/lg:grid-cols-\[/);
+    expect(html).not.toMatch(/\b(?:sm|md|lg|xl):grid-cols-\[minmax\(0,1\.\d+fr\)_/);
   });
 
   it("keeps a single line that a voucher is a unique code and a screenshot alone is not honoured", () => {

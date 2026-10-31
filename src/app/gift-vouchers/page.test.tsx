@@ -1,4 +1,5 @@
 import { renderToStaticMarkup } from "react-dom/server";
+import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import GiftVouchersPage from "@/app/gift-vouchers/page";
 
@@ -18,5 +19,16 @@ describe("gift voucher request page", () => {
     expect(details).toContain('name="recipientPhone"');
     expect(details).toContain('name="recipientEmail"');
     expect(details).toMatch(/>Name<\/label>[\s\S]*>Phone number<\/label>[\s\S]*>Email address<\/label>/);
+  });
+
+  it("sets its small headings in navy, never the light gold, which cannot be read on the white page", () => {
+    expect(html).not.toContain("text-brand-gold-dark");
+    expect(readFileSync("src/components/GiftVoucherIntro.tsx", "utf8")).not.toContain("text-brand-gold-dark");
+    expect(readFileSync("src/app/gift-vouchers/page.tsx", "utf8")).not.toContain("text-brand-gold-dark");
+  });
+
+  it("says a voucher is a code held in the shop's records with its own balance, so a picture or screenshot alone is not honoured", () => {
+    expect(html).toMatch(/unique code/i);
+    expect(html).toMatch(/screenshot/i);
   });
 });

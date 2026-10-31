@@ -35,13 +35,13 @@ export default function GiftVouchersPage() {
           <aside aria-labelledby="how-heading" className="hidden lg:block lg:pt-2">
             <h2 id="how-heading" className="font-display text-2xl font-bold">How it works</h2>
             <ol className="mt-4 space-y-4">
-              <li><span className="font-semibold text-brand-gold-dark">01 · Fill in the details</span><p className="mt-1 text-sm text-gray-600">Choose an amount, add your name and the gift recipient&apos;s details.</p></li>
-              <li><span className="font-semibold text-brand-gold-dark">02 · Chat with our team</span><p className="mt-1 text-sm text-gray-600">Send the WhatsApp request. We explain how to pay and confirm your payment.</p></li>
-              <li><span className="font-semibold text-brand-gold-dark">03 · We send the voucher</span><p className="mt-1 text-sm text-gray-600">After payment is verified, we issue the code and email the voucher to the recipient.</p></li>
+              <li><span className="font-semibold text-brand-navy">01 · Fill in the details</span><p className="mt-1 text-sm text-gray-600">Choose an amount, add your name and the gift recipient&apos;s details.</p></li>
+              <li><span className="font-semibold text-brand-navy">02 · Chat with our team</span><p className="mt-1 text-sm text-gray-600">Send the WhatsApp request. We explain how to pay and confirm your payment.</p></li>
+              <li><span className="font-semibold text-brand-navy">03 · We send the voucher</span><p className="mt-1 text-sm text-gray-600">After payment is verified, we issue the code and email the voucher to the recipient.</p></li>
             </ol>
             <div className="mt-5 border-t border-gray-300 pt-4">
               <h3 className="font-semibold">Using a voucher</h3>
-              <p className="mt-1 text-sm text-gray-600">Enter the code at checkout, or ask our shop team to redeem it for your order.</p>
+              <p className="mt-1 text-sm text-gray-600">Enter the code at checkout, or ask our shop team to redeem it for your order. Every voucher is a unique code held in our records, with its own balance, so a picture or screenshot of a voucher cannot be used without the code.</p>
               <Link href="/shop" className="mt-2 inline-block text-sm font-semibold text-brand-navy underline underline-offset-4 decoration-brand-gold decoration-2 dark:text-brand-gold">Browse watches</Link>
             </div>
           </aside>

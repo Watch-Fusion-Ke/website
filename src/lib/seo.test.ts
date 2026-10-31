@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  brandOf,
   breadcrumbJsonLd,
   jsonLdScript,
   organizationJsonLd,
@@ -157,15 +158,64 @@ describe("productJsonLd", () => {
   });
 
   it("leaves out what the product does not have, instead of printing empty values", () => {
-    const text = JSON.stringify(productJsonLd({ ...p, sku: null, brand: null, imageUrl: null, imageUrls: [] }));
+    const text = JSON.stringify(productJsonLd({ ...p, name: "Engraved Watch Box", sku: null, brand: null, imageUrl: null, imageUrls: [] }));
     expect(text).not.toContain('"sku"');
     expect(text).not.toContain('"brand"');
     expect(text).not.toContain('"image"');
   });
 
+  it("falls back to the brand in the product name when the store has none", () => {
+    const ld = productJsonLd({ ...p, name: "Naviforce NF9197", brand: null }) as Record<string, any>;
+    expect(ld.brand).toEqual({ "@type": "Brand", name: "Naviforce" });
+  });
+
   it("uses the shop's own description for the product when the shop wrote one in the store", () => {
     const ld = productJsonLd({ ...p, seoTags: [{ type: "meta", props: { name: "description", content: "From the store." } }] }) as Record<string, any>;
     expect(ld.description).toBe("From the store.");
+  });
+});
+
+describe("brandOf", () => {
+  it("keeps the brand the shop entered in the store", () => {
+    expect(brandOf("Casio MTP-1374D", "Casio")).toBe("Casio");
+    expect(brandOf("Mystery watch", " Seiko ")).toBe("Seiko");
+  });
+
+  it("reads the brand from the start of the product name when the store has none", () => {
+    expect(brandOf("Casio MTP-1374D Men's Watch", null)).toBe("Casio");
+    expect(brandOf("naviforce NF9197 Chronograph", "")).toBe("Naviforce");
+    expect(brandOf("CURREN 8386 Quartz", undefined)).toBe("Curren");
+    expect(brandOf("Hannah Martin HM-1021 Ladies", null)).toBe("Hannah Martin");
+    expect(brandOf("CRRJU 2220 Gold Plated", null)).toBe("Crrju");
+    expect(brandOf("Poedagar 613 Steel", null)).toBe("Poedagar");
+    expect(brandOf("Olevs 5568", null)).toBe("Olevs");
+    expect(brandOf("Reward RD33021L", null)).toBe("Reward");
+  });
+
+  it("gives no brand when the name does not start with a known one", () => {
+    expect(brandOf("Engraved Wooden Watch Box", null)).toBeUndefined();
+    expect(brandOf("Casiotone Gift Set", null)).toBeUndefined();
+    expect(brandOf("Premium Casio Gift Package", null)).toBeUndefined();
+    expect(brandOf("", null)).toBeUndefined();
+  });
+
+  it("gives no brand to a gift, a box, a strap or a card even when its name starts with a brand", () => {
+    expect(brandOf("Casio Gift Package", null)).toBeUndefined();
+    expect(brandOf("Casio Watch Box", null)).toBeUndefined();
+    expect(brandOf("Reward Card", null)).toBeUndefined();
+    expect(brandOf("Naviforce Leather Strap", null)).toBeUndefined();
+  });
+
+  it("copes with odd spacing and a dash after the brand", () => {
+    expect(brandOf("Casio\u00a0MTP-1374D", null)).toBe("Casio");
+    expect(brandOf("Casio\tMTP", null)).toBe("Casio");
+    expect(brandOf("Hannah  Martin HM-1021", null)).toBe("Hannah Martin");
+    expect(brandOf("Casio-MTP 1374", null)).toBe("Casio");
+    expect(brandOf("Casio: MTP", null)).toBe("Casio");
+  });
+
+  it("lets the brand entered in the store win over a different one in the name", () => {
+    expect(brandOf("Casio MTP-1374D", "Seiko")).toBe("Seiko");
   });
 });
 

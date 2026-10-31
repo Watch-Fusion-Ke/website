@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import {
+  VOUCHER_PRESET_AMOUNTS,
   giftVoucherWhatsAppUrl,
   validateGiftVoucherRequest,
   type GiftVoucherErrors,
@@ -14,6 +15,7 @@ const error = "mt-1 text-sm text-red-600";
 
 export default function GiftVoucherRequestForm() {
   const [errors, setErrors] = useState<GiftVoucherErrors>({});
+  const [amount, setAmount] = useState("");
 
   const continueToWhatsApp = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -38,7 +40,22 @@ export default function GiftVoucherRequestForm() {
         <label htmlFor="voucher-amount" className={label}>Gift amount (KES)</label>
         <input id="voucher-amount" name="amount" type="number" inputMode="numeric" min="1" step="1" required
           aria-invalid={Boolean(errors.amount)} aria-describedby={errors.amount ? "voucher-amount-error" : undefined}
+          value={amount} onChange={(e) => setAmount(e.target.value)}
           placeholder="5000" className={input} />
+        <div role="group" aria-label="Quick amounts" className="mt-2 flex flex-nowrap gap-1.5">
+          {VOUCHER_PRESET_AMOUNTS.map((preset) => (
+            <button key={preset} type="button" aria-pressed={amount === String(preset)} aria-label={`KES ${preset.toLocaleString("en-KE")}`}
+              onClick={() => {
+                setAmount(String(preset));
+                document.getElementById("voucher-amount")?.focus();
+              }}
+              className={`min-h-11 min-w-0 flex-1 rounded-full border px-2 text-sm font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold ${
+                amount === String(preset) ? "border-brand-navy bg-brand-navy text-white" : "border-gray-300 text-gray-700 hover:border-brand-navy"
+              }`}>
+              {preset.toLocaleString("en-KE")}
+            </button>
+          ))}
+        </div>
         {errors.amount && <p id="voucher-amount-error" className={error}>{errors.amount}</p>}
       </div>
 

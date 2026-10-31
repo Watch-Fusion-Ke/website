@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { giftVoucherMessage, giftVoucherWhatsAppUrl, validateGiftVoucherRequest } from "@/lib/giftVoucherRequest";
+import { VOUCHER_PRESET_AMOUNTS, giftVoucherMessage, giftVoucherWhatsAppUrl, validateGiftVoucherRequest } from "@/lib/giftVoucherRequest";
 
 const request = {
   amount: "5000",
@@ -49,5 +49,17 @@ describe("gift voucher request handoff", () => {
     if (!result.ok) return;
     expect(giftVoucherMessage(result.values)).toContain("From: Jane Amount: free\nRecipient details:\nName: Amina");
     expect(new URL(giftVoucherWhatsAppUrl(result.values)).searchParams.get("text")).toContain("For you & me 🎁");
+  });
+});
+
+describe("the quick amounts offered on the voucher form", () => {
+  it("are a few whole shilling amounts, smallest first, each of which the form accepts", () => {
+    expect(VOUCHER_PRESET_AMOUNTS.length).toBeGreaterThanOrEqual(3);
+    expect(VOUCHER_PRESET_AMOUNTS.length).toBeLessThanOrEqual(5);
+    expect([...VOUCHER_PRESET_AMOUNTS].sort((a, b) => a - b)).toEqual([...VOUCHER_PRESET_AMOUNTS]);
+    for (const amount of VOUCHER_PRESET_AMOUNTS) {
+      expect(Number.isInteger(amount)).toBe(true);
+      expect(validateGiftVoucherRequest({ ...request, amount: String(amount) }).ok).toBe(true);
+    }
   });
 });

@@ -1,6 +1,7 @@
 "use client";
 
 import { categoryHref } from "@/lib/categoryPages";
+import { SITE_PAGES } from "@/lib/siteMenu";
 import Image from "next/image";
 import Link from "next/link";
 import ThemeToggle from "./ThemeToggle";
@@ -45,13 +46,7 @@ const Menu = () => {
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [open]);
 
-  const navLinks = [
-    { label: "Homepage", href: "/" },
-    { label: "Shop", href: "/shop" },
-    { label: "Deals", href: "/deals" },
-    { label: "Gift Vouchers", href: "/gift-vouchers" },
-    { label: "Contact", href: "/contact" },
-  ];
+  const navLinks = SITE_PAGES.map((page) => ({ label: page.name, href: page.href }));
 
   return (
     <div className="relative">

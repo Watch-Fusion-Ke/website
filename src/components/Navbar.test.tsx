@@ -240,3 +240,17 @@ describe("Navbar stays at the top while the page scrolls", () => {
     expect(search).toContain("grid-rows-[1fr]");
   });
 });
+
+describe("Navbar on a computer", () => {
+  const desktop = () => {
+    const html = renderToStaticMarkup(<Navbar />);
+    return html.slice(html.indexOf('data-testid="desktop-header"'));
+  };
+
+  it("holds the logo, the search and the icons, and no page links, which now live in the More menu of the category row", () => {
+    const html = desktop();
+    expect(html).toContain('aria-label="Watch Fusion Kenya, home"');
+    for (const href of ["/shop", "/deals", "/gift-vouchers", "/contact"]) expect(html).not.toContain(`href="${href}"`);
+    expect(html).not.toMatch(/>Homepage</);
+  });
+});

@@ -1,13 +1,27 @@
 // A brand can carry a few pages of its own, shown indented under it in the brands menu (Casio: Men and Women).
 export type MenuCategory = { name: string; slug: string; visible?: boolean | null; children?: MenuCategory[] };
-export type MenuGroup = { label: string; items: MenuCategory[] };
+// A page of the site that is not a category (Deals, Contact). A menu can list some after its categories.
+export type MenuPage = { name: string; href: string };
+export type MenuGroup = { label: string; items: MenuCategory[]; pages?: MenuPage[] };
 // One stop in the row: a plain link (a seasonal page is shown highlighted) or a menu that opens a dropdown.
 export type RowEntry = { kind: "link"; category: MenuCategory; seasonal?: boolean } | { kind: "menu"; group: MenuGroup };
 export type SiteMenu = { row: RowEntry[] };
 
+// The site's own pages. The phone's menu drawer lists all of them; the row's More menu lists the ones it needs (see NOT_IN_MORE).
+export const SITE_PAGES: MenuPage[] = [
+  { name: "Homepage", href: "/" },
+  { name: "Shop", href: "/shop" },
+  { name: "Deals", href: "/deals" },
+  { name: "Gift Vouchers", href: "/gift-vouchers" },
+  { name: "Contact", href: "/contact" },
+];
+const SHOP_PAGE = "/shop";
+// Left out of the More menu: the logo already goes home, and the footer already has Contact.
+const NOT_IN_MORE = new Set(["/", "/contact"]);
+
 // The shop's category row would otherwise print every Wix category side by side. These lists decide which ones stay in the row,
 // which go into a menu, and where. The row reads: Watch Brands, Customizable Gifts, the seasonal pages, Gent's, Ladies, the other gift
-// pages, then All Products last. A category Wix does not send (a hidden one) never appears, and a category listed here that the store has
+// pages, then All Products, and the More menu at the very end. A category Wix does not send (a hidden one) never appears, and a category listed here that the store has
 // not made visible simply is not there.
 const LEFT_OUT = new Set(["all-products", "featured", "brands", "gifts"]); // each is handled on its own below, or is already covered by a home page section
 const ALL_PRODUCTS = "all-products";
@@ -67,8 +81,10 @@ export const buildMenu = (categories: MenuCategory[]): SiteMenu => {
       ...giftEntry.map((c) => link(c)),
       ...seasonal.map((c) => link(c, true)),
       ...main.map((c) => link(c)),
-      ...menuOrLink("More", rest),
       ...everything.map((c) => link(c)),
+      // One menu closes the row: any other gift pages the store has, then the site's own pages. Shop is listed only when the row has
+      // no All Products entry, so the whole shop is always one click away and never shown twice.
+      { kind: "menu", group: { label: "More", items: rest, pages: SITE_PAGES.filter((page) => !NOT_IN_MORE.has(page.href) && (page.href !== SHOP_PAGE || everything.length === 0)) } },
     ],
   };
 };

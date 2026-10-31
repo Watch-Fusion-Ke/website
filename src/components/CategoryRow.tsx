@@ -57,7 +57,11 @@ const CategoryRow = ({ menu }: { menu: SiteMenu }) => {
 
   const place = (button: HTMLElement) => {
     const nav = root.current;
-    if (nav) setLeft(clampLeft(button.getBoundingClientRect().left - nav.getBoundingClientRect().left, PANEL_WIDTH, nav.getBoundingClientRect().width));
+    if (!nav) return;
+    // A box may reach no further right than the row's last entry, so on a wide window the last menu sits under its button.
+    const navBox = nav.getBoundingClientRect();
+    const lastRight = strip.current?.lastElementChild?.getBoundingClientRect().right ?? navBox.right;
+    setLeft(clampLeft(button.getBoundingClientRect().left - navBox.left, PANEL_WIDTH, Math.min(navBox.width, lastRight - navBox.left)));
   };
   const cancelLeave = () => {
     if (leaveTimer.current) clearTimeout(leaveTimer.current);
@@ -195,7 +199,8 @@ const CategoryRow = ({ menu }: { menu: SiteMenu }) => {
                   place(ev.currentTarget);
                   setState((s) => press(s, g.label));
                 }}
-                className={entry}
+                // A menu that holds only the site's pages is left out on a phone: the phone has its own menu drawer with them.
+                className={g.items.length === 0 && g.pages ? `${entry} max-md:hidden` : entry}
               >
                 {g.label}
                 <Chevron open={open === g.label} />
@@ -214,26 +219,39 @@ const CategoryRow = ({ menu }: { menu: SiteMenu }) => {
         {groups.map((g, i) => (
           <div key={g.label} id={`${id}-${i}`} data-menu={g.label} hidden={open !== g.label} className={open === g.label ? panelOuter : undefined}>
             <div className={panelInner}>
-              <ul aria-label={g.label}>
-                {g.items.map((c) => (
-                  <li key={c.slug}>
-                    <Link href={categoryHref(c.slug)} className={panelLink} onClick={() => setState(closed)}>
-                      {c.name}
-                    </Link>
-                    {c.children && c.children.length > 0 && (
-                      <ul aria-label={c.name}>
-                        {c.children.map((child) => (
-                          <li key={child.slug}>
-                            <Link href={categoryHref(child.slug)} className={`${panelLink} pl-6`} onClick={() => setState(closed)}>
-                              {child.name}
-                            </Link>
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-                  </li>
-                ))}
-              </ul>
+              {g.items.length > 0 && (
+                <ul aria-label={g.label}>
+                  {g.items.map((c) => (
+                    <li key={c.slug}>
+                      <Link href={categoryHref(c.slug)} className={panelLink} onClick={() => setState(closed)}>
+                        {c.name}
+                      </Link>
+                      {c.children && c.children.length > 0 && (
+                        <ul aria-label={c.name}>
+                          {c.children.map((child) => (
+                            <li key={child.slug}>
+                              <Link href={categoryHref(child.slug)} className={`${panelLink} pl-6`} onClick={() => setState(closed)}>
+                                {child.name}
+                              </Link>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              )}
+              {g.pages && g.pages.length > 0 && (
+                <ul aria-label={g.items.length > 0 ? "Pages" : g.label} className={g.items.length > 0 ? "mt-1 border-t border-gray-200 pt-1" : undefined}>
+                  {g.pages.map((page) => (
+                    <li key={page.href}>
+                      <Link href={page.href} className={panelLink} onClick={() => setState(closed)}>
+                        {page.name}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              )}
             </div>
           </div>
         ))}

@@ -101,7 +101,7 @@ const Navbar = () => {
       {/* Desktop Navbar */}
       <div data-testid="desktop-header" className='hidden md:flex items-center justify-between gap-8 h-full'>
         {/* Left Section */}
-        <div className='w-1/3 xl:w-1/2 flex items-center gap-4'>
+        <div className='flex flex-shrink-0 items-center gap-4'>
           <Link href="/" aria-label="Watch Fusion Kenya, home" className="flex items-center flex-shrink-0">
             <span className='relative block h-14 aspect-[2209/823] overflow-hidden'>
               <Image
@@ -122,27 +122,10 @@ const Navbar = () => {
               />
             </span>
           </Link>
-          <div className="hidden xl:flex gap-3 whitespace-nowrap">
-            <Link href="/" className="hover:text-gray-600 transition-colors">
-              Homepage
-            </Link>
-            <Link href="/shop" className="hover:text-gray-600 transition-colors">
-              Shop
-            </Link>
-            <Link href="/deals" className="hover:text-gray-600 transition-colors">
-              Deals
-            </Link>
-            <Link href="/gift-vouchers" className="hover:text-gray-600 transition-colors">
-              Gift Vouchers
-            </Link>
-            <Link href="/contact" className="hover:text-gray-600 transition-colors">
-              Contact
-            </Link>
-          </div>
         </div>
 
         {/* Right Section */}
-        <div className='w-2/3 xl:w-1/2 flex items-center justify-between gap-8'>
+        <div className='flex flex-1 items-center justify-between gap-8'>
           <SearchBar />
           <div className='flex items-center gap-2'>
             <ThemeToggle />

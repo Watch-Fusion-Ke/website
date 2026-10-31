@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { PHONE_FOCUS_SLUG, buildMenu, centreScrollLeft, clampLeft, closed, hoverIn, hoverOut, phoneOrder, press, scrollEdges, type SiteMenu } from "@/lib/siteMenu";
+import { PHONE_FOCUS_SLUG, SITE_PAGES, buildMenu, centreScrollLeft, clampLeft, closed, hoverIn, hoverOut, phoneOrder, press, scrollEdges, type SiteMenu } from "@/lib/siteMenu";
 
 const cat = (slug: string, name = slug, visible?: boolean) => ({ slug, name, visible });
 const today = [
@@ -20,8 +20,8 @@ const slugs = (menu: SiteMenu) => menu.row.flatMap((e) => (e.kind === "menu" ? e
 const menuOf = (menu: SiteMenu, label: string) => menu.row.flatMap((e) => (e.kind === "menu" && e.group.label === label ? [e.group] : []))[0];
 
 describe("the homepage category menu", () => {
-  it("reads in the order the shop asked for: Watch Brands, Customizable Gifts, Christmas Gifts, then the rest, All Products last", () => {
-    expect(names(buildMenu(today))).toEqual(["[Watch Brands]", "Customizable Gifts", "Christmas Gifts", "Gent's Watches", "Ladies Watches", "All Products"]);
+  it("reads in the order the shop asked for: Watch Brands, Customizable Gifts, Christmas Gifts, then the rest, All Products, and the More menu at the very end", () => {
+    expect(names(buildMenu(today))).toEqual(["[Watch Brands]", "Customizable Gifts", "Christmas Gifts", "Gent's Watches", "Ladies Watches", "All Products", "[More]"]);
   });
 
   it("keeps that order whatever order the store sends the categories in", () => {
@@ -58,7 +58,7 @@ describe("the homepage category menu", () => {
   it("does not list Casio Men and Casio Women again as brands of their own, or under More", () => {
     const menu = buildMenu([...today, cat("casio-men", "Casio Men"), cat("casio-women", "Casio Women")]);
     expect(menuOf(menu, "Watch Brands")?.items.map((c) => c.slug)).toEqual(["casio-watches-kenya", "naviforce-watches-kenya"]);
-    expect(menuOf(menu, "More")).toBeUndefined();
+    expect(menuOf(menu, "More")?.items).toEqual([]);
     expect(names(menu)).not.toContain("Casio Men");
   });
 
@@ -116,14 +116,16 @@ describe("the homepage category menu", () => {
     expect(names(buildMenu(today.filter((c) => c.slug !== "christmas-gift-packages")))).not.toContain("Christmas Gifts");
   });
 
-  it("lets the other gift pages follow the watches, in a More menu just before All Products", () => {
+  it("lets the other gift pages follow the watches, in the More menu at the end of the row", () => {
     const menu = buildMenu([...today, cat("gift-packages", "Gift Packages"), cat("corporate-gifts", "Corporate Gifts"), cat("birthday-gifts", "Birthday Gifts")]);
-    expect(names(menu).slice(-3)).toEqual(["Ladies Watches", "[More]", "All Products"]);
+    expect(names(menu).slice(-3)).toEqual(["Ladies Watches", "All Products", "[More]"]);
     expect(menuOf(menu, "More")?.items.map((c) => c.slug)).toEqual(["gift-packages", "birthday-gifts", "corporate-gifts"]);
   });
 
-  it("shows a lone other gift page as itself, just before All Products", () => {
-    expect(names(buildMenu([...today, cat("gift-packages", "Gift Packages")])).slice(-2)).toEqual(["Gift Packages", "All Products"]);
+  it("keeps a lone other gift page in the More menu, not as a link of its own, so the row's order stays the shop's", () => {
+    const menu = buildMenu([...today, cat("gift-packages", "Gift Packages")]);
+    expect(names(menu).slice(-2)).toEqual(["All Products", "[More]"]);
+    expect(menuOf(menu, "More")?.items.map((c) => c.slug)).toEqual(["gift-packages"]);
   });
 
   it("keeps a category it does not know about, under More, so nothing disappears from the shop", () => {
@@ -132,7 +134,7 @@ describe("the homepage category menu", () => {
   });
 
   it("does not make up categories the store did not send, so a hidden one never shows", () => {
-    expect(names(buildMenu([cat("gents-watches", "Gent's Watches")]))).toEqual(["Gent's Watches"]);
+    expect(names(buildMenu([cat("gents-watches", "Gent's Watches")]))).toEqual(["Gent's Watches", "[More]"]);
   });
 
   it("skips a category the store marks as hidden, even if it is a known one", () => {
@@ -293,5 +295,40 @@ describe("fading only when real content is hidden", () => {
 
   it("allows only a pixel of rounding when no padding allowance is given", () => {
     expect(scrollEdges(24, 360, 642)).toEqual({ atStart: false, atEnd: false });
+  });
+});
+
+describe("the More menu, which replaces the page links that used to sit in the header", () => {
+  const pagesOf = (menu: SiteMenu) => menuOf(menu, "More")?.pages?.map((p) => [p.name, p.href]);
+
+  it("closes the row, after All Products, so the shop's own order is untouched", () => {
+    const row = names(buildMenu(today));
+    expect(row.slice(0, -1)).toEqual(["[Watch Brands]", "Customizable Gifts", "Christmas Gifts", "Gent's Watches", "Ladies Watches", "All Products"]);
+    expect(row[row.length - 1]).toBe("[More]");
+  });
+
+  it("lists Deals and Gift Vouchers, and leaves out Homepage, which the logo already is, and Contact, which the footer has", () => {
+    expect(pagesOf(buildMenu(today))).toEqual([["Deals", "/deals"], ["Gift Vouchers", "/gift-vouchers"]]);
+  });
+
+  it("lists Shop too when the store shows no All Products page, so the whole shop is never out of reach", () => {
+    const without = buildMenu(today.filter((c) => c.slug !== "all-products"));
+    expect(pagesOf(without)?.map(([name]) => name)).toContain("Shop");
+    expect(pagesOf(buildMenu(today))?.map(([name]) => name)).not.toContain("Shop");
+  });
+
+  it("is still there when the store sends no categories at all, so a store outage leaves the pages reachable", () => {
+    expect(names(buildMenu([]))).toEqual(["[More]"]);
+  });
+
+  it("holds the other gift pages in the same menu, ahead of the pages, so there is never two More entries", () => {
+    const menu = buildMenu([...today, cat("gift-packages", "Gift Packages"), cat("watch-straps", "Watch Straps")]);
+    expect(names(menu).filter((n) => n === "[More]")).toHaveLength(1);
+    expect(menuOf(menu, "More")?.items.map((c) => c.slug)).toEqual(["gift-packages", "watch-straps"]);
+    expect(pagesOf(menu)).toHaveLength(2);
+  });
+
+  it("keeps the whole list of pages for the phone's menu drawer, which still shows Homepage and Contact", () => {
+    expect(SITE_PAGES.map((p) => p.href)).toEqual(["/", "/shop", "/deals", "/gift-vouchers", "/contact"]);
   });
 });

@@ -330,3 +330,47 @@ describe("CategoryRow", () => {
     expect(source).toMatch(/dark:via-\[#0a0a0a\]/i);
   });
 });
+
+describe("CategoryRow's More menu of pages", () => {
+  const withPages: SiteMenu = {
+    row: [
+      link("Gent's Watches", "gents-watches"),
+      link("All Products", "all-products"),
+      { kind: "menu", group: { label: "More", items: [], pages: [{ name: "Deals", href: "/deals" }, { name: "Gift Vouchers", href: "/gift-vouchers" }] } },
+    ],
+  };
+  const out = renderToStaticMarkup(<CategoryRow menu={withPages} />);
+
+  it("links each page to its own address, not to a category", () => {
+    for (const href of ["/deals", "/gift-vouchers"]) expect(out).toContain(`href="${href}"`);
+    expect(out).not.toContain("/shop/deals");
+    expect(out).not.toContain("/shop/gift-vouchers");
+  });
+
+  it("keeps those links in the page, hidden until the menu is opened", () => {
+    expect(out).toMatch(/<div[^>]*hidden=""[^>]*>[\s\S]*href="\/deals"/);
+  });
+
+  it("names the pages list after the menu when it is the only list", () => {
+    expect(out).toMatch(/<ul[^>]*aria-label="More"/);
+  });
+
+  it("hides a menu that holds only pages on a phone, since the phone has its own menu drawer with those pages", () => {
+    const button = out.match(/<button[^>]*>/)?.[0] ?? "";
+    expect(button).toContain("max-md:hidden");
+  });
+
+  it("keeps a More menu that holds categories visible on a phone, and puts the pages under them in a second list", () => {
+    const both = renderToStaticMarkup(<CategoryRow menu={menu.row.length ? { row: [{ kind: "menu", group: { label: "More", items: [{ name: "Corporate Gifts", slug: "corporate-gifts" }], pages: [{ name: "Deals", href: "/deals" }] } }] } : menu} />);
+    expect(both.match(/<button[^>]*>/)?.[0]).not.toContain("max-md:hidden");
+    expect(both).toMatch(/<ul[^>]*aria-label="More"[\s\S]*corporate-gifts[\s\S]*<ul[^>]*aria-label="Pages"[\s\S]*href="\/deals"/);
+  });
+});
+
+describe("where a dropdown opens", () => {
+  it("never runs past the row's last entry, so on a wide screen the last menu sits under its button and not at the edge of the window", () => {
+    const source = readFileSync("src/components/CategoryRow.tsx", "utf8");
+    expect(source).toContain("lastElementChild");
+    expect(source).toMatch(/Math\.min\(navBox\.width, lastRight/);
+  });
+});

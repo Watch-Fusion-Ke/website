@@ -62,14 +62,19 @@ export type ProductSeo = {
 // The brands the shop sells. Many products have no brand entered in the store, but their names start with it.
 const BRANDS = ["Casio", "Naviforce", "Curren", "Poedagar", "Olevs", "Hannah Martin", "Reward", "Crrju"];
 
+// A name that starts with a brand but is a box, a gift or a spare part is not that brand's watch.
+const NOT_A_WATCH = /\b(gifts?|box(?:es)?|packages?|packs?|straps?|bands?|batter(?:y|ies)|cards?)\b/i;
+
 export const brandOf = (name: string, brand?: string | null): string | undefined => {
   const entered = brand?.trim();
   if (entered) return entered;
-  const start = name.trim().toLowerCase();
-  return BRANDS.find((b) => {
-    const lower = b.toLowerCase();
-    return start === lower || start.startsWith(`${lower} `);
-  });
+  const start = name.replace(/\s+/g, " ").trim();
+  if (NOT_A_WATCH.test(start)) return undefined;
+  const lower = start.toLowerCase();
+  // Longest first, so a longer brand is never hidden behind a shorter one that begins the same way.
+  return [...BRANDS]
+    .sort((x, y) => y.length - x.length)
+    .find((b) => new RegExp(`^${b.toLowerCase()}(?=[\\s:\\-]|$)`).test(lower));
 };
 
 const productUrl = (slug: string) => `${SITE_URL}/${slug}`;

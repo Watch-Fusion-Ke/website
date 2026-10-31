@@ -198,6 +198,25 @@ describe("brandOf", () => {
     expect(brandOf("Premium Casio Gift Package", null)).toBeUndefined();
     expect(brandOf("", null)).toBeUndefined();
   });
+
+  it("gives no brand to a gift, a box, a strap or a card even when its name starts with a brand", () => {
+    expect(brandOf("Casio Gift Package", null)).toBeUndefined();
+    expect(brandOf("Casio Watch Box", null)).toBeUndefined();
+    expect(brandOf("Reward Card", null)).toBeUndefined();
+    expect(brandOf("Naviforce Leather Strap", null)).toBeUndefined();
+  });
+
+  it("copes with odd spacing and a dash after the brand", () => {
+    expect(brandOf("Casio\u00a0MTP-1374D", null)).toBe("Casio");
+    expect(brandOf("Casio\tMTP", null)).toBe("Casio");
+    expect(brandOf("Hannah  Martin HM-1021", null)).toBe("Hannah Martin");
+    expect(brandOf("Casio-MTP 1374", null)).toBe("Casio");
+    expect(brandOf("Casio: MTP", null)).toBe("Casio");
+  });
+
+  it("lets the brand entered in the store win over a different one in the name", () => {
+    expect(brandOf("Casio MTP-1374D", "Seiko")).toBe("Seiko");
+  });
 });
 
 describe("breadcrumbJsonLd", () => {

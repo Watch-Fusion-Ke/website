@@ -5,7 +5,7 @@ import { drawerMenu } from "@/lib/siteMenu";
 import Image from "next/image";
 import Link from "next/link";
 import ThemeToggle from "./ThemeToggle";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useAllCategories } from "@/hooks/useCategories";
 import { useRouter } from "next/navigation";
 import { useWixClient } from "@/hooks/useWixClient";
@@ -16,11 +16,16 @@ const Menu = () => {
   const [open, setOpen] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
   const allCats = useAllCategories();
-  // The categories are asked for only once the menu is opened; the pages are there from the start.
+  // The categories arrive soon after the page loads and stay, so the lists do not collapse while the drawer slides shut. The pages are
+  // there from the start.
   const { sections, pages } = useMemo(
-    () => drawerMenu((open ? allCats : []).map((c) => ({ name: c.name ?? "", slug: c.slug ?? "", visible: c.visible }))),
-    [open, allCats]
+    () => drawerMenu(allCats.map((c) => ({ name: c.name ?? "", slug: c.slug ?? "", visible: c.visible }))),
+    [allCats]
   );
+  const openerRef = useRef<HTMLButtonElement>(null);
+  const closeRef = useRef<HTMLButtonElement>(null);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const wasOpen = useRef(false);
 
   const router = useRouter();
   const wixClient = useWixClient();
@@ -38,21 +43,53 @@ const Menu = () => {
 
   const close = () => setOpen(false);
 
-  // Escape closes the menu
+  // While the drawer is open it is a modal: the keyboard moves into it and stays there (Tab goes round), Escape closes it, the page
+  // behind does not scroll, and closing returns the keyboard to the button that opened it.
   useEffect(() => {
-    if (!open) return;
+    if (!open) {
+      if (wasOpen.current) openerRef.current?.focus();
+      wasOpen.current = false;
+      return;
+    }
+    wasOpen.current = true;
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    // The drawer is still invisible at the start of its slide-in, and a hidden control cannot take focus, so wait a moment.
+    const timer = setTimeout(() => closeRef.current?.focus(), 60);
     const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setOpen(false);
+      if (e.key === "Escape") {
+        setOpen(false);
+        return;
+      }
+      if (e.key !== "Tab" || !dialogRef.current) return;
+      // Only controls that are really shown count: the links of a folded group are not.
+      const controls = Array.prototype.slice
+        .call(dialogRef.current.querySelectorAll("a[href], button:not([disabled]), summary"))
+        .filter((el: HTMLElement) => el.offsetParent !== null);
+      if (controls.length === 0) return;
+      const first = controls[0] as HTMLElement;
+      const last = controls[controls.length - 1] as HTMLElement;
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
     };
     window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener("keydown", onKeyDown);
+      document.body.style.overflow = previous;
+    };
   }, [open]);
-
 
   return (
     <div className="relative">
       {/* Menu button: sits on the left of the phone header */}
       <button
+        ref={openerRef}
         aria-label="Open menu"
         aria-expanded={open}
         onClick={() => setOpen(true)}
@@ -74,6 +111,7 @@ const Menu = () => {
 
       {/* Slide-in drawer from the left. No shadow while closed, so nothing leaks onto the page edge. */}
       <div
+        ref={dialogRef}
         role="dialog"
         aria-modal="true"
         aria-label="Menu"
@@ -85,6 +123,7 @@ const Menu = () => {
         <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100">
           <span className="font-bold text-lg tracking-wide">Menu</span>
           <button
+            ref={closeRef}
             onClick={close}
             aria-label="Close menu"
             className="text-gray-400 hover:text-black transition-colors"

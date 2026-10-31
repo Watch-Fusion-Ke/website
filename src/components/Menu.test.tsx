@@ -15,3 +15,28 @@ describe("the menu drawer's grouped categories", () => {
     expect(source).toMatch(/<summary[^>]*min-h-11/);
   });
 });
+
+describe("the menu drawer as a modal", () => {
+  const source = readFileSync("src/components/Menu.tsx", "utf8");
+
+  it("moves the keyboard into the drawer when it opens and back to the menu button when it closes", () => {
+    expect(source).toMatch(/setTimeout\(\(\) => closeRef\.current\?\.focus\(\), \d+\)/);
+    expect(source).toMatch(/openerRef\.current\?\.focus\(\)/);
+    expect(source).toContain("ref={openerRef}");
+    expect(source).toContain("ref={closeRef}");
+  });
+
+  it("keeps Tab inside the drawer while it is open, going round from the last control to the first and back", () => {
+    expect(source).toContain('"Tab"');
+    expect(source).toContain("e.shiftKey");
+  });
+
+  it("stops the page behind it from scrolling while it is open, and gives the scroll back after", () => {
+    expect(source).toContain('document.body.style.overflow = "hidden"');
+    expect(source).toMatch(/document\.body\.style\.overflow = (previous|before)/);
+  });
+
+  it("shows its categories whether or not it is open, so the lists do not collapse while it slides shut", () => {
+    expect(source).not.toMatch(/open \? allCats/);
+  });
+});

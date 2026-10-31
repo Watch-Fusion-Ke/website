@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { PHONE_FOCUS_SLUG, SITE_PAGES, buildMenu, drawerMenu, lastVisibleRight, pagesOnly, centreScrollLeft, clampLeft, closed, hoverIn, hoverOut, phoneOrder, press, scrollEdges, type SiteMenu } from "@/lib/siteMenu";
+import { PHONE_FOCUS_SLUG, SITE_PAGES, buildMenu, drawerMenu, lastVisibleRight, centreScrollLeft, clampLeft, closed, hoverIn, hoverOut, phoneOrder, press, scrollEdges, type SiteMenu } from "@/lib/siteMenu";
 
 const cat = (slug: string, name = slug, visible?: boolean) => ({ slug, name, visible });
 const today = [
@@ -20,17 +20,12 @@ const slugs = (menu: SiteMenu) => menu.row.flatMap((e) => (e.kind === "menu" ? e
 const menuOf = (menu: SiteMenu, label: string) => menu.row.flatMap((e) => (e.kind === "menu" && e.group.label === label ? [e.group] : []))[0];
 
 describe("the homepage category menu", () => {
-  it("reads in the order the shop asked for: Watch Brands, Customizable Gifts, Christmas Gifts, then the rest, All Products, and the More menu at the very end", () => {
-    expect(names(buildMenu(today))).toEqual(["[Watch Brands]", "Customizable Gifts", "Christmas Gifts", "Gent's Watches", "Ladies Watches", "All Products", "[More]"]);
+  it("reads in the order the shop asked for: Watch Brands, Customizable Gifts, Christmas Gifts, then the rest, and the More menu, which holds All Products, at the very end", () => {
+    expect(names(buildMenu(today))).toEqual(["[Watch Brands]", "Customizable Gifts", "Christmas Gifts", "Gent's Watches", "Ladies Watches", "[More]"]);
   });
 
   it("keeps that order whatever order the store sends the categories in", () => {
     expect(names(buildMenu([...today].reverse()))).toEqual(names(buildMenu(today)));
-  });
-
-  it("leaves All Products out only when the store does not show it", () => {
-    expect(slugs(buildMenu(today.filter((c) => c.slug !== "all-products")))).not.toContain("all-products");
-    expect(slugs(buildMenu(today.map((c) => (c.slug === "all-products" ? { ...c, visible: false } : c))))).not.toContain("all-products");
   });
 
   it("leaves Editor's Picks out of the row, because the Customer Favourites section on the home page already is that", () => {
@@ -118,13 +113,13 @@ describe("the homepage category menu", () => {
 
   it("lets the other gift pages follow the watches, in the More menu at the end of the row", () => {
     const menu = buildMenu([...today, cat("gift-packages", "Gift Packages"), cat("corporate-gifts", "Corporate Gifts"), cat("birthday-gifts", "Birthday Gifts")]);
-    expect(names(menu).slice(-3)).toEqual(["Ladies Watches", "All Products", "[More]"]);
+    expect(names(menu).slice(-3)).toEqual(["Gent's Watches", "Ladies Watches", "[More]"]);
     expect(menuOf(menu, "More")?.items.map((c) => c.slug)).toEqual(["gift-packages", "birthday-gifts", "corporate-gifts"]);
   });
 
   it("keeps a lone other gift page in the More menu, not as a link of its own, so the row's order stays the shop's", () => {
     const menu = buildMenu([...today, cat("gift-packages", "Gift Packages")]);
-    expect(names(menu).slice(-2)).toEqual(["All Products", "[More]"]);
+    expect(names(menu).slice(-2)).toEqual(["Ladies Watches", "[More]"]);
     expect(menuOf(menu, "More")?.items.map((c) => c.slug)).toEqual(["gift-packages"]);
   });
 
@@ -301,20 +296,21 @@ describe("fading only when real content is hidden", () => {
 describe("the More menu, which replaces the page links that used to sit in the header", () => {
   const pagesOf = (menu: SiteMenu) => menuOf(menu, "More")?.pages?.map((p) => [p.name, p.href]);
 
-  it("closes the row, after All Products, so the shop's own order is untouched", () => {
+  it("closes the row, after Ladies, so the shop's own order is untouched, with no All Products entry of its own", () => {
     const row = names(buildMenu(today));
-    expect(row.slice(0, -1)).toEqual(["[Watch Brands]", "Customizable Gifts", "Christmas Gifts", "Gent's Watches", "Ladies Watches", "All Products"]);
+    expect(row.slice(0, -1)).toEqual(["[Watch Brands]", "Customizable Gifts", "Christmas Gifts", "Gent's Watches", "Ladies Watches"]);
     expect(row[row.length - 1]).toBe("[More]");
+    expect(slugs(buildMenu(today))).not.toContain("all-products");
   });
 
-  it("lists Deals and Gift Vouchers, and leaves out Homepage, which the logo already is, and Contact, which the footer has", () => {
-    expect(pagesOf(buildMenu(today))).toEqual([["Deals", "/deals"], ["Gift Vouchers", "/gift-vouchers"]]);
+  it("lists All Products first, then Deals and Gift Vouchers, and leaves out Homepage, which the logo already is, and Contact, which the footer has", () => {
+    expect(pagesOf(buildMenu(today))).toEqual([["All Products", "/shop"], ["Deals", "/deals"], ["Gift Vouchers", "/gift-vouchers"]]);
   });
 
-  it("lists Shop too when the store shows no All Products page, so the whole shop is never out of reach", () => {
-    const without = buildMenu(today.filter((c) => c.slug !== "all-products"));
-    expect(pagesOf(without)?.map(([name]) => name)).toContain("Shop");
-    expect(pagesOf(buildMenu(today))?.map(([name]) => name)).not.toContain("Shop");
+  it("calls the whole-shop page Shop when the store does not show All Products, so the whole shop is never out of reach", () => {
+    const missing = buildMenu(today.filter((c) => c.slug !== "all-products"));
+    const hidden = buildMenu(today.map((c) => (c.slug === "all-products" ? { ...c, visible: false } : c)));
+    for (const menu of [missing, hidden]) expect(pagesOf(menu)?.[0]).toEqual(["Shop", "/shop"]);
   });
 
   it("is still there when the store sends an empty list or hides every category, so the pages stay reachable", () => {
@@ -325,7 +321,7 @@ describe("the More menu, which replaces the page links that used to sit in the h
     const menu = buildMenu([...today, cat("gift-packages", "Gift Packages"), cat("watch-straps", "Watch Straps")]);
     expect(names(menu).filter((n) => n === "[More]")).toHaveLength(1);
     expect(menuOf(menu, "More")?.items.map((c) => c.slug)).toEqual(["gift-packages", "watch-straps"]);
-    expect(pagesOf(menu)).toHaveLength(2);
+    expect(pagesOf(menu)).toHaveLength(3);
   });
 
   it("keeps the whole list of pages for the phone's menu drawer, which still shows Homepage and Contact", () => {
@@ -348,23 +344,14 @@ describe("which entry of the row is the last one on screen", () => {
   });
 });
 
-describe("a menu that holds only the site's pages", () => {
-  it("is told apart from one that holds categories", () => {
-    expect(pagesOnly({ label: "More", items: [], pages: [{ name: "Deals", href: "/deals" }] })).toBe(true);
-    expect(pagesOnly({ label: "More", items: [{ name: "Gift Packages", slug: "gift-packages" }], pages: [{ name: "Deals", href: "/deals" }] })).toBe(false);
-    expect(pagesOnly({ label: "Watch Brands", items: [{ name: "Casio", slug: "casio" }] })).toBe(false);
-    expect(pagesOnly({ label: "More", items: [] })).toBe(false);
-  });
-});
-
 describe("the menu drawer, built from the same menu as the row", () => {
   const withCasio = [...today, cat("casio-men", "Casio Men"), cat("casio-women", "Casio Women")];
   const flat = (sections: ReturnType<typeof drawerMenu>["sections"]) => sections.map((s) => [s.heading ?? "", s.links.map((l) => `${l.depth}:${l.name}`)]);
 
-  it("lists the categories in the phone's order: Watch Brands, then Christmas, Customizable Gifts, Gent's, Ladies, All Products", () => {
+  it("lists the categories in the phone's order: Watch Brands, then Christmas, Customizable Gifts, Gent's, Ladies", () => {
     expect(flat(drawerMenu(today).sections)).toEqual([
       ["Watch Brands", ["0:Casio", "0:Naviforce"]],
-      ["", ["0:Christmas Gifts", "0:Customizable Gifts", "0:Gent's Watches", "0:Ladies Watches", "0:All Products"]],
+      ["", ["0:Christmas Gifts", "0:Customizable Gifts", "0:Gent's Watches", "0:Ladies Watches"]],
     ]);
   });
 
@@ -374,12 +361,12 @@ describe("the menu drawer, built from the same menu as the row", () => {
     expect(sections.flatMap((s) => s.links).filter((l) => l.depth === 0).map((l) => l.name)).not.toContain("Casio Men");
   });
 
-  it("lists only Deals and Gift Vouchers as pages, the same as the row's More menu, with no Homepage, Contact or second Shop link", () => {
-    expect(drawerMenu(today).pages.map((p) => p.href)).toEqual(["/deals", "/gift-vouchers"]);
+  it("lists All Products, Deals and Gift Vouchers as pages, the same as the row's More menu, with no Homepage or Contact", () => {
+    expect(drawerMenu(today).pages.map((p) => [p.name, p.href])).toEqual([["All Products", "/shop"], ["Deals", "/deals"], ["Gift Vouchers", "/gift-vouchers"]]);
   });
 
-  it("lists Shop as a page when the store shows no All Products", () => {
-    expect(drawerMenu(today.filter((c) => c.slug !== "all-products")).pages.map((p) => p.href)).toEqual(["/shop", "/deals", "/gift-vouchers"]);
+  it("calls the whole-shop page Shop when the store shows no All Products", () => {
+    expect(drawerMenu(today.filter((c) => c.slug !== "all-products")).pages.map((p) => p.name)).toEqual(["Shop", "Deals", "Gift Vouchers"]);
   });
 
   it("keeps the pages when the categories have not arrived yet, with Shop among them until All Products arrives", () => {

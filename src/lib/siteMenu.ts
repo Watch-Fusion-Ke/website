@@ -21,7 +21,7 @@ const NOT_IN_MORE = new Set(["/", "/contact"]);
 
 // The shop's category row would otherwise print every Wix category side by side. These lists decide which ones stay in the row,
 // which go into a menu, and where. The row reads: Watch Brands, Customizable Gifts, the seasonal pages, Gent's, Ladies, the other gift
-// pages, then All Products, and the More menu at the very end. A category Wix does not send (a hidden one) never appears, and a category listed here that the store has
+// pages, and the More menu at the very end, which holds All Products. A category Wix does not send (a hidden one) never appears, and a category listed here that the store has
 // not made visible simply is not there.
 const LEFT_OUT = new Set(["all-products", "featured", "brands", "gifts"]); // each is handled on its own below, or is already covered by a home page section
 const ALL_PRODUCTS = "all-products";
@@ -55,7 +55,7 @@ export const buildMenu = (categories: MenuCategory[]): SiteMenu => {
   const take = (test: (c: MenuCategory) => boolean) => shown.filter(test);
   const link = (c: MenuCategory, seasonal?: boolean): RowEntry => ({ kind: "link", category: c, seasonal });
 
-  // The whole shop closes the row whenever the store shows its All Products page.
+  // The store's All Products page is the whole shop; it is listed in the More menu rather than as an entry of the row.
   const everything = categories.filter((c) => c.slug === ALL_PRODUCTS && c.name && c.visible !== false);
   const main = ordered(take((c) => MAIN.includes(c.slug)), MAIN);
   // The menu takes its name from the store's Watch Brands category, so renaming it in Wix renames the menu.
@@ -75,16 +75,17 @@ export const buildMenu = (categories: MenuCategory[]): SiteMenu => {
   const seasonal = ordered(take((c) => SEASONAL.includes(c.slug)), SEASONAL);
   const rest = ordered(take((c) => !MAIN.includes(c.slug) && c.slug !== GIFT_ENTRY && !SEASONAL.includes(c.slug) && !isBrand(c.slug) && !BRAND_PAGE_SLUGS.has(c.slug)), OTHER_GIFT_ORDER);
 
+  const shopPage: MenuPage = { name: everything[0]?.name ?? "Shop", href: SHOP_PAGE };
+
   return {
     row: [
       ...menuOrLink(brandsLabel, brands),
       ...giftEntry.map((c) => link(c)),
       ...seasonal.map((c) => link(c, true)),
       ...main.map((c) => link(c)),
-      ...everything.map((c) => link(c)),
-      // One menu closes the row: any other gift pages the store has, then the site's own pages. Shop is listed only when the row has
-      // no All Products entry, so the whole shop is always one click away and never shown twice.
-      { kind: "menu", group: { label: "More", items: rest, pages: SITE_PAGES.filter((page) => !NOT_IN_MORE.has(page.href) && (page.href !== SHOP_PAGE || everything.length === 0)) } },
+      // One menu closes the row: any other gift pages the store has, then the whole shop (under the store's own name for it, All Products,
+      // or Shop when the store does not show that page), Deals and Gift Vouchers. The whole shop is always one click away, shown once.
+      { kind: "menu", group: { label: "More", items: rest, pages: [shopPage, ...SITE_PAGES.filter((page) => !NOT_IN_MORE.has(page.href) && page.href !== SHOP_PAGE)] } },
     ],
   };
 };
@@ -129,9 +130,6 @@ export const phoneOrder = (row: RowEntry[]): number[] => {
   return places.map((i) => (i === focus ? 1 : i > 0 && i < focus ? i + 1 : i));
 };
 
-// A menu that holds only the site's own pages, with no category: on a phone it is left out, because the phone's menu drawer has them.
-export const pagesOnly = (group: MenuGroup): boolean => group.items.length === 0 && Boolean(group.pages && group.pages.length > 0);
-
 // The right edge of the last entry of the row that is really shown. An entry that is not shown has no size, so it is skipped: measuring
 // a hidden one would give a dropdown a limit of zero. `fallback` is used when nothing is shown.
 export const lastVisibleRight = (boxes: { right: number; width: number }[], fallback: number): number => {
@@ -142,7 +140,7 @@ export const lastVisibleRight = (boxes: { right: number; width: number }[], fall
 };
 
 // The phone's menu drawer lists the same things as the row, in the phone's order: brands grouped under their heading, a brand's own pages
-// one step in, then the plain links, then any other gift pages, with the site's pages kept apart for the end of the drawer.
+// one step in, then the plain links, then any other gift pages, with the More menu's pages kept apart for the end of the drawer.
 export type DrawerLink = { name: string; slug: string; depth: 0 | 1 };
 export type DrawerSection = { heading?: string; links: DrawerLink[] };
 export const drawerMenu = (categories: MenuCategory[]): { sections: DrawerSection[]; pages: MenuPage[] } => {

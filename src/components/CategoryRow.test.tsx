@@ -357,36 +357,15 @@ describe("CategoryRow's More menu of pages", () => {
     expect(out).toMatch(/<ul[^>]*aria-label="More"/);
   });
 
-  it("hides a menu that holds only pages on a phone, since the phone has its own menu drawer with those pages", () => {
-    const button = out.match(/<button[^>]*>/)?.[0] ?? "";
-    expect(button).toContain("max-md:hidden");
-  });
-
-  it("keeps a More menu that holds categories visible on a phone, and puts the pages under them in a second list", () => {
+  it("puts the pages under a More menu's categories, in a second list", () => {
     const both = renderToStaticMarkup(<CategoryRow menu={{ row: [{ kind: "menu", group: { label: "More", items: [{ name: "Corporate Gifts", slug: "corporate-gifts" }], pages: [{ name: "Deals", href: "/deals" }] } }] }} />);
-    expect(both.match(/<button[^>]*>/)?.[0]).not.toContain("max-md:hidden");
     expect(both).toMatch(/<ul[^>]*aria-label="More"[\s\S]*corporate-gifts[\s\S]*<ul[^>]*aria-label="Pages"[\s\S]*href="\/deals"/);
   });
 });
 
 describe("where a dropdown opens", () => {
-  it("is measured against the last entry that is really shown, so a hidden More on a phone does not drag every dropdown to the left edge", () => {
+  it("is measured against the last entry that is really shown, so an entry that is not shown does not drag every dropdown to the left edge", () => {
     expect(readFileSync("src/components/CategoryRow.tsx", "utf8")).toContain("lastVisibleRight(");
-  });
-});
-
-describe("a row with nothing to show on a phone", () => {
-  const onlyPages: SiteMenu = { row: [{ kind: "menu", group: { label: "More", items: [], pages: [{ name: "Deals", href: "/deals" }] } }] };
-
-  it("is hidden on a phone, so no empty strip is left under the header, and still shown from a tablet up", () => {
-    const root = renderToStaticMarkup(<CategoryRow menu={onlyPages} />).match(/^<div class="([^"]*)"/)?.[1].split(" ") ?? [];
-    expect(root).toContain("max-md:hidden");
-    expect(root).not.toContain("md:hidden");
-  });
-
-  it("is shown on a phone as soon as it holds one category", () => {
-    const root = renderToStaticMarkup(<CategoryRow menu={{ row: [link("Gent's Watches", "gents-watches"), ...onlyPages.row] }} />).match(/^<div class="([^"]*)"/)?.[1].split(" ") ?? [];
-    expect(root).not.toContain("max-md:hidden");
   });
 });
 

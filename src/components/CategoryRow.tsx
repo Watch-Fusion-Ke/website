@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useId, useLayoutEffect, useRef, useState } from "react";
 import ChristmasCategoryLink from "@/components/ChristmasCategoryLink";
 import { categoryHref } from "@/lib/categoryPages";
-import { PHONE_FOCUS_SLUG, centreScrollLeft, clampLeft, closed, hoverIn, hoverOut, lastVisibleRight, pagesOnly, phoneOrder, press, scrollEdges, type MenuState, type SiteMenu } from "@/lib/siteMenu";
+import { PHONE_FOCUS_SLUG, centreScrollLeft, clampLeft, closed, hoverIn, hoverOut, lastVisibleRight, phoneOrder, press, scrollEdges, type MenuState, type SiteMenu } from "@/lib/siteMenu";
 
 // Every entry is plain words, on a phone as on a computer, with a gold underline on hover or press. A drawn box round each word costs
 // about 20 px of width for nothing: the 44 px tap area is invisible padding (min-h-11 and px-3), which is what lets the whole row stay
@@ -151,10 +151,8 @@ const CategoryRow = ({ menu }: { menu: SiteMenu }) => {
   const phone = phoneOrder(menu.row);
   const orderStyle = (index: number) => ({ "--phone-order": phone[index] }) as React.CSSProperties;
 
-  // On a phone the row is left out altogether when its only entry is hidden there, so no empty strip is left under the header.
-  const phoneEmpty = menu.row.every((e) => e.kind === "menu" && pagesOnly(e.group));
   return (
-    <div ref={root} className={`py-1 md:py-8${phoneEmpty ? " max-md:hidden" : ""}`}>
+    <div ref={root} className="py-1 md:py-8">
       <nav
         aria-label="Shop by category"
         className="relative"
@@ -202,8 +200,7 @@ const CategoryRow = ({ menu }: { menu: SiteMenu }) => {
                   place(ev.currentTarget);
                   setState((s) => press(s, g.label));
                 }}
-                // A menu that holds only the site's pages is left out on a phone: the phone has its own menu drawer with them.
-                className={pagesOnly(g) ? `${entry} max-md:hidden` : entry}
+                className={entry}
               >
                 {g.label}
                 <Chevron open={open === g.label} />

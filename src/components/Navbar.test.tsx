@@ -2,9 +2,10 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { readFileSync } from "node:fs";
 import { describe, expect, it, vi } from "vitest";
 
+const page = vi.hoisted(() => ({ path: "/" }));
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: () => {}, replace: () => {} }),
-  usePathname: () => "/",
+  usePathname: () => page.path,
   useSearchParams: () => new URLSearchParams(),
 }));
 vi.mock("@/hooks/useWixClient", () => ({
@@ -238,5 +239,51 @@ describe("Navbar stays at the top while the page scrolls", () => {
     expect(search).toContain("transition-");
     expect(search).toContain("motion-reduce:transition-none");
     expect(search).toContain("grid-rows-[1fr]");
+  });
+});
+
+describe("Navbar on a computer", () => {
+  const desktop = () => {
+    const html = renderToStaticMarkup(<Navbar />);
+    return html.slice(html.indexOf('data-testid="desktop-header"'));
+  };
+
+  it("holds the logo, the search and the icons, and no page links, which now live in the More menu of the category row", () => {
+    const html = desktop();
+    expect(html).toContain('aria-label="Watch Fusion Kenya, home"');
+    for (const href of ["/shop", "/deals", "/gift-vouchers", "/contact"]) expect(html).not.toContain(`href="${href}"`);
+    expect(html).not.toMatch(/>Homepage</);
+  });
+});
+
+describe("the menu button on a computer", () => {
+  const desktop = (path: string) => {
+    page.path = path;
+    const html = renderToStaticMarkup(<Navbar />);
+    page.path = "/";
+    return html.slice(html.indexOf('data-testid="desktop-header"'));
+  };
+
+  it("is not shown on the home page, where the category row carries the menu", () => {
+    expect(desktop("/")).not.toContain('aria-label="Open menu"');
+  });
+
+  it("is shown beside the logo on every other page, so Deals, Gift Vouchers and the categories are one click away", () => {
+    for (const path of ["/shop", "/deals", "/cart", "/gift-vouchers", "/some-product"]) {
+      const html = desktop(path);
+      expect(html.indexOf('aria-label="Open menu"')).toBeGreaterThan(-1);
+      expect(html.indexOf('aria-label="Open menu"')).toBeLessThan(html.indexOf('alt="Watch Fusion Kenya"'));
+    }
+  });
+});
+
+describe("the menu drawer's pages", () => {
+  it("lists Deals and Gift Vouchers, and not the Homepage and Contact links the row's More menu also leaves out", () => {
+    const html = phoneHeader();
+    const drawer = html.slice(html.indexOf('role="dialog"'));
+    expect(drawer).toContain('href="/deals"');
+    expect(drawer).toContain('href="/gift-vouchers"');
+    expect(drawer).not.toContain('href="/contact"');
+    expect(drawer).not.toMatch(/>Homepage</);
   });
 });

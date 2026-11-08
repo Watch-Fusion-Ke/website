@@ -124,7 +124,7 @@
 :global(.dark) .star { fill: #f7cf62; filter: drop-shadow(0 0 3px #f3b837) drop-shadow(0 0 5px #f7d873); }
 
 @media (min-width: 768px) {
-  .link { min-height: 44px; padding: 5px 24px 5px 30px; font-size: 17px; }
+  .link { min-height: 44px; padding: 5px 22px 5px 28px; font-size: 16px; }
   .giftHalo { top: 7px; left: 0; width: 30px; height: 30px; }
   .gift { top: 6px; left: 2px; width: 25px; height: 28px; }
   .cane { top: 6px; right: 4px; width: 18px; height: 30px; }

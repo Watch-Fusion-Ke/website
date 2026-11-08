@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { PHONE_FOCUS_SLUG, buildMenu, centreScrollLeft, clampLeft, closed, hoverIn, hoverOut, phoneOrder, press, scrollEdges, type SiteMenu } from "@/lib/siteMenu";
+import { PHONE_FOCUS_SLUG, SITE_PAGES, buildMenu, drawerMenu, lastVisibleRight, centreScrollLeft, clampLeft, closed, hoverIn, hoverOut, phoneOrder, press, scrollEdges, type SiteMenu } from "@/lib/siteMenu";
 
 const cat = (slug: string, name = slug, visible?: boolean) => ({ slug, name, visible });
 const today = [
@@ -20,17 +20,12 @@ const slugs = (menu: SiteMenu) => menu.row.flatMap((e) => (e.kind === "menu" ? e
 const menuOf = (menu: SiteMenu, label: string) => menu.row.flatMap((e) => (e.kind === "menu" && e.group.label === label ? [e.group] : []))[0];
 
 describe("the homepage category menu", () => {
-  it("reads in the order the shop asked for: Watch Brands, Customizable Gifts, Christmas Gifts, then the rest, All Products last", () => {
-    expect(names(buildMenu(today))).toEqual(["[Watch Brands]", "Customizable Gifts", "Christmas Gifts", "Gent's Watches", "Ladies Watches", "All Products"]);
+  it("reads in the order the shop asked for: Watch Brands, Customizable Gifts, Christmas Gifts, then the rest, and the More menu, which holds All Products, at the very end", () => {
+    expect(names(buildMenu(today))).toEqual(["[Watch Brands]", "Customizable Gifts", "Christmas Gifts", "Gent's Watches", "Ladies Watches", "[More]"]);
   });
 
   it("keeps that order whatever order the store sends the categories in", () => {
     expect(names(buildMenu([...today].reverse()))).toEqual(names(buildMenu(today)));
-  });
-
-  it("leaves All Products out only when the store does not show it", () => {
-    expect(slugs(buildMenu(today.filter((c) => c.slug !== "all-products")))).not.toContain("all-products");
-    expect(slugs(buildMenu(today.map((c) => (c.slug === "all-products" ? { ...c, visible: false } : c))))).not.toContain("all-products");
   });
 
   it("leaves Editor's Picks out of the row, because the Customer Favourites section on the home page already is that", () => {
@@ -58,7 +53,7 @@ describe("the homepage category menu", () => {
   it("does not list Casio Men and Casio Women again as brands of their own, or under More", () => {
     const menu = buildMenu([...today, cat("casio-men", "Casio Men"), cat("casio-women", "Casio Women")]);
     expect(menuOf(menu, "Watch Brands")?.items.map((c) => c.slug)).toEqual(["casio-watches-kenya", "naviforce-watches-kenya"]);
-    expect(menuOf(menu, "More")).toBeUndefined();
+    expect(menuOf(menu, "More")?.items).toEqual([]);
     expect(names(menu)).not.toContain("Casio Men");
   });
 
@@ -116,14 +111,16 @@ describe("the homepage category menu", () => {
     expect(names(buildMenu(today.filter((c) => c.slug !== "christmas-gift-packages")))).not.toContain("Christmas Gifts");
   });
 
-  it("lets the other gift pages follow the watches, in a More menu just before All Products", () => {
+  it("lets the other gift pages follow the watches, in the More menu at the end of the row", () => {
     const menu = buildMenu([...today, cat("gift-packages", "Gift Packages"), cat("corporate-gifts", "Corporate Gifts"), cat("birthday-gifts", "Birthday Gifts")]);
-    expect(names(menu).slice(-3)).toEqual(["Ladies Watches", "[More]", "All Products"]);
+    expect(names(menu).slice(-3)).toEqual(["Gent's Watches", "Ladies Watches", "[More]"]);
     expect(menuOf(menu, "More")?.items.map((c) => c.slug)).toEqual(["gift-packages", "birthday-gifts", "corporate-gifts"]);
   });
 
-  it("shows a lone other gift page as itself, just before All Products", () => {
-    expect(names(buildMenu([...today, cat("gift-packages", "Gift Packages")])).slice(-2)).toEqual(["Gift Packages", "All Products"]);
+  it("keeps a lone other gift page in the More menu, not as a link of its own, so the row's order stays the shop's", () => {
+    const menu = buildMenu([...today, cat("gift-packages", "Gift Packages")]);
+    expect(names(menu).slice(-2)).toEqual(["Ladies Watches", "[More]"]);
+    expect(menuOf(menu, "More")?.items.map((c) => c.slug)).toEqual(["gift-packages"]);
   });
 
   it("keeps a category it does not know about, under More, so nothing disappears from the shop", () => {
@@ -132,7 +129,7 @@ describe("the homepage category menu", () => {
   });
 
   it("does not make up categories the store did not send, so a hidden one never shows", () => {
-    expect(names(buildMenu([cat("gents-watches", "Gent's Watches")]))).toEqual(["Gent's Watches"]);
+    expect(names(buildMenu([cat("gents-watches", "Gent's Watches")]))).toEqual(["Gent's Watches", "[More]"]);
   });
 
   it("skips a category the store marks as hidden, even if it is a known one", () => {
@@ -293,5 +290,94 @@ describe("fading only when real content is hidden", () => {
 
   it("allows only a pixel of rounding when no padding allowance is given", () => {
     expect(scrollEdges(24, 360, 642)).toEqual({ atStart: false, atEnd: false });
+  });
+});
+
+describe("the More menu, which replaces the page links that used to sit in the header", () => {
+  const pagesOf = (menu: SiteMenu) => menuOf(menu, "More")?.pages?.map((p) => [p.name, p.href]);
+
+  it("closes the row, after Ladies, so the shop's own order is untouched, with no All Products entry of its own", () => {
+    const row = names(buildMenu(today));
+    expect(row.slice(0, -1)).toEqual(["[Watch Brands]", "Customizable Gifts", "Christmas Gifts", "Gent's Watches", "Ladies Watches"]);
+    expect(row[row.length - 1]).toBe("[More]");
+    expect(slugs(buildMenu(today))).not.toContain("all-products");
+  });
+
+  it("lists All Products first, then Deals and Gift Vouchers, and leaves out Homepage, which the logo already is, and Contact, which the footer has", () => {
+    expect(pagesOf(buildMenu(today))).toEqual([["All Products", "/shop"], ["Deals", "/deals"], ["Gift Vouchers", "/gift-vouchers"]]);
+  });
+
+  it("calls the whole-shop page Shop when the store does not show All Products, so the whole shop is never out of reach", () => {
+    const missing = buildMenu(today.filter((c) => c.slug !== "all-products"));
+    const hidden = buildMenu(today.map((c) => (c.slug === "all-products" ? { ...c, visible: false } : c)));
+    for (const menu of [missing, hidden]) expect(pagesOf(menu)?.[0]).toEqual(["Shop", "/shop"]);
+  });
+
+  it("is still there when the store sends an empty list or hides every category, so the pages stay reachable", () => {
+    expect(names(buildMenu([]))).toEqual(["[More]"]);
+  });
+
+  it("holds the other gift pages in the same menu, ahead of the pages, so there is never two More entries", () => {
+    const menu = buildMenu([...today, cat("gift-packages", "Gift Packages"), cat("watch-straps", "Watch Straps")]);
+    expect(names(menu).filter((n) => n === "[More]")).toHaveLength(1);
+    expect(menuOf(menu, "More")?.items.map((c) => c.slug)).toEqual(["gift-packages", "watch-straps"]);
+    expect(pagesOf(menu)).toHaveLength(3);
+  });
+
+  it("keeps the whole list of pages for the phone's menu drawer, which still shows Homepage and Contact", () => {
+    expect(SITE_PAGES.map((p) => p.href)).toEqual(["/", "/shop", "/deals", "/gift-vouchers", "/contact"]);
+  });
+});
+
+describe("which entry of the row is the last one on screen", () => {
+  it("is the last entry that has a size", () => {
+    expect(lastVisibleRight([{ right: 100, width: 80 }, { right: 300, width: 90 }], 999)).toBe(300);
+  });
+
+  it("skips an entry that is not shown (it has no size, as a hidden More on a phone), so a dropdown is not placed against a zero", () => {
+    expect(lastVisibleRight([{ right: 100, width: 80 }, { right: 300, width: 90 }, { right: 0, width: 0 }], 999)).toBe(300);
+  });
+
+  it("falls back to the given edge when nothing is shown", () => {
+    expect(lastVisibleRight([], 500)).toBe(500);
+    expect(lastVisibleRight([{ right: 0, width: 0 }], 500)).toBe(500);
+  });
+});
+
+describe("the menu drawer, built from the same menu as the row", () => {
+  const withCasio = [...today, cat("casio-men", "Casio Men"), cat("casio-women", "Casio Women")];
+  const flat = (sections: ReturnType<typeof drawerMenu>["sections"]) => sections.map((s) => [s.heading ?? "", s.links.map((l) => `${l.depth}:${l.name}`)]);
+
+  it("lists the categories in the phone's order: Watch Brands, then Christmas, Customizable Gifts, Gent's, Ladies", () => {
+    expect(flat(drawerMenu(today).sections)).toEqual([
+      ["Watch Brands", ["0:Casio", "0:Naviforce"]],
+      ["", ["0:Christmas Gifts", "0:Customizable Gifts", "0:Gent's Watches", "0:Ladies Watches"]],
+    ]);
+  });
+
+  it("shows Men and Women inside Casio, one step in, and never as categories of their own", () => {
+    const sections = drawerMenu(withCasio).sections;
+    expect(sections[0].links.map((l) => `${l.depth}:${l.name}`)).toEqual(["0:Casio", "1:Men", "1:Women", "0:Naviforce"]);
+    expect(sections.flatMap((s) => s.links).filter((l) => l.depth === 0).map((l) => l.name)).not.toContain("Casio Men");
+  });
+
+  it("lists All Products, Deals and Gift Vouchers as pages, the same as the row's More menu, with no Homepage or Contact", () => {
+    expect(drawerMenu(today).pages.map((p) => [p.name, p.href])).toEqual([["All Products", "/shop"], ["Deals", "/deals"], ["Gift Vouchers", "/gift-vouchers"]]);
+  });
+
+  it("calls the whole-shop page Shop when the store shows no All Products", () => {
+    expect(drawerMenu(today.filter((c) => c.slug !== "all-products")).pages.map((p) => p.name)).toEqual(["Shop", "Deals", "Gift Vouchers"]);
+  });
+
+  it("keeps the pages when the categories have not arrived yet, with Shop among them until All Products arrives", () => {
+    const empty = drawerMenu([]);
+    expect(empty.sections).toEqual([]);
+    expect(empty.pages.map((p) => p.href)).toEqual(["/shop", "/deals", "/gift-vouchers"]);
+  });
+
+  it("puts the other gift pages in a More section at the end, and skips a hidden category", () => {
+    const menu = drawerMenu([...today, cat("gift-packages", "Gift Packages"), cat("valentines-gifts", "Valentine's Gifts", false)]);
+    expect(flat(menu.sections).slice(-1)).toEqual([["More", ["0:Gift Packages"]]]);
+    expect(menu.sections.flatMap((s) => s.links.map((l) => l.name))).not.toContain("Valentine's Gifts");
   });
 });

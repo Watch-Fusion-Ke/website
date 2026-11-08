@@ -234,12 +234,12 @@ describe("CategoryRow", () => {
     expect(row).not.toContain("md:justify-center");
   });
 
-  it("steps the larger text and the gaps up with the screen, so the row fits a tablet and keeps its roomy look on a wide screen", () => {
+  it("steps the larger text and the gaps up with the screen, so all seven entries fit a tablet and the row keeps its roomy look on a wide screen", () => {
     const row = html.match(/<div class="([^"]*overflow-x-auto[^"]*)"/)?.[1].split(" ") ?? [];
-    expect(row).toEqual(expect.arrayContaining(["md:gap-6", "lg:gap-8", "xl:gap-16"]));
+    expect(row).toEqual(expect.arrayContaining(["md:gap-4", "lg:gap-6", "xl:gap-16"]));
     const tag = html.match(/<a[^>]*href="\/shop\/gents-watches"[^>]*>/)?.[0] ?? "";
     const classes = tag.match(/class="([^"]*)"/)?.[1].split(" ") ?? [];
-    expect(classes).toContain("md:text-lg");
+    expect(classes).toContain("md:text-[15px]");
     expect(classes).toContain("lg:text-xl");
     expect(classes).not.toContain("md:text-xl");
     const css = readFileSync("src/components/ChristmasCategoryLink.module.css", "utf8");
@@ -328,5 +328,53 @@ describe("CategoryRow", () => {
     expect(source).toMatch(/from-white/);
     expect(source).toMatch(/dark:from-\[#0a0a0a\]/i);
     expect(source).toMatch(/dark:via-\[#0a0a0a\]/i);
+  });
+});
+
+describe("CategoryRow's More menu of pages", () => {
+  const withPages: SiteMenu = {
+    row: [
+      link("Gent's Watches", "gents-watches"),
+      link("All Products", "all-products"),
+      { kind: "menu", group: { label: "More", items: [], pages: [{ name: "Deals", href: "/deals" }, { name: "Gift Vouchers", href: "/gift-vouchers" }] } },
+    ],
+  };
+  const out = renderToStaticMarkup(<CategoryRow menu={withPages} />);
+
+  it("links each page to its own address, not to a category", () => {
+    for (const href of ["/deals", "/gift-vouchers"]) expect(out).toContain(`href="${href}"`);
+    expect(out).not.toContain("/shop/deals");
+    expect(out).not.toContain("/shop/gift-vouchers");
+  });
+
+  it("keeps those links in the page, hidden until the menu is opened", () => {
+    const panel = out.match(/<div[^>]*data-menu="More"[^>]*hidden=""[^>]*>[\s\S]*?<\/ul>/)?.[0] ?? "";
+    expect(panel).toContain('href="/deals"');
+    expect(panel).toContain('href="/gift-vouchers"');
+  });
+
+  it("names the pages list after the menu when it is the only list", () => {
+    expect(out).toMatch(/<ul[^>]*aria-label="More"/);
+  });
+
+  it("puts the pages under a More menu's categories, in a second list", () => {
+    const both = renderToStaticMarkup(<CategoryRow menu={{ row: [{ kind: "menu", group: { label: "More", items: [{ name: "Corporate Gifts", slug: "corporate-gifts" }], pages: [{ name: "Deals", href: "/deals" }] } }] }} />);
+    expect(both).toMatch(/<ul[^>]*aria-label="More"[\s\S]*corporate-gifts[\s\S]*<ul[^>]*aria-label="Pages"[\s\S]*href="\/deals"/);
+  });
+});
+
+describe("where a dropdown opens", () => {
+  it("is measured against the last entry that is really shown, so an entry that is not shown does not drag every dropdown to the left edge", () => {
+    expect(readFileSync("src/components/CategoryRow.tsx", "utf8")).toContain("lastVisibleRight(");
+  });
+});
+
+describe("the row's size from a tablet up", () => {
+  const source = readFileSync("src/components/CategoryRow.tsx", "utf8");
+
+  it("sets its words smaller and closer on a tablet, so all seven entries, More included, fit without sliding", () => {
+    expect(source).toContain("md:text-[15px]");
+    expect(source).not.toContain("md:text-lg");
+    expect(source).toContain("md:gap-4");
   });
 });

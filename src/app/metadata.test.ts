@@ -61,10 +61,9 @@ describe("the shop's name", () => {
     );
 
   it("is spelled Watch Fusion Kenya in every title, link preview and structured-data line the site makes", () => {
-    // The other spellings live in one place only: the list that tells Google they are the same shop.
-    const wrong = files("src").filter((f) => f !== "src/lib/site.ts" && /WatchFusion Kenya|WatchFusionKe/.test(readFileSync(f, "utf8")));
+    const wrong = files("src").filter((f) => /WatchFusion Kenya|WatchFusionKe/.test(readFileSync(f, "utf8")));
     expect(wrong).toEqual([]);
-    expect(read("src/lib/site.ts")).toContain("SITE_ALTERNATE_NAMES");
+    expect(read("src/lib/site.ts")).not.toContain("SITE_ALTERNATE_NAMES");
     expect(read("src/lib/site.ts")).toContain('export const SITE_NAME = "Watch Fusion Kenya";');
   });
 

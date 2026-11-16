@@ -28,11 +28,17 @@ The Wix-hosted checkout remains the place for online code redemption. In-store s
 3. Confirm an unpaid Wix order can be redeemed in the dashboard for an in-store purchase. Do not hand over a watch before redemption succeeds.
 4. Confirm the recipient email and final voucher artwork with the owner before adding artwork automation.
 
+## Verified on 31 October 2026
+
+- The shop's Wix store has the Wix Gift Cards app installed. A read-only query of its gift cards succeeded and returned none, so no card has been issued yet. Nothing was created or changed in the store.
+- Wix's own dashboard flow matches the manual model here: Gift Card Sales, Issue Gift Card, then the recipient, amount, an optional message and an expiry (never, or after a number of months). Wix emails the code to the recipient, and an issued card can be disabled if it was sent by mistake.
+- The Gift Cards API can also create a card with the source set to manual, a custom or generated code and an expiry date. That is available for later, if the shop ever wants issuing from a staff page. It needs the store's admin credential, which is why this branch does not use it.
+
 ## Unverified
 
-- Whether Wix Gift Cards is installed and active on the live Wix site.
-- Whether the current Wix-hosted checkout exposes the gift card field for this headless storefront.
-- Whether the owner's chosen payment method, denominations, and expiration policy are configured.
+- Whether the Gift Cards toggle is switched on at Wix checkout, and whether the Wix-hosted checkout shows the gift card field to this headless storefront. A real low-value card should be issued and redeemed once on the preview before the page says "enter the code at checkout" without the fallback.
+- The expiry the shop wants (never, or a number of months), and the denominations beyond the quick amounts on the form.
+- The email the recipient receives: Wix lets the shop edit its design under "Edit gift card email". The final card artwork is still to be designed.
 
 ## Sources
 

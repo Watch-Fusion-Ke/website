@@ -10,6 +10,7 @@ import { currentCart } from "@wix/ecom";
 import DeliveryPicker from "@/components/DeliveryPicker";
 import useDelivery from "@/hooks/useDelivery";
 import useDeliveryFeeSync from "@/hooks/useDeliveryFeeSync";
+import { ensureFeeMatchesBasket } from "@/lib/feeSync";
 import { DELIVERY_PREFIX, formatKes, goodsTotal, isDeliveryLine, isFreeDelivery, needsDeliveryArea } from "@/lib/delivery";
 import { SITE_URL } from "@/lib/site";
 
@@ -34,7 +35,7 @@ const CartPage = () => {
   const productsSubtotal =
     deliveryFee !== null && Number.isFinite(deliveryFee) && Number.isFinite(total) ? formatKes(total - deliveryFee) : null;
 
-  // Free delivery starts above a set amount of goods, so the fee is priced again when the basket crosses that line.
+  // Free delivery starts from a set amount of goods, so the fee is priced again when the basket crosses that line.
   const reloadCart = useCallback(() => getCart(wixClient), [getCart, wixClient]);
   useDeliveryFeeSync(allLines, delivery, reloadCart);
 
@@ -63,6 +64,15 @@ const CartPage = () => {
   const handleCheckout = async () => {
   setCheckoutError(null);
   try {
+    // A shopper who changed the basket and tapped Checkout at once can be ahead of the automatic re-pricing of the delivery fee.
+    if (delivery.enabled) {
+      await ensureFeeMatchesBasket({
+        getLines: () => useCartStore.getState().cart.lineItems ?? [],
+        areas: delivery.areas,
+        choose: delivery.choose,
+        getCart: () => getCart(wixClient),
+      });
+    }
     const checkout =
       await wixClient.currentCart.createCheckoutFromCurrentCart({
         channelType: currentCart.ChannelType.WEB,
@@ -125,8 +135,8 @@ const CartPage = () => {
           <circle cx="9" cy="21" r="1" /><circle cx="20" cy="21" r="1" />
           <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
         </svg>
-        <p className="text-xl font-semibold text-gray-600">Your cart is empty</p>
-        <p className="text-sm text-gray-400">Add some products and come back!</p>
+        <h1 className="text-xl font-semibold text-gray-600">Your cart is empty</h1>
+        <p className="text-sm text-gray-600">Add some products and come back!</p>
         <Link href="/shop" className="bg-brand-navy text-white px-6 py-3 rounded-lg text-sm font-medium hover:bg-brand-gold hover:text-brand-navy transition-colors">
           Browse Products
         </Link>

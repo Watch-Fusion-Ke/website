@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { syncFee, whenFeeSyncIdle } from "@/lib/feeSync";
+import { ensureFeeMatchesBasket, syncFee, whenFeeSyncIdle } from "@/lib/feeSync";
 import type { DeliveryArea } from "@/lib/delivery";
 
 const area: DeliveryArea = { id: "r1:0", place: "Gigiri", road: "Limuru Road", price: 450 };
@@ -68,5 +68,43 @@ describe("keeping the delivery fee in step with the basket", () => {
     await first;
     await whenFeeSyncIdle();
     expect(await syncFee(ref(), area, false, vi.fn(async () => {}), vi.fn())).toBe("done");
+  });
+});
+
+describe("checking the fee one last time before checkout", () => {
+  const gigiri: DeliveryArea = { id: "r1:0", place: "Gigiri", road: "Limuru Road", price: 450 };
+  const watch = (amount: string, quantity = 1) => ({ productName: { original: "Watch" }, price: { amount }, quantity });
+  const fee = (amount: string) => ({ productName: { original: "Delivery: Gigiri, Limuru Road" }, price: { amount }, quantity: 1 });
+
+  it("prices the fee again when the basket crossed the free-delivery line since it was set, then reloads the cart", async () => {
+    const choose = vi.fn(async () => {});
+    const getCart = vi.fn();
+    await ensureFeeMatchesBasket({ getLines: () => [watch("6500", 2), fee("450")], areas: [gigiri], choose, getCart });
+    expect(choose).toHaveBeenCalledWith(gigiri);
+    expect(getCart).toHaveBeenCalledTimes(1);
+  });
+
+  it("does nothing when the fee already matches the basket", async () => {
+    const choose = vi.fn(async () => {});
+    await ensureFeeMatchesBasket({ getLines: () => [watch("6500"), fee("450")], areas: [gigiri], choose, getCart: vi.fn() });
+    expect(choose).not.toHaveBeenCalled();
+  });
+
+  it("waits for a re-pricing that is already running, then checks again, so it never prices the same fee twice", async () => {
+    let release = () => {};
+    const slow = vi.fn(() => new Promise<void>((resolve) => { release = resolve; }));
+    let lines: ReturnType<typeof fee | typeof watch>[] = [watch("6500", 2), fee("450")];
+    const running = syncFee({ current: null }, gigiri, true, async () => { await slow(); lines = [watch("6500", 2), fee("0")]; }, vi.fn());
+    const choose = vi.fn(async () => {});
+    const waiting = ensureFeeMatchesBasket({ getLines: () => lines, areas: [gigiri], choose, getCart: vi.fn() });
+    release();
+    await running;
+    await waiting;
+    expect(choose).not.toHaveBeenCalled();
+  });
+
+  it("lets the shopper carry on, with the fee as it is, when the shop cannot re-price", async () => {
+    const choose = vi.fn(async () => { throw new Error("no"); });
+    await expect(ensureFeeMatchesBasket({ getLines: () => [watch("6500", 2), fee("450")], areas: [gigiri], choose, getCart: vi.fn() })).resolves.toBeUndefined();
   });
 });

@@ -69,7 +69,7 @@ describe("sitemap", () => {
 
   it("lists the main pages on the www address", async () => {
     const urls = (await sitemap()).map((entry) => entry.url);
-    expect(urls).toEqual(expect.arrayContaining([SITE_URL, `${SITE_URL}/shop`, `${SITE_URL}/deals`, `${SITE_URL}/contact`]));
+    expect(urls).toEqual(expect.arrayContaining([SITE_URL, `${SITE_URL}/shop`, `${SITE_URL}/deals`, `${SITE_URL}/contact`, `${SITE_URL}/return-policy`]));
     expect(urls.every((url) => url.startsWith(SITE_URL))).toBe(true);
   });
 

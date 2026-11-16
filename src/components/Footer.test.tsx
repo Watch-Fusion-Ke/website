@@ -59,7 +59,7 @@ describe("Footer", () => {
     expect(t).not.toMatch(/Terms of Service|Privacy Policy|Couple Sets/);
     const html = await render();
     expect(html).not.toContain('href="#"');
-    for (const path of ["/", "/shop", "/deals", "/contact"]) expect(html).toContain(`href="${path}"`);
+    for (const path of ["/", "/shop", "/deals", "/contact", "/return-policy"]) expect(html).toContain(`href="${path}"`);
   });
 
   it("shows the shop's real address, hours, phone and email", async () => {
@@ -69,7 +69,7 @@ describe("Footer", () => {
     expect(t).toContain("Moi Avenue");
     expect(t).toMatch(/Mon to Fri 8:30am to 7pm/);
     expect(html).toContain('href="tel:+254796044969"');
-    expect(html).toContain('href="mailto:watchfusionkenya@gmail.com"');
+    expect(html).toContain('href="mailto:info@watchfusionkenya.com"');
     expect(html).toContain('href="https://wa.me/254796044969"');
   });
 
@@ -103,7 +103,7 @@ describe("Footer", () => {
   it("keeps the shop's contact details together in one address block for screen readers", async () => {
     const html = await render();
     const block = html.match(/<address[\s\S]*?<\/address>/)?.[0] ?? "";
-    for (const part of ["Stanbank House", 'href="tel:+254796044969"', 'href="mailto:watchfusionkenya@gmail.com"', "Mon to Fri"]) {
+    for (const part of ["Stanbank House", 'href="tel:+254796044969"', 'href="mailto:info@watchfusionkenya.com"', "Mon to Fri"]) {
       expect(block).toContain(part);
     }
   });

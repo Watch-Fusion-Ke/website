@@ -24,7 +24,7 @@ describe("Contact page", () => {
     expect(html).toContain('href="https://wa.me/254796044969"');
     expect(html).toContain('href="tel:+254796044969"');
     expect(html).toContain("0796 044 969");
-    expect(html).toContain('href="mailto:watchfusionkenya@gmail.com"');
+    expect(html).toContain('href="mailto:info@watchfusionkenya.com"');
     expect(html).toContain('href="https://www.instagram.com/watchfusion_kenya"');
     expect(html).toContain('href="https://www.tiktok.com/@watchfusion_kenya"');
   });

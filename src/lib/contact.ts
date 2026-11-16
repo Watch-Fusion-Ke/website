@@ -4,7 +4,7 @@ export const WHATSAPP_NUMBER = "254796044969";
 export const WHATSAPP_URL = `https://wa.me/${WHATSAPP_NUMBER}`;
 export const PHONE_DISPLAY = "0796 044 969";
 export const PHONE_TEL = `tel:+${WHATSAPP_NUMBER}`;
-export const EMAIL = "watchfusionkenya@gmail.com";
+export const EMAIL = "info@watchfusionkenya.com";
 export const INSTAGRAM_URL = "https://www.instagram.com/watchfusion_kenya";
 export const TIKTOK_URL = "https://www.tiktok.com/@watchfusion_kenya";
 

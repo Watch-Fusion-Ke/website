@@ -59,7 +59,7 @@ describe("Footer", () => {
     expect(t).not.toMatch(/Terms of Service|Privacy Policy|Couple Sets/);
     const html = await render();
     expect(html).not.toContain('href="#"');
-    for (const path of ["/", "/shop", "/deals", "/contact"]) expect(html).toContain(`href="${path}"`);
+    for (const path of ["/", "/shop", "/deals", "/contact", "/return-policy"]) expect(html).toContain(`href="${path}"`);
   });
 
   it("shows the shop's real address, hours, phone and email", async () => {

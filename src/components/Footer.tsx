@@ -70,6 +70,7 @@ const Footer = () => {
               <li><Link href="/shop" className={link}>Shop</Link></li>
               <li><Link href="/deals" className={link}>Deals</Link></li>
               <li><Link href="/gift-vouchers" className={link}>Gift Vouchers</Link></li>
+              <li><Link href="/return-policy" className={link}>Returns &amp; Exchanges</Link></li>
               <li><Link href="/contact" className={link}>Contact</Link></li>
             </ul>
           </nav>

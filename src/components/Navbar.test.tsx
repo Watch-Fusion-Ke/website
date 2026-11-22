@@ -47,7 +47,7 @@ describe("Navbar on a phone", () => {
   it("shows the full holiday logo in the phone header", () => {
     const html = phoneHeader();
     const wrapper = html.match(/<span class="([^"]*)"[^>]*><img[^>]*alt="Watch Fusion Kenya"/)?.[1].split(" ") ?? [];
-    expect(wrapper).toContain("h-9");
+    expect(wrapper).toContain("h-11");
     expect(wrapper).toContain("overflow-hidden");
     expect(wrapper).toContain("aspect-[2/1]");
     const img = html.match(/<img[^>]*alt="Watch Fusion Kenya"[^>]*>/)?.[0] ?? "";

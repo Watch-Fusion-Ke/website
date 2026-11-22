@@ -56,14 +56,15 @@ const Navbar = () => {
             <Menu />
           </div>
           <Link href="/" aria-label="Watch Fusion Kenya, home" className='flex items-center h-11'>
-            <span className='relative block h-9 aspect-[2/1] overflow-hidden'>
+            <span className='relative block h-11 aspect-[2/1] overflow-hidden'>
               {/* Black lettering on the light page, white lettering on the black page */}
               <Image
                 src="/logo-holiday-on-light.png"
                 alt="Watch Fusion Kenya"
                 fill
-                sizes="110px"
+                sizes="256px"
                 loading="eager"
+                quality={95}
                 className='object-cover object-[center_44%] dark:hidden'
               />
               <Image
@@ -71,7 +72,7 @@ const Navbar = () => {
                 alt=""
                 fill
                 loading="eager"
-                sizes="110px"
+                sizes="256px"
                 className='hidden object-cover object-[center_44%] dark:block dark:drop-shadow-[0_0_8px_rgba(249,201,43,0.5)]'
               />
             </span>
@@ -103,13 +104,14 @@ const Navbar = () => {
         {/* Left Section */}
         <div className='w-1/3 xl:w-1/2 flex items-center gap-4'>
           <Link href="/" aria-label="Watch Fusion Kenya, home" className="flex items-center flex-shrink-0">
-            <span className='relative block h-14 aspect-[2/1] overflow-hidden'>
+            <span className='relative block h-16 aspect-[2/1] overflow-hidden'>
               <Image
                 src="/logo-holiday-on-light.png"
                 alt="Watch Fusion Kenya"
                 fill
-                sizes="160px"
+                sizes="320px"
                 loading="eager"
+                quality={95}
                 className='object-cover object-[center_44%] dark:hidden'
               />
               <Image
@@ -117,7 +119,7 @@ const Navbar = () => {
                 alt=""
                 fill
                 loading="eager"
-                sizes="160px"
+                sizes="320px"
                 className='hidden object-cover object-[center_44%] dark:block dark:drop-shadow-[0_0_8px_rgba(249,201,43,0.5)]'
               />
             </span>

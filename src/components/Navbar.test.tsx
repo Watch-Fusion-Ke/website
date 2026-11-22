@@ -44,21 +44,21 @@ describe("Navbar on a phone", () => {
     expect(cart).toBeGreaterThan(logo);
   });
 
-  it("shows the logo without its small slogan, cropped from the picture so the name can be bigger", () => {
+  it("shows the full holiday logo in the phone header", () => {
     const html = phoneHeader();
     const wrapper = html.match(/<span class="([^"]*)"[^>]*><img[^>]*alt="Watch Fusion Kenya"/)?.[1].split(" ") ?? [];
     expect(wrapper).toContain("h-9");
     expect(wrapper).toContain("overflow-hidden");
-    expect(wrapper).toContain("aspect-[5/2]");
+    expect(wrapper).toContain("aspect-[2/1]");
     const img = html.match(/<img[^>]*alt="Watch Fusion Kenya"[^>]*>/)?.[0] ?? "";
     expect(img).toContain("object-cover");
-    expect(img).toContain("object-[center_38%]");
+    expect(img).toContain("object-[center_44%]");
   });
 
-  it("positions the holiday artwork within the dark-theme header", () => {
+  it("positions both holiday logos within the header", () => {
     const html = renderToStaticMarkup(<Navbar />);
-    expect((html.match(/aspect-\[5\/2\]/g) ?? []).length).toBe(2);
-    expect((html.match(/object-\[center_38%\]/g) ?? []).length).toBe(4);
+    expect((html.match(/aspect-\[2\/1\]/g) ?? []).length).toBe(2);
+    expect((html.match(/object-\[center_44%\]/g) ?? []).length).toBe(4);
   });
 
   it("gives the logo link a tap area at least 44 px tall", () => {

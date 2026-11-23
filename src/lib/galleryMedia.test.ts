@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { canAutoAdvance, pickVideoFile, shouldAutoplayVideo, toGalleryMedia, videoKeepsKey } from "@/lib/galleryMedia";
+import { canAutoAdvance, largerStill, pickVideoFile, shouldAutoplayVideo, toGalleryMedia, videoKeepsKey } from "@/lib/galleryMedia";
 
 const file = (width: number | null, height: number | null, url = `https://v/${width}x${height}.mp4`) => ({ url, width, height });
 const photo = (id: string, url: string) => ({ _id: id, image: { url } });
@@ -130,3 +130,46 @@ describe("videoKeepsKey", () => {
     expect(videoKeepsKey("next", null)).toBe(false);
   });
 });
+
+describe("largerStill", () => {
+  const small = "https://static.wixstatic.com/media/6e72d8_abc_f002.jpg/v1/fit/w_50,h_50,q_90/file.jpg";
+
+  it("asks for the video's still at a size that stays sharp on the page, not the store's 50 pixel thumbnail", () => {
+    expect(largerStill(small)).toBe("https://static.wixstatic.com/media/6e72d8_abc_f002.jpg/v1/fit/w_1000,h_1000,q_90/file.jpg");
+  });
+
+  it("changes only the size, so the picture and its quality stay as the store gave them", () => {
+    const filled = "https://static.wixstatic.com/media/x_f002.jpg/v1/fill/w_50,h_50,al_c,q_85/file.jpg";
+    expect(largerStill(filled)).toBe("https://static.wixstatic.com/media/x_f002.jpg/v1/fill/w_1000,h_1000,al_c,q_85/file.jpg");
+  });
+
+  it("leaves an address with no size in it as it is", () => {
+    expect(largerStill("https://still/clip.jpg")).toBe("https://still/clip.jpg");
+    expect(largerStill("https://static.wixstatic.com/media/x_f002.jpg")).toBe("https://static.wixstatic.com/media/x_f002.jpg");
+  });
+
+  it("is what a video is shown by in the gallery", () => {
+    const [clip] = toGalleryMedia([{ _id: "v", video: { files: [{ url: "https://v/a.mp4", width: 576, height: 1024 }] }, thumbnail: { url: small } }]);
+    expect(clip.url).toBe("https://static.wixstatic.com/media/6e72d8_abc_f002.jpg/v1/fit/w_1000,h_1000,q_90/file.jpg");
+  });
+});
+
+describe("pickVideoFile and streaming files", () => {
+  it("leaves out a file the store marks as streaming, whatever its address looks like", () => {
+    const files = [
+      { url: "https://files.wix.com/site/media/video/abc/def", width: 0, height: 0, format: "hls" },
+      { url: "https://video.wixstatic.com/video/abc/480p/mp4/file.mp4", width: 576, height: 1024, format: "mp4" },
+    ];
+    expect(pickVideoFile(files)).toBe("https://video.wixstatic.com/video/abc/480p/mp4/file.mp4");
+    expect(pickVideoFile([files[0]])).toBeNull();
+  });
+
+  it("picks the 480p file when it is the best the store made, as for a phone video 576 pixels wide", () => {
+    const files = [
+      { url: "https://video.wixstatic.com/video/abc/480p/mp4/file.mp4", width: 576, height: 1024, format: "mp4" },
+      { url: "https://video.wixstatic.com/video/abc/360p/mp4/file.mp4", width: 202, height: 360, format: "mp4" },
+    ];
+    expect(pickVideoFile(files)).toBe("https://video.wixstatic.com/video/abc/480p/mp4/file.mp4");
+  });
+});
+

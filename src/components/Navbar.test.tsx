@@ -44,27 +44,28 @@ describe("Navbar on a phone", () => {
     expect(cart).toBeGreaterThan(logo);
   });
 
-  it("shows the full holiday logo in the phone header", () => {
+  it("shows the holiday logo, cut tight and uncropped, as large as the phone bar allows", () => {
     const html = phoneHeader();
     const wrapper = html.match(/<span class="([^"]*)"[^>]*><img[^>]*alt="Watch Fusion Kenya"/)?.[1].split(" ") ?? [];
-    expect(wrapper).toContain("h-11");
-    expect(wrapper).toContain("overflow-hidden");
-    expect(wrapper).toContain("aspect-[2/1]");
+    expect(wrapper).toContain("h-14");
+    expect(wrapper).toContain("aspect-[1167/525]");
+    expect(wrapper).not.toContain("overflow-hidden");
     const img = html.match(/<img[^>]*alt="Watch Fusion Kenya"[^>]*>/)?.[0] ?? "";
-    expect(img).toContain("object-cover");
-    expect(img).toContain("object-[center_44%]");
+    expect(img).toContain("object-contain");
+    expect(img).not.toContain("object-cover");
   });
 
-  it("positions both holiday logos within the header", () => {
+  it("gives both holiday logos the same shape on the phone and the computer, so nothing is cropped", () => {
     const html = renderToStaticMarkup(<Navbar />);
-    expect((html.match(/aspect-\[2\/1\]/g) ?? []).length).toBe(2);
-    expect((html.match(/object-\[center_44%\]/g) ?? []).length).toBe(4);
+    expect((html.match(/aspect-\[1167\/525\]/g) ?? []).length).toBe(2);
+    expect((html.match(/object-contain/g) ?? []).length).toBeGreaterThanOrEqual(4);
+    expect(html).not.toContain("object-[center_44%]");
   });
 
   it("gives the logo link a tap area at least 44 px tall", () => {
     const link = phoneHeader().match(/<a[^>]*href="\/"[^>]*>(?=<span[^>]*><img[^>]*alt="Watch Fusion Kenya")/)?.[0] ?? "";
     expect(link).not.toBe("");
-    expect(link.match(/class="([^"]*)"/)?.[1].split(" ")).toContain("h-11");
+    expect(link.match(/class="([^"]*)"/)?.[1].split(" ")).toContain("h-14");
   });
 
   it("shows the header's own cart link, not only the one inside the menu", () => {
@@ -125,12 +126,12 @@ describe("Navbar on a phone", () => {
   });
 
   it("gives the logo a soft gold glow in the dark theme, where it sits straight on the black page", () => {
-    const dark = (markup: string) => markup.match(/<img[^>]*%2Flogo-holiday\.png[^>]*>/)?.[0] ?? "";
+    const dark = (markup: string) => markup.match(/<img[^>]*%2Flogo-holiday-header\.png[^>]*>/)?.[0] ?? "";
     expect(dark(phoneHeader())).toMatch(/dark:drop-shadow-\[/);
     const html = renderToStaticMarkup(<Navbar />);
     const desktop = dark(html.slice(html.indexOf('data-testid="desktop-header"')));
     expect(desktop).toMatch(/dark:drop-shadow-\[/);
-    expect(desktop).toContain("object-cover");
+    expect(desktop).toContain("object-contain");
   });
 
   it("shows the logo straight on the page, with no black box behind it, in both themes", () => {
@@ -141,8 +142,8 @@ describe("Navbar on a phone", () => {
     const html = renderToStaticMarkup(<Navbar />);
     const desktopAt = html.indexOf('data-testid="desktop-header"');
     for (const part of [html.slice(0, desktopAt), html.slice(desktopAt)]) {
-      const light = part.match(/<img[^>]*%2Flogo-holiday-on-light\.png[^>]*>/)?.[0] ?? "";
-      const dark = part.match(/<img[^>]*%2Flogo-holiday\.png[^>]*>/)?.[0] ?? "";
+      const light = part.match(/<img[^>]*%2Flogo-holiday-header-on-light\.png[^>]*>/)?.[0] ?? "";
+      const dark = part.match(/<img[^>]*%2Flogo-holiday-header\.png[^>]*>/)?.[0] ?? "";
       expect(light).toContain("dark:hidden");
       expect(light).toContain('alt="Watch Fusion Kenya"');
       expect(dark).toMatch(/\bhidden\b/);
@@ -162,7 +163,7 @@ describe("Navbar on a phone", () => {
 
   it("loads whichever logo is shown straight away, without preloading the hidden one", () => {
     const html = renderToStaticMarkup(<Navbar />);
-    const logos = html.match(/<img[^>]*%2Flogo-holiday(?:-on-light)?\.png[^>]*>/g) ?? [];
+    const logos = html.match(/<img[^>]*%2Flogo-holiday-header(?:-on-light)?\.png[^>]*>/g) ?? [];
     expect(logos).toHaveLength(4);
     for (const logo of logos) expect(logo).toContain('loading="eager"');
     expect(html).not.toMatch(/<link[^>]*rel="preload"[^>]*logo/);

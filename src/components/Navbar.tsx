@@ -54,28 +54,30 @@ const Navbar = () => {
     >
       {/* Mobile Navbar: menu button on the left, logo in the middle, cart on the right, search underneath */}
       <div data-testid="phone-header" className='md:hidden border-b border-gray-200'>
-        <div className='grid grid-cols-[1fr_auto_1fr] items-center h-14'>
+        <div className='grid grid-cols-[1fr_auto_1fr] items-center h-16'>
           <div className='flex justify-start'>
             <Menu />
           </div>
-          <Link href="/" aria-label="Watch Fusion Kenya, home" className='flex items-center h-11'>
-            <span className='relative block h-9 aspect-[2209/823] overflow-hidden'>
-              {/* Black lettering on the light page, white lettering on the black page */}
+          <Link href="/" aria-label="Watch Fusion Kenya, home" className='flex items-center h-14'>
+            <span className='relative block h-14 aspect-[1167/525]'>
+              {/* Black lettering on the light page, white lettering on the black page. Both are cut tight, with the slogan left out, so the name is as large as the bar allows. */}
               <Image
-                src="/logo-on-light.png"
+                src="/logo-holiday-header-on-light.png"
                 alt="Watch Fusion Kenya"
                 fill
-                sizes="110px"
+                sizes="125px"
                 loading="eager"
-                className='object-cover object-top dark:hidden'
+                quality={90}
+                className='object-contain dark:hidden'
               />
               <Image
-                src="/logo.png"
+                src="/logo-holiday-header.png"
                 alt=""
                 fill
                 loading="eager"
-                sizes="110px"
-                className='hidden object-cover object-top dark:block dark:drop-shadow-[0_0_8px_rgba(249,201,43,0.5)]'
+                sizes="125px"
+                quality={90}
+                className='hidden object-contain dark:block dark:drop-shadow-[0_0_8px_rgba(249,201,43,0.5)]'
               />
             </span>
           </Link>
@@ -107,22 +109,24 @@ const Navbar = () => {
         <div className='flex flex-shrink-0 items-center gap-2'>
           {!onHome && <Menu />}
           <Link href="/" aria-label="Watch Fusion Kenya, home" className="flex items-center flex-shrink-0">
-            <span className='relative block h-14 aspect-[2209/823] overflow-hidden'>
+            <span className='relative block h-[4.5rem] aspect-[1167/525]'>
               <Image
-                src="/logo-on-light.png"
+                src="/logo-holiday-header-on-light.png"
                 alt="Watch Fusion Kenya"
                 fill
                 sizes="160px"
                 loading="eager"
-                className='object-cover object-top dark:hidden'
+                quality={90}
+                className='object-contain dark:hidden'
               />
               <Image
-                src="/logo.png"
+                src="/logo-holiday-header.png"
                 alt=""
                 fill
                 loading="eager"
                 sizes="160px"
-                className='hidden object-cover object-top dark:block dark:drop-shadow-[0_0_8px_rgba(249,201,43,0.5)]'
+                quality={90}
+                className='hidden object-contain dark:block dark:drop-shadow-[0_0_8px_rgba(249,201,43,0.5)]'
               />
             </span>
           </Link>

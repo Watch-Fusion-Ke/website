@@ -142,14 +142,14 @@ describe("Footer", () => {
     expect(link).not.toBe("");
     expect(link).toContain("Wear the Moment, Own the Legacy");
     expect(link).toMatch(/\bw-full\b/);
-    expect(link).toMatch(/max-w-\[12\.5rem\]/);
-    expect(link).not.toMatch(/\bhidden\b/);
-    expect(link).not.toContain("object-cover");
+    expect(link).toMatch(/max-w-\[14rem\]/);
+    expect(link).toContain("object-contain");
+    expect(link).toContain("logo-holiday-full.png");
   });
 
   it("has only the logo and the social buttons in the brand column, with no second small logo or written tagline", async () => {
     const html = await render();
-    expect((html.match(/<img[^>]*src="[^"]*logo\.png[^"]*"/g) ?? []).length).toBe(1);
+    expect((html.match(/<img[^>]*src="[^"]*logo-holiday-full\.png[^"]*"/g) ?? []).length).toBe(1);
     expect(html).not.toContain("Watches and gifts in Nairobi");
     expect(html).not.toMatch(/>Watch Fusion Kenya<\/span>/);
   });

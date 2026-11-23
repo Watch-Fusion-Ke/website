@@ -32,14 +32,14 @@ const Footer = () => {
         <div className="grid grid-cols-2 gap-x-6 gap-y-10 md:grid-cols-[1.6fr_1fr_1fr_1.3fr]">
           <div className="col-span-2 text-center md:col-span-1 md:text-center">
             {/* The full logo with its slogan, large enough to read, centred above the social buttons. */}
-            <Link href="/" className="mx-auto block w-fit">
+            <Link href="/" className="relative mx-auto block aspect-[1167/594] w-full max-w-[14rem]">
               <Image
-                src="/logo.png"
+                src="/logo-holiday-full.png"
                 alt="Watch Fusion Kenya, Wear the Moment, Own the Legacy"
-                width={2209}
-                height={937}
-                sizes="200px"
-                className="h-auto w-full max-w-[12.5rem]"
+                fill
+                sizes="224px"
+                quality={90}
+                className="object-contain"
               />
             </Link>
             <div className="mt-5 flex justify-center gap-3">

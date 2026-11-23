@@ -132,3 +132,108 @@ describe("ZoomView", () => {
     expect(view(false, 1)).not.toContain('aria-label="Next photo"');
   });
 });
+
+const clip = { _id: "clip", video: { files: [{ url: "https://v/clip.mp4", width: 576, height: 1024 }] }, thumbnail: { url: "https://still/clip.jpg" } };
+
+describe("ProductImages with a video", () => {
+  it("plays a video in the main spot silently, inline on a phone, and without downloading it until it is needed", () => {
+    const html = renderToStaticMarkup(<ProductImages items={[clip, ...photos(2)]} />);
+    const tag = html.match(/<video[^>]*>/)?.[0] ?? "";
+    expect(tag).toContain('src="https://v/clip.mp4"');
+    expect(tag).toContain('poster="https://still/clip.jpg"');
+    expect(tag).toContain("muted");
+    expect(tag).toContain("playsinline");
+    expect(tag).toContain('preload="none"');
+    expect(tag).toContain("loop");
+    expect(tag).toContain("controls");
+  });
+
+  it("describes the video to a screen reader with the product's name", () => {
+    const html = renderToStaticMarkup(<ProductImages items={[clip, ...photos(2)]} name="Casio MTP-V006L-1B" />);
+    expect(html).toContain('aria-label="Casio MTP-V006L-1B video"');
+    expect(renderToStaticMarkup(<ProductImages items={[clip, ...photos(2)]} />)).toContain('aria-label="Product video"');
+  });
+
+  it("has no zoom button on a video, which has nothing to zoom, but keeps it on a photo", () => {
+    const first = renderToStaticMarkup(<ProductImages items={[clip, ...photos(2)]} />);
+    expect(first).not.toContain("data-main-photo");
+    expect(first).toContain("data-main-video");
+    const second = renderToStaticMarkup(<ProductImages items={[photos(1)[0], clip, ...photos(1)]} />);
+    expect(second).toContain("data-main-photo");
+    expect(second).not.toContain("<video");
+  });
+
+  it("marks a video in the small strip with a play mark and says it is a video", () => {
+    const html = renderToStaticMarkup(<ProductImages items={[photos(1)[0], clip, photos(2)[1]]} />);
+    expect(html).toContain('aria-label="Show video 2 of 3"');
+    expect(html.match(/data-play-mark/g)).toHaveLength(1);
+    expect(html).toContain("https://still/clip.jpg");
+  });
+
+  it("shows a video's still as it is, not through the image resizer, so an unfamiliar picture host cannot break the page", () => {
+    const html = renderToStaticMarkup(<ProductImages items={[photos(1)[0], clip, photos(2)[1]]} />);
+    const tile = html.match(/<img[^>]*clip\.jpg[^>]*>/)?.[0] ?? "";
+    expect(tile).not.toBe("");
+    expect(tile).not.toContain("_next/image");
+    const shot = html.match(/<img[^>]*img%2F0\.jpg[^>]*>/)?.[0] ?? "";
+    expect(shot).toContain("_next/image");
+  });
+
+  it("lets focus come back to the video after the full screen view closes", () => {
+    const html = renderToStaticMarkup(<ProductImages items={[clip, ...photos(2)]} />);
+    expect(html.match(/<div[^>]*data-main-video[^>]*>/)?.[0]).toContain('tabindex="-1"');
+  });
+
+  it("offers Pause photos only while a photo is showing, since a video does not move on", () => {
+    expect(renderToStaticMarkup(<ProductImages items={[clip, ...photos(2)]} />)).not.toMatch(/Pause photos|Play photos/);
+    expect(renderToStaticMarkup(<ProductImages items={[photos(1)[0], clip, photos(2)[1]]} />)).toContain("Pause photos");
+  });
+
+  it("still names the other tiles photos", () => {
+    const html = renderToStaticMarkup(<ProductImages items={[photos(1)[0], clip, photos(2)[1]]} />);
+    expect(html).toContain('aria-label="Show photo 3 of 3"');
+  });
+
+  it("does not swipe a video away, since the swipe would fight the video's own controls", () => {
+    const html = renderToStaticMarkup(<ProductImages items={[clip, ...photos(2)]} />);
+    const stage = html.match(/<div[^>]*data-main-video[^>]*>/)?.[0] ?? "";
+    expect(stage).not.toContain("ontouch");
+  });
+
+  it("leaves a photo-only product exactly as it was", () => {
+    const html = render(3);
+    expect(html).not.toContain("<video");
+    expect(html).not.toContain("data-play-mark");
+    expect(html).toContain("data-main-photo");
+  });
+});
+
+describe("ZoomView with a video", () => {
+  const view = (props = {}) =>
+    renderToStaticMarkup(
+      <ZoomView url="https://still/clip.jpg" videoUrl="https://v/clip.mp4" count={3} magnified={false} onClose={() => {}} onNext={() => {}} onPrev={() => {}} onToggle={() => {}} {...props} />
+    );
+
+  it("plays the video full screen with its own controls", () => {
+    const html = view();
+    const tag = html.match(/<video[^>]*>/)?.[0] ?? "";
+    expect(tag).toContain('src="https://v/clip.mp4"');
+    expect(tag).toContain("controls");
+    expect(tag).toContain("muted");
+    expect(tag).toContain("playsinline");
+  });
+
+  it("names the view a video, and drops the zoom instructions and the zoom button, which belong to photos", () => {
+    const html = view();
+    expect(html).toContain('aria-label="Product video"');
+    expect(html).not.toContain("Tap the photo to zoom");
+    expect(html).not.toContain("data-magnified");
+  });
+
+  it("keeps the close button and the arrows", () => {
+    const html = view();
+    expect(html).toContain("data-close");
+    expect(html).toContain('aria-label="Next photo"');
+  });
+});
+

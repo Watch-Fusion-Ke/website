@@ -22,6 +22,13 @@ describe("ProductSpecs", () => {
     expect(html).toContain("46.6 x 39.9 x 8.9 mm");
   });
 
+  it("lets a long unbroken value, such as a link or a serial number, wrap inside its box instead of running off a phone's screen", () => {
+    const html = render({ specs: [{ label: "Serial", value: "SR920SW-" + "0123456789".repeat(8) }] });
+    const dd = html.match(/<dd class="([^"]*)"/)?.[1].split(" ") ?? [];
+    expect(dd).toContain("min-w-0");
+    expect(dd).toContain("break-words");
+  });
+
   it("is a section named by its Specifications heading, so a screen reader announces it", () => {
     const html = render();
     const heading = html.match(/<h3[^>]*id="([^"]+)"[^>]*>Specifications<\/h3>/);

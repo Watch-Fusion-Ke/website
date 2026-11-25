@@ -1,5 +1,9 @@
 import { WHATSAPP_NUMBER } from "@/lib/contact";
 
+// Amounts offered as a quick pick on the form. They are suggestions only: any whole amount can still be typed, and the shop confirms
+// the amount on WhatsApp.
+export const VOUCHER_PRESET_AMOUNTS = [1000, 2500, 5000, 10000] as const;
+
 export type GiftVoucherRequest = {
   amount: number;
   senderName: string;

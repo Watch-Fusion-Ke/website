@@ -9,6 +9,7 @@ import { useCallback, useState } from "react";
 import { useRouter } from "next/navigation";
 import useDelivery from "@/hooks/useDelivery";
 import useDeliveryFeeSync from "@/hooks/useDeliveryFeeSync";
+import { ensureFeeMatchesBasket } from "@/lib/feeSync";
 import { formatKes, isDeliveryLine, needsDeliveryArea } from "@/lib/delivery";
 import { SITE_URL } from "@/lib/site";
 
@@ -27,7 +28,7 @@ const CartModal = ({ onClose }: CartModalProps) => {
   const allLines = cart.lineItems ?? [];
   const products = allLines.filter((item) => !isDeliveryLine(item));
   const fee = allLines.find(isDeliveryLine);
-  // Free delivery starts above a set amount of goods, so the fee is priced again when the basket crosses that line.
+  // Free delivery starts from a set amount of goods, so the fee is priced again when the basket crosses that line.
   const reloadCart = useCallback(() => getCart(wixClient), [getCart, wixClient]);
   useDeliveryFeeSync(allLines, delivery, reloadCart);
   const feeAmount = fee ? Number(fee.price?.amount) : NaN;
@@ -43,6 +44,15 @@ const CartModal = ({ onClose }: CartModalProps) => {
     return;
   }
   try {
+    // A shopper who changed the basket and tapped Checkout at once can be ahead of the automatic re-pricing of the delivery fee.
+    if (delivery.enabled) {
+      await ensureFeeMatchesBasket({
+        getLines: () => useCartStore.getState().cart.lineItems ?? [],
+        areas: delivery.areas,
+        choose: delivery.choose,
+        getCart: () => getCart(wixClient),
+      });
+    }
     const checkout =
       await wixClient.currentCart.createCheckoutFromCurrentCart({
         channelType: currentCart.ChannelType.WEB,

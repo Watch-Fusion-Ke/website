@@ -82,7 +82,7 @@ export default function ProductSpecs({ specs, features = [] }: Props) {
           {specs.map((spec, index) => (
             <div key={index} data-spec-row="" className={rowClass(phase)} style={rowDelay(index)}>
               <dt className="text-xs font-medium uppercase tracking-wide text-gray-500 [@container(min-width:26rem)]:pt-0.5">{spec.label}</dt>
-              <dd className="text-sm font-semibold text-gray-900 first-letter:uppercase">{spec.value}</dd>
+              <dd className="min-w-0 break-words text-sm font-semibold text-gray-900 first-letter:uppercase">{spec.value}</dd>
             </div>
           ))}
         </dl>

@@ -11,10 +11,11 @@ const sourceFiles = (dir: string): string[] =>
   });
 
 describe("the public repository", () => {
+  // Listing the repository's files can take longer than the default five seconds on a busy machine, which made this test fail at random.
   it("holds no editor settings or personal tool settings", () => {
     const tracked = execSync("git ls-files", { encoding: "utf8" }).split("\n");
     expect(tracked.filter((f) => f.startsWith(".idea/") || f === ".claude/settings.json" || f.startsWith(".claude/settings"))).toEqual([]);
-  });
+  }, 30_000);
 
   it("keeps those folders out in future", () => {
     const ignore = readFileSync(".gitignore", "utf8");

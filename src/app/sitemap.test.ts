@@ -125,6 +125,6 @@ describe("robots", () => {
     const result = robots();
     expect(result.sitemap).toBe(`${SITE_URL}/sitemap.xml`);
     const rule = Array.isArray(result.rules) ? result.rules[0] : result.rules;
-    expect(rule.disallow).toEqual(expect.arrayContaining(["/api/", "/login", "/profile", "/orders/"]));
+    expect(rule.disallow).toEqual(expect.arrayContaining(["/api/", "/login", "/profile", "/orders/", "/cart", "/success"]));
   });
 });

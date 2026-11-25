@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useId, useLayoutEffect, useRef, useState } from "react";
 import ChristmasCategoryLink from "@/components/ChristmasCategoryLink";
 import { categoryHref } from "@/lib/categoryPages";
-import { PHONE_FOCUS_SLUG, centreScrollLeft, clampLeft, closed, hoverIn, hoverOut, phoneOrder, press, scrollEdges, type MenuState, type SiteMenu } from "@/lib/siteMenu";
+import { PHONE_FOCUS_SLUG, centreScrollLeft, clampLeft, closed, hoverIn, hoverOut, lastVisibleRight, phoneOrder, press, scrollEdges, type MenuState, type SiteMenu } from "@/lib/siteMenu";
 
 // Every entry is plain words, on a phone as on a computer, with a gold underline on hover or press. A drawn box round each word costs
 // about 20 px of width for nothing: the 44 px tap area is invisible padding (min-h-11 and px-3), which is what lets the whole row stay
@@ -16,7 +16,7 @@ const entry =
   // Hover styles apply only to a pointer that really hovers, so a tap on a phone does not leave the last entry stuck underlined. The focus
   // ring is drawn inside the entry because the row clips anything outside its 44 px height.
   "[@media(hover:hover)]:hover:text-black [@media(hover:hover)]:hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-brand-gold " +
-  "md:min-h-0 md:px-0 md:py-1.5 md:text-lg lg:text-xl md:leading-[25.5px] md:text-gray-800 md:underline-offset-4 md:[@media(hover:hover)]:hover:text-gray-800";
+  "md:min-h-0 md:px-0 md:py-1.5 md:text-[15px] lg:text-xl md:leading-[25.5px] md:text-gray-800 md:underline-offset-4 md:[@media(hover:hover)]:hover:text-gray-800";
 // The one place a gold chip is kept: a seasonal page, so it stands out from the plain words.
 const seasonalEntry =
   "inline-flex min-h-11 flex-shrink-0 items-center whitespace-nowrap rounded-full bg-brand-gold px-3 text-[13px] font-semibold text-brand-navy transition-colors duration-200 hover:brightness-95 max-md:snap-center max-md:[order:var(--phone-order)] md:min-h-0 md:px-4 md:py-2 md:text-base";
@@ -57,7 +57,12 @@ const CategoryRow = ({ menu }: { menu: SiteMenu }) => {
 
   const place = (button: HTMLElement) => {
     const nav = root.current;
-    if (nav) setLeft(clampLeft(button.getBoundingClientRect().left - nav.getBoundingClientRect().left, PANEL_WIDTH, nav.getBoundingClientRect().width));
+    if (!nav) return;
+    // A box may reach no further right than the row's last entry, so on a wide window the last menu sits under its button.
+    const navBox = nav.getBoundingClientRect();
+    const boxes = Array.prototype.slice.call(strip.current?.children ?? []).map((child: Element) => child.getBoundingClientRect());
+    const lastRight = lastVisibleRight(boxes, navBox.right);
+    setLeft(clampLeft(button.getBoundingClientRect().left - navBox.left, PANEL_WIDTH, Math.min(navBox.width, lastRight - navBox.left)));
   };
   const cancelLeave = () => {
     if (leaveTimer.current) clearTimeout(leaveTimer.current);
@@ -160,7 +165,7 @@ const CategoryRow = ({ menu }: { menu: SiteMenu }) => {
         }}
       >
         <div className="relative">
-        <div ref={strip} onScroll={onRowScroll} onFocus={onRowFocus} className="relative flex scroll-px-4 overflow-x-auto px-4 scrollbar-hide max-md:snap-x max-md:snap-proximity md:items-center md:gap-6 md:[&>:first-child]:ml-auto md:[&>:last-child]:mr-auto lg:gap-8 xl:gap-16">
+        <div ref={strip} onScroll={onRowScroll} onFocus={onRowFocus} className="relative flex scroll-px-4 overflow-x-auto px-4 scrollbar-hide max-md:snap-x max-md:snap-proximity md:items-center md:gap-4 md:[&>:first-child]:ml-auto md:[&>:last-child]:mr-auto lg:gap-6 xl:gap-16">
           {menu.row.map((e, index) => {
             if (e.kind === "link") {
               const c = e.category;
@@ -214,26 +219,39 @@ const CategoryRow = ({ menu }: { menu: SiteMenu }) => {
         {groups.map((g, i) => (
           <div key={g.label} id={`${id}-${i}`} data-menu={g.label} hidden={open !== g.label} className={open === g.label ? panelOuter : undefined}>
             <div className={panelInner}>
-              <ul aria-label={g.label}>
-                {g.items.map((c) => (
-                  <li key={c.slug}>
-                    <Link href={categoryHref(c.slug)} className={panelLink} onClick={() => setState(closed)}>
-                      {c.name}
-                    </Link>
-                    {c.children && c.children.length > 0 && (
-                      <ul aria-label={c.name}>
-                        {c.children.map((child) => (
-                          <li key={child.slug}>
-                            <Link href={categoryHref(child.slug)} className={`${panelLink} pl-6`} onClick={() => setState(closed)}>
-                              {child.name}
-                            </Link>
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-                  </li>
-                ))}
-              </ul>
+              {g.items.length > 0 && (
+                <ul aria-label={g.label}>
+                  {g.items.map((c) => (
+                    <li key={c.slug}>
+                      <Link href={categoryHref(c.slug)} className={panelLink} onClick={() => setState(closed)}>
+                        {c.name}
+                      </Link>
+                      {c.children && c.children.length > 0 && (
+                        <ul aria-label={c.name}>
+                          {c.children.map((child) => (
+                            <li key={child.slug}>
+                              <Link href={categoryHref(child.slug)} className={`${panelLink} pl-6`} onClick={() => setState(closed)}>
+                                {child.name}
+                              </Link>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              )}
+              {g.pages && g.pages.length > 0 && (
+                <ul aria-label={g.items.length > 0 ? "Pages" : g.label} className={g.items.length > 0 ? "mt-1 border-t border-gray-200 pt-1" : undefined}>
+                  {g.pages.map((page) => (
+                    <li key={page.href}>
+                      <Link href={page.href} className={panelLink} onClick={() => setState(closed)}>
+                        {page.name}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              )}
             </div>
           </div>
         ))}

@@ -27,7 +27,8 @@ const LEFT_OUT = new Set(["all-products", "featured", "brands", "gifts"]); // ea
 const ALL_PRODUCTS = "all-products";
 const BRANDS_PAGE = "brands";
 const MAIN = ["gents-watches", "ladies-watches"];
-const BRAND_ORDER = ["casio-watches-kenya", "naviforce-watches-kenya"];
+// Leather Watches is a category of its own, not a brand, but the shop asked for it third in this list, after Casio and Naviforce.
+const BRAND_ORDER = ["casio-watches-kenya", "naviforce-watches-kenya", "leather-watches-kenya"];
 // Only Casio has pages of its own (the shop asked for Men and Women under it, and said the other brands need none).
 const BRAND_PAGES: Record<string, string[]> = { "casio-watches-kenya": ["casio-men", "casio-women"] };
 const BRAND_PAGE_SLUGS = new Set(Object.keys(BRAND_PAGES).flatMap((brand) => BRAND_PAGES[brand]));

@@ -45,6 +45,20 @@ describe("the homepage category menu", () => {
     expect(names(buildMenu(today.filter((c) => c.slug !== "brands")))).toContain("[Brands]");
   });
 
+  it("puts Leather Watches third in the brands menu, after Casio and Naviforce and before the other brands", () => {
+    const others = [cat("hannah-martin-watches-kenya", "Hannah Martin"), cat("poedagar-watches-kenya", "Poedagar"), cat("olevs-watches-kenya", "Olevs")];
+    const wanted = ["casio-watches-kenya", "naviforce-watches-kenya", "leather-watches-kenya"];
+    const menu = buildMenu([...today, ...others, cat("leather-watches-kenya", "Leather Watches")]);
+    expect(menuOf(menu, "Watch Brands")?.items.slice(0, 3).map((c) => c.slug)).toEqual(wanted);
+    expect(menuOf(menu, "Watch Brands")?.items.map((c) => c.slug)).toHaveLength(6);
+    expect(menuOf(buildMenu([...today, ...others, cat("leather-watches-kenya", "Leather Watches")].reverse()), "Watch Brands")?.items.slice(0, 3).map((c) => c.slug)).toEqual(wanted);
+  });
+
+  it("leaves Leather Watches out while the store keeps it hidden, and keeps the other brands in place", () => {
+    const menu = buildMenu([...today, cat("poedagar-watches-kenya", "Poedagar"), cat("leather-watches-kenya", "Leather Watches", false)]);
+    expect(menuOf(menu, "Watch Brands")?.items.map((c) => c.slug)).toEqual(["casio-watches-kenya", "naviforce-watches-kenya", "poedagar-watches-kenya"]);
+  });
+
   it("puts any new brand category into the brands menu without a code change", () => {
     expect(menuOf(buildMenu([...today, cat("olevs-watches-kenya", "Olevs")]), "Watch Brands")?.items.map((c) => c.slug)).toContain("olevs-watches-kenya");
   });

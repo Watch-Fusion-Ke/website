@@ -16,8 +16,8 @@ type Props = {
     params: { slug: string };
 };
 
-// Everything a search engine or a link preview is told about a product comes from one place, src/lib/seo.ts: the title and description
-// the shop wrote for the product in the store when there are some, a clean one made from its own text when there are not.
+// Product search metadata and link previews share src/lib/seo.ts: reviewed copy for the four November quick wins,
+// otherwise the shop's SEO wording from Wix or a clean description made from the product's own text.
 const seoOf = (product: Awaited<ReturnType<typeof findProduct>>, slug: string) => {
     const photos = (product?.media?.items ?? []).flatMap((item) => (item?.image?.url ? [item.image.url] : []));
     return {

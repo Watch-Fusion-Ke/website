@@ -3,8 +3,8 @@ import { ADDRESS_LINES, EMAIL, INSTAGRAM_URL, TIKTOK_URL, WHATSAPP_NUMBER } from
 import { seoOf, type SeoTag } from "@/lib/categoryPages";
 import { SITE_NAME, SITE_URL } from "@/lib/site";
 
-// What search engines and link previews are told about a page. The shop's own wording from the store (the SEO title and description
-// it writes for a product or a category) comes first; anything it has not written is made here, once, the same way everywhere.
+// Search results and link previews share the same copy. The four reviewed product quick wins below take priority;
+// other products keep the shop's SEO wording from Wix, then fall back to their own descriptions.
 
 // The named entities an editor is likely to produce. Numbers (&#8217; and &#x2019;) are read separately.
 const NAMED: Record<string, string> = {
@@ -79,13 +79,35 @@ export const brandOf = (name: string, brand?: string | null): string | undefined
 
 const productUrl = (slug: string) => `${SITE_URL}/${slug}`;
 
+// Model and feature wording verified against Catalog V3 on 26 November 2026.
+// Selection and delivery evidence: docs/product-seo-quick-wins.md. Prices always come from the current product.
+const QUICK_WIN_PRODUCTS: Record<string, { model: string; watch: string; features: string }> = {
+  "olevs-1112": { model: "Olevs 1112", watch: "Olevs 1112 digital watch", features: "TPU strap and alarm. " },
+  "hannah-martin-hm-cz32-rose-gold-mesh-ladies-watch": {
+    model: "Hannah Martin HM-CZ32", watch: "Hannah Martin HM-CZ32 rose gold mesh watch", features: "",
+  },
+  "poedagar-924": { model: "Poedagar 924", watch: "Poedagar 924 men's watch", features: "Steel strap and date. " },
+  "curren-8472": { model: "Curren 8472", watch: "Curren 8472 men's watch", features: "Steel strap and date. " },
+};
+
+const productSeoCopy = (p: ProductSeo): { title: string | null; description: string | null } => {
+  const copy = Object.prototype.hasOwnProperty.call(QUICK_WIN_PRODUCTS, p.slug) ? QUICK_WIN_PRODUCTS[p.slug] : undefined;
+  // If Wix has no usable price, retain the existing SEO fallback rather than publishing an assumed amount.
+  if (!copy || p.price == null || !Number.isFinite(p.price) || p.price <= 0) return seoOf(p.seoTags);
+  const price = `KES ${new Intl.NumberFormat("en-KE", { minimumFractionDigits: Number.isInteger(p.price) ? 0 : 2, maximumFractionDigits: 2 }).format(p.price)}`;
+  return {
+    title: `${copy.model} Price in Kenya: ${price} | ${SITE_NAME}`,
+    description: `Buy the ${copy.watch} in Kenya for ${price}. ${copy.features}Nairobi delivery; elsewhere in Kenya, ask on WhatsApp.`,
+  };
+};
+
 const productDescription = (p: ProductSeo): string => {
-  const seo = seoOf(p.seoTags);
+  const seo = productSeoCopy(p);
   return seo.description || summarise(plainText(p.description)) || `Buy ${p.name} at ${SITE_NAME}. Genuine watches with delivery across Nairobi and Kenya.`;
 };
 
 export const productMetadata = (p: ProductSeo): Metadata => {
-  const seo = seoOf(p.seoTags);
+  const seo = productSeoCopy(p);
   const description = productDescription(p);
   const shareTitle = seo.title ?? `${p.name} | ${SITE_NAME}`;
   const image = p.imageUrl ? { url: p.imageUrl, alt: p.name } : { url: "/share-image.png", alt: `${SITE_NAME}: Wear the Moment, Own the Legacy` };

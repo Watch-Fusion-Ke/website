@@ -132,6 +132,64 @@ describe("productMetadata", () => {
   });
 });
 
+describe("the November product SEO quick wins", () => {
+  const products = [
+    { name: "Olevs 1112 Men's Digital Watch", slug: "olevs-1112", model: "Olevs 1112", price: 3500, amount: "KES 3,500" },
+    { name: "Hannah Martin HM-CZ32 Rose Gold Mesh Ladies' Watch", slug: "hannah-martin-hm-cz32-rose-gold-mesh-ladies-watch", model: "Hannah Martin HM-CZ32", price: 2999, amount: "KES 2,999" },
+    { name: "Poedagar 924 Men's Watch", slug: "poedagar-924", model: "Poedagar 924", price: 3500, amount: "KES 3,500" },
+    { name: "Curren 8472 Men's Watch", slug: "curren-8472", model: "Curren 8472", price: 3000, amount: "KES 3,000" },
+  ];
+  const seoTags = [
+    { type: "title", children: "Existing catalog title" },
+    { type: "meta", props: { name: "description", content: "Existing catalog description" } },
+  ];
+
+  it.each(products)("gives $model accurate price copy across search, shares and structured data", (p) => {
+    const product = { ...p, seoTags, imageUrl: "https://static.wixstatic.com/media/watch.jpg", inStock: false };
+    const m = productMetadata(product);
+    const title = `${p.model} Price in Kenya: ${p.amount} | ${SITE_NAME}`;
+    expect(m.title).toEqual({ absolute: title });
+    expect(m.description).toContain(p.model);
+    expect(m.description).toContain(`in Kenya for ${p.amount}.`);
+    expect(m.description).toContain("Nairobi delivery; elsewhere in Kenya, ask on WhatsApp.");
+    expect(String(m.description).length).toBeLessThanOrEqual(155);
+    expect(m.description).not.toMatch(/free|same.day|waterproof|genuine/i);
+    expect(m.openGraph).toMatchObject({ title, description: m.description, url: `${SITE_URL}/${p.slug}`, images: [{ url: product.imageUrl, alt: p.name }] });
+    expect(m.twitter).toMatchObject({ title, description: m.description });
+    expect(m.alternates?.canonical).toBe(`${SITE_URL}/${p.slug}`);
+    expect(productJsonLd(product)).toMatchObject({
+      name: p.name, description: m.description,
+      offers: { price: p.price, priceCurrency: "KES", availability: "https://schema.org/OutOfStock" },
+    });
+  });
+
+  it("follows a new catalog price, including cents, instead of retaining the verified snapshot price", () => {
+    const p = { ...products[2], price: 3250.50 };
+    const m = productMetadata(p);
+    expect(m.title).toEqual({ absolute: `Poedagar 924 Price in Kenya: KES 3,250.50 | ${SITE_NAME}` });
+    expect(m.description).toContain("KES 3,250.50");
+    expect(m.description).not.toContain("3,500");
+    expect(productJsonLd(p)).toMatchObject({ description: m.description, offers: { price: 3250.50 } });
+  });
+
+  it.each([null, undefined, NaN, Infinity, -1, 0])("retains catalog SEO when the current price is unusable (%s)", (price) => {
+    const p = { ...products[0], price, seoTags };
+    expect(productMetadata(p)).toMatchObject({ title: { absolute: "Existing catalog title" }, description: "Existing catalog description" });
+    expect(productJsonLd(p)).toMatchObject({ description: "Existing catalog description" });
+  });
+
+  it("retains the description fallback without a price or catalog SEO", () => {
+    const p = { ...products[2], price: null, description: "A stainless steel watch with a date display." };
+    expect(productMetadata(p)).toMatchObject({ title: p.name, description: p.description });
+  });
+
+  it.each(["olevs-3675", "hannah-martin-1681", "curren-8442", "poedagar-978", "poedagar-924-copy", "constructor"])("leaves other slugs (%s) with catalog SEO", (slug) => {
+    expect(productMetadata({ ...products[2], slug, seoTags })).toMatchObject({
+      title: { absolute: "Existing catalog title" }, description: "Existing catalog description",
+    });
+  });
+});
+
 describe("productJsonLd", () => {
   const p = { name: "Casio MTP", slug: "casio-mtp", description: html, imageUrl: "https://img/a.png", imageUrls: ["https://img/a.png", "https://img/b.png"], sku: "MTP-1", brand: "Casio", price: 6000, inStock: true, seoTags: [] };
 
